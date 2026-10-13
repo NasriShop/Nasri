@@ -1351,7 +1351,7 @@ async function tryLogin(){
   const pass=document.getElementById('a_pass').value;
   const em=(document.getElementById('a_email')||{value:''}).value.trim();
   if(S.cloud && window.FB && FB.signIn){
-    try{ await FB.signIn(em,pass); }catch(e){ toast(t('wrongPass')); }   // enterAdmin() runs from onAuth below
+    try{ await FB.signIn(em,pass); }catch(e){ console.error(e); toast(t('wrongPass')+' ['+(e.code||e.message)+']'); }   // enterAdmin() runs from onAuth below
   } else if(pass===DEFAULT_SETTINGS.adminPass){ enterAdmin(); }       // local-only mode (no cloud)
   else toast(t('wrongPass'));
 }
