@@ -298,17 +298,22 @@ ttq.load('TIKTOK_PIXEL_ID'); ttq.page();
 <script type="module">
   const c = window.FIREBASE_CONFIG || {};
   if (c.apiKey && !String(c.apiKey).includes("PASTE")) {
-    const [{ initializeApp }, fs] = await Promise.all([
+    const [{ initializeApp }, fs, au] = await Promise.all([
       import("https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"),
-      import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js")]);
+      import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js"),
+      import("https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js")]);
     const app = initializeApp(c);
+    const auth = au.getAuth(app);
     const db  = fs.getFirestore(app);
     window.FB = {
       docRef: p => fs.doc(db, p),
       colRef: p => fs.collection(db, p),
       getDoc: fs.getDoc, setDoc: fs.setDoc, updateDoc: fs.updateDoc, deleteDoc: fs.deleteDoc,
       getDocs: fs.getDocs, onSnapshot: fs.onSnapshot, query: fs.query,
-      orderBy: fs.orderBy, limit: fs.limit
+      orderBy: fs.orderBy, limit: fs.limit,
+      signIn: (e,p)=>au.signInWithEmailAndPassword(auth,e,p),
+      signOut: ()=>au.signOut(auth),
+      onAuth: cb=>au.onAuthStateChanged(auth,cb)
     };
   }
   window.__fbDone = true;
@@ -319,7 +324,7 @@ ttq.load('TIKTOK_PIXEL_ID'); ttq.page();
 
 <header class="topbar">
   <div class="wrap" style="display:flex; align-items:center; gap:12px; height:66px">
-    <div class="logo" onclick="go('home')">
+    <div class="logo" onclick="logoTap()">
       <div class="logo-mark">ZN</div>
       <div>
         <div class="logo-txt">Zoubir<span>Nasri</span>Shop</div>
@@ -332,10 +337,6 @@ ttq.load('TIKTOK_PIXEL_ID'); ttq.page();
       <button data-lang="fr" aria-pressed="false">FR</button>
       <button data-lang="en" aria-pressed="false">EN</button>
     </div>
-    <button class="btn btn-ghost btn-sm" onclick="go('admin')" id="adminBtn" title="Admin">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6h.09A1.65 1.65 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-      <span data-i18n="admin"></span>
-    </button>
   </div>
 </header>
 
@@ -683,6 +684,7 @@ async function initCloud(){
   await fbReady();
   DB = window.FB ? fbAdapter() : null;
   S.cloud = !!DB;
+  if(window.FB && FB.onAuth) FB.onAuth(u=>{ if(u) enterAdmin(); else if(S.admin && S.cloud){ S.admin=false; if(S.view==='admin') render(); } });
   const key = localStorage.getItem('zn_aikey');
   SAMPLE = key ? makeSampler(key) : null;
   const wasReady = S.ready;
@@ -779,9 +781,10 @@ function subscribe(){
     }, e=>console.warn(e));
   }catch(e){}
 }
+function pubSettings(){ const r={...S.settings}; delete r.adminPass; return r; }
 async function saveSettings(){
   S.settings.updatedAt = new Date().toISOString(); if(S.cloud) saveCache();
-  if(DB){ try{ await DB.doc("shop/settings").set(S.settings); return true; }catch(e){ toast("⚠︎ "+e.code); } }
+  if(DB){ try{ await DB.doc("shop/settings").set(pubSettings()); return true; }catch(e){ toast("⚠︎ "+e.code); } }
   LS.set('settings', S.settings); return true;
 }
 async function saveProduct(p){
@@ -845,7 +848,10 @@ async function addOrder(o){
   o.ref = id;
   const sheetUrl = S.settings.sheetUrl || window.SHEETS_URL;
   if(sheetUrl){ pushSheet([{id, ...o}]); o.sheetSynced = true; } // remembers it's already in the sheet, so archiving never re-sends it
-  bumpStatsOnCreate(o); await saveSettings();
+  bumpStatsOnCreate(o);
+  if(S.admin) await saveSettings();
+  else if(DB){ try{ await DB.doc("shop/settings").update({stats:S.settings.stats, updatedAt:new Date().toISOString()}); }catch(e){} }
+  else LS.set('settings', S.settings);
   if(DB){
     try{ await DB.doc("orders/"+id).set(o); return {id, ...o}; }
     catch(e){ toast("⚠︎ "+(e.code||e.message)); }
@@ -927,7 +933,7 @@ async function seedDemo(){
   S.products = demo; S.settings = {...DEFAULT_SETTINGS, featuredId:"p_demo1"};
   try{
     for(const p of demo){ const b={...p}; delete b.id; await DB.doc("products/"+p.id).set(b); }
-    await DB.doc("shop/settings").set(S.settings);
+    await DB.doc("shop/settings").set(pubSettings());
   }catch(e){}
 }
 const L = (v) => { // localized field: {ar,fr,en} or plain string
@@ -1313,7 +1319,8 @@ function viewAdmin(){
       <div class="logo-mark" style="margin:0 auto 14px">ZN</div>
       <h1 style="font-size:1.25rem; margin-bottom:6px">${t('adminLogin')}</h1>
       <p class="muted" style="font-size:.85rem; margin:0 0 18px">${S.cloud?t('cloudOn'):t('cloudOff')}</p>
-      <input class="field" id="a_pass" type="password" placeholder="${t('password')}"
+      <input class="field" id="a_email" type="email" autocomplete="username" placeholder="Email" style="text-align:center; margin-bottom:10px">
+      <input class="field" id="a_pass" type="password" autocomplete="current-password" placeholder="${t('password')}"
         onkeydown="if(event.key==='Enter')tryLogin()" style="text-align:center">
       <button class="btn btn-primary" style="width:100%; margin-top:12px" onclick="tryLogin()">${t('login')}</button>
       <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="go('home')">${t('back')}</button>
@@ -1326,17 +1333,29 @@ function viewAdmin(){
       ${S.cloud?'☁︎ '+t('cloudOn'):'⚠︎ '+t('cloudOff')}</span>
     <div style="flex:1"></div>
     <button class="btn btn-ghost btn-sm" onclick="go('home')">${t('back')}</button>
-    <button class="btn btn-ghost btn-sm" onclick="S.admin=false;go('home')">${t('logout')}</button>
+    <button class="btn btn-ghost btn-sm" onclick="logout()">${t('logout')}</button>
   </div>
   <div class="tabs" style="margin-bottom:18px">
     ${tabs.map(([k,lbl])=>`<button aria-selected="${S.tab===k}" onclick="S.tab='${k}';render()">${lbl}</button>`).join('')}
   </div>
   ${S.tab==='products'?tabProducts():S.tab==='orders'?tabOrders():S.tab==='shipping'?tabShipping():S.tab==='ai'?tabAI():tabSettings()}`;
 }
-function tryLogin(){
-  const v=document.getElementById('a_pass').value;
-  if(v===S.settings.adminPass){ S.admin=true; render(); if(DB){ loadOrders().then(()=>{ if(S.view==='admin') render(); }); subscribe(); } } else toast(t('wrongPass'));
+let _tap=0,_tt;
+function logoTap(){ _tap++; clearTimeout(_tt); _tt=setTimeout(()=>{_tap=0;},1500); if(_tap>=5){ _tap=0; go('admin'); } else go('home'); }
+function enterAdmin(){
+  if(S.admin) return;
+  S.admin=true; if(S.view==='admin') render();
+  if(DB){ loadOrders().then(()=>{ if(S.view==='admin') render(); }); subscribe(); }
 }
+async function tryLogin(){
+  const pass=document.getElementById('a_pass').value;
+  const em=(document.getElementById('a_email')||{value:''}).value.trim();
+  if(S.cloud && window.FB && FB.signIn){
+    try{ await FB.signIn(em,pass); }catch(e){ toast(t('wrongPass')); }   // enterAdmin() runs from onAuth below
+  } else if(pass===DEFAULT_SETTINGS.adminPass){ enterAdmin(); }       // local-only mode (no cloud)
+  else toast(t('wrongPass'));
+}
+function logout(){ S.admin=false; if(window.FB&&FB.signOut) FB.signOut().catch(()=>{}); go('home'); }
 
 /* ---- products tab ---- */
 function tabProducts(){
@@ -1869,7 +1888,6 @@ Write the ad in ${langName}, in a ${toneName} tone. Return exactly this structur
 function tabSettings(){
   return `<div class="card" style="padding:22px; display:grid; gap:14px; max-width:620px">
     <div><label class="lbl">${t('storeName')}</label><input class="field" id="st_name" value="${esc(S.settings.storeName)}"></div>
-    <div><label class="lbl">${t('adminPass')}</label><input class="field" id="st_pass" value="${esc(S.settings.adminPass)}"></div>
     <div><label class="lbl">WhatsApp (213…)</label><input class="field" id="st_wa" value="${esc(S.settings.whatsapp)}"></div>
     <div><label class="lbl">Facebook</label><input class="field" id="st_fb" value="${esc(S.settings.facebook)}"></div>
     <div class="card" style="padding:14px; box-shadow:none; background:var(--surface-2); display:grid; gap:12px">
@@ -1901,8 +1919,7 @@ async function commitSettings(){
   const aik=g('st_ai');
   if(aik){ localStorage.setItem('zn_aikey',aik); SAMPLE=makeSampler(aik); }
   else { localStorage.removeItem('zn_aikey'); SAMPLE=null; }
-  Object.assign(S.settings,{storeName:g('st_name'),adminPass:g('st_pass')||S.settings.adminPass,
-    whatsapp:g('st_wa'),facebook:g('st_fb'),sheetUrl:g('st_sheet'),
+  Object.assign(S.settings,{storeName:g('st_name'),    whatsapp:g('st_wa'),facebook:g('st_fb'),sheetUrl:g('st_sheet'),
     fbPixel:g('st_fbpx'),ttPixel:g('st_ttpx')});
   await saveSettings(); loadPixels(); toast(t('saved')); render();
 }
@@ -1925,6 +1942,7 @@ document.querySelectorAll('[data-i18n]').forEach(e=>e.textContent=t(e.dataset.i1
 document.getElementById('tagline').textContent=t('tagline');
 if(cloudConfigured() && loadCache()){ S.ready=true; S._sig=viewSig(); }
 render();
+if(location.hash==='#admin'){ S.view='admin'; try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){} }
 initCloud();
 </script>
 
