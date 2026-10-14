@@ -206,6 +206,65 @@ header.topbar::after{content:""; position:absolute; inset-inline:0; bottom:-2px;
 .qty button{width:40px; height:40px; border:0; background:var(--surface-2); font-size:1.1rem; font-weight:800; cursor:pointer}
 .qty span{min-width:48px; text-align:center; font-weight:800}
 
+/* ---------- order form (ofm) ---------- */
+.ofm{padding:0 !important; overflow:hidden}
+.ofm::before{content:""; display:block; height:5px; background:var(--grad)}
+.ofm-head{display:flex; align-items:center; gap:12px; padding:18px 20px 0}
+.ofm-spark{width:46px; height:46px; flex:none; border-radius:15px; background:var(--grad); display:grid; place-items:center;
+  font-size:1.35rem; box-shadow:0 10px 20px -10px var(--brand)}
+.ofm-head h2{font-size:1.15rem; font-weight:900; line-height:1.25}
+.ofm-head p{font-size:.8rem; color:var(--muted); margin-top:2px}
+.ofm-body{padding:16px 20px 20px; display:grid; gap:14px}
+.ofm-grp{display:grid; gap:11px; background:var(--surface-2); border:1px solid var(--line); border-radius:20px; padding:14px}
+.ofm-step{display:flex; align-items:center; gap:9px; font-weight:800; font-size:.88rem}
+.ofm-step b{width:25px; height:25px; flex:none; border-radius:50%; background:var(--grad); color:#fff; display:grid; place-items:center;
+  font-size:.78rem; font-family:"Outfit","Cairo",sans-serif}
+.ofm .field{height:50px; font-weight:600; background:var(--surface)}
+.ofm textarea.field{height:auto}
+.ofm .field.err{border-color:#E5484D; box-shadow:0 0 0 4px rgba(229,72,77,.16); animation:ofmShake .35s}
+.ofm .ic{position:relative}
+.ofm .ic > em{position:absolute; inset-inline-start:14px; top:50%; transform:translateY(-50%); font-style:normal; font-size:1.05rem; pointer-events:none}
+.ofm .ic > .field{padding-inline-start:46px}
+.ofm-two{display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px}
+.ofm .sel{position:relative}
+.ofm .sel select{appearance:none; -webkit-appearance:none; padding-inline-end:38px; cursor:pointer; text-overflow:ellipsis}
+.ofm .sel::after{content:""; position:absolute; inset-inline-end:17px; top:50%; width:8px; height:8px; pointer-events:none;
+  border-inline-end:2px solid var(--muted); border-bottom:2px solid var(--muted); transform:translateY(-72%) rotate(45deg)}
+.ofm-del{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.dcard{position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:5px; text-align:center;
+  border:2px solid var(--line); background:var(--surface); border-radius:18px; padding:14px 8px 12px; cursor:pointer;
+  transition:border-color .18s, background .18s, transform .18s, box-shadow .18s}
+.dcard input{position:absolute; opacity:0; pointer-events:none}
+.dcard .di{font-size:1.75rem; line-height:1}
+.dcard .dl{font-size:.8rem; font-weight:800; line-height:1.3}
+.dcard .price{font-size:1.02rem; color:var(--muted)}
+.dcard::after{content:"✓"; position:absolute; top:8px; inset-inline-end:8px; width:21px; height:21px; border-radius:50%; background:var(--grad);
+  color:#fff; font-size:.72rem; font-weight:900; display:grid; place-items:center; transform:scale(0); transition:transform .2s cubic-bezier(.3,1.6,.5,1)}
+.dcard:hover{border-color:var(--brand)}
+.dcard[data-on="1"]{border-color:var(--brand); background:var(--brand-soft); box-shadow:0 12px 24px -16px var(--brand); transform:translateY(-2px)}
+.dcard[data-on="1"]::after{transform:scale(1)}
+.dcard[data-on="1"] .price{color:var(--brand-ink)}
+.dcard:focus-within{outline:3px solid var(--brand-soft); outline-offset:2px}
+.ofm-qrow{display:flex; align-items:center; justify-content:space-between; gap:12px}
+.ofm .qty{background:var(--surface); border:0; box-shadow:inset 0 0 0 1.5px var(--line); border-radius:999px; padding:4px; gap:2px}
+.ofm .qty button{width:42px; height:42px; border-radius:50%; background:var(--grad); color:#fff; font-size:1.3rem; line-height:1;
+  box-shadow:0 8px 16px -10px var(--brand); transition:transform .12s}
+.ofm .qty button:active{transform:scale(.86)}
+.ofm .qty span{min-width:58px; font-size:1.2rem; font-family:"Outfit","Cairo",sans-serif}
+.ofm-sum{display:grid; gap:8px; padding:14px 16px; border-radius:18px; background:var(--surface); border:1.5px dashed var(--line); font-size:.95rem}
+.ofm-sum .row{display:flex; justify-content:space-between; align-items:center}
+.ofm-sum .tot{border-top:1px dashed var(--line); padding-top:10px; margin-top:2px; font-size:1.2rem}
+.ofm-cta{width:100%; padding:16px; font-size:1.08rem; font-weight:900; border-radius:16px; background:var(--grad); color:#fff;
+  box-shadow:0 16px 30px -16px var(--accent); position:relative; overflow:hidden; gap:10px}
+.ofm-cta::before{content:""; position:absolute; top:0; bottom:0; width:60px; inset-inline-start:-80px; transform:skewX(-20deg);
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent); animation:ofmShine 3.2s ease-in-out infinite}
+.ofm-cta:disabled{opacity:.7; cursor:wait}
+.ofm-trust{display:flex; flex-wrap:wrap; gap:7px; justify-content:center}
+.ofm-trust span{font-size:.74rem; font-weight:700; color:var(--muted); background:var(--surface-2); border-radius:999px; padding:5px 11px}
+@keyframes ofmShine{0%{inset-inline-start:-80px} 55%,100%{inset-inline-start:115%}}
+@keyframes ofmShake{25%{transform:translateX(-4px)} 75%{transform:translateX(4px)}}
+@media (prefers-reduced-motion:reduce){ .ofm-cta::before{animation:none} .ofm .field.err{animation:none} .dcard{transition:none} }
+
 /* ---------- floating contact ---------- */
 .floaties{position:fixed; inset-inline-end:14px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:60;
   display:flex; flex-direction:column; gap:10px}
@@ -1155,52 +1214,60 @@ function viewProduct(){
   </div>`;
 }
 function orderFormHtml(p){
-  return `<form class="card" id="orderForm" style="padding:22px" onsubmit="return false">
-    <h2 style="font-size:1.15rem; margin-bottom:4px">${t('orderForm')}</h2>
-    <p class="muted" style="font-size:.85rem; margin:0 0 16px">${t('t1')} · ${t('t2')}</p>
-    <div style="display:grid; gap:12px">
-      <div><label class="lbl">${t('fullName')} *</label><input class="field" id="f_name" required autocomplete="name"></div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
-        <div><label class="lbl">${t('phone')} *</label><input class="field" id="f_phone" inputmode="tel" placeholder="05XXXXXXXX" required></div>
-        <div><label class="lbl">${t('phone2')}</label><input class="field" id="f_phone2" inputmode="tel"></div>
+  const arrow = LANG==='ar' ? '←' : '→';
+  return `<form class="card ofm" id="orderForm" novalidate onsubmit="return false">
+    <div class="ofm-head">
+      <div class="ofm-spark">✨</div>
+      <div><h2>${t('orderForm')}</h2><p>${t('t1')} · ${t('t2')}</p></div>
+    </div>
+    <div class="ofm-body">
+
+      <div class="ofm-grp">
+        <div class="ofm-step"><b>1</b>${t('fullName')} · ${t('phone')}</div>
+        <div class="ic"><em>👤</em><input class="field" id="f_name" autocomplete="name" aria-label="${t('fullName')}" placeholder="${t('fullName')} *"></div>
+        <div class="ic"><em>📱</em><input class="field" id="f_phone" inputmode="tel" autocomplete="tel" maxlength="14" aria-label="${t('phone')}" placeholder="${t('phone')} *"></div>
       </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
-        <div><label class="lbl">${t('wilaya')} *</label>
-          <select class="field" id="f_wilaya" required>
+
+      <div class="ofm-grp">
+        <div class="ofm-step"><b>2</b>${t('wilaya')} · ${t('commune')}</div>
+        <div class="ofm-two">
+          <div class="sel"><select class="field" id="f_wilaya" aria-label="${t('wilaya')}">
             <option value="">${t('pickWilaya')}</option>
             ${DZ.map(w=>`<option value="${w[0]}">${String(w[0]).padStart(2,'0')} — ${LANG==='ar'?esc(w[1]):esc(w[2])}</option>`).join('')}
           </select></div>
-        <div><label class="lbl">${t('commune')} *</label>
-          <select class="field" id="f_commune" required><option value="">${t('pickCommune')}</option></select>
-          <input class="field hidden" id="f_commune_other" style="margin-top:8px" placeholder="${t('commune')}">
+          <div class="sel"><select class="field" id="f_commune" aria-label="${t('commune')}"><option value="">${t('pickCommune')}</option></select></div>
+        </div>
+        <input class="field hidden" id="f_commune_other" placeholder="${t('commune')}">
+      </div>
+
+      <div class="ofm-grp">
+        <div class="ofm-step"><b>3</b>${t('deliveryType')}</div>
+        <div class="ofm-del">
+          <label class="dcard" data-on="1" id="rc_home">
+            <input type="radio" name="dtype" value="home" checked>
+            <span class="di">🏠</span><span class="dl">${t('home')}</span><b class="price" id="p_home">—</b></label>
+          <label class="dcard" id="rc_desk">
+            <input type="radio" name="dtype" value="desk">
+            <span class="di">🏢</span><span class="dl">${t('desk')}</span><b class="price" id="p_desk">—</b></label>
         </div>
       </div>
-      <div>
-        <label class="lbl">${t('deliveryType')} *</label>
-        <div style="display:flex; gap:10px">
-          <label class="radio-card" data-on="1" id="rc_home">
-            <input type="radio" name="dtype" value="home" checked style="accent-color:var(--brand)">
-            <span style="flex:1">🏠 ${t('home')}</span><b class="price" id="p_home">—</b></label>
-          <label class="radio-card" id="rc_desk">
-            <input type="radio" name="dtype" value="desk" style="accent-color:var(--brand)">
-            <span style="flex:1">🏢 ${t('desk')}</span><b class="price" id="p_desk">—</b></label>
+
+      <div class="ofm-grp">
+        <div class="ofm-qrow">
+          <div class="ofm-step"><b>4</b>${t('qty')}</div>
+          <div class="qty"><button type="button" onclick="bumpQty(-1)" aria-label="-">−</button><span id="f_qty">1</span><button type="button" onclick="bumpQty(1)" aria-label="+">+</button></div>
         </div>
       </div>
-      <div><label class="lbl">${t('address')} *</label><input class="field" id="f_addr" required></div>
-      <div><label class="lbl">${t('qty')}</label>
-        <div class="qty"><button type="button" onclick="bumpQty(-1)">−</button><span id="f_qty">1</span><button type="button" onclick="bumpQty(1)">+</button></div>
+
+      <div class="ofm-sum">
+        <div class="row"><span class="muted">${t('subtotal')}</span><b class="price" id="s_sub">${money(p.price)}</b></div>
+        <div class="row"><span class="muted">${t('shipping')}</span><b class="price" id="s_ship">—</b></div>
+        <div class="row tot"><span style="font-weight:900">${t('total')}</span><b class="price" id="s_total" style="color:var(--accent)">${money(p.price)}</b></div>
       </div>
-      <div><label class="lbl">${t('notes')}</label><textarea class="field" id="f_notes" rows="2"></textarea></div>
+
+      <button type="button" class="btn ofm-cta" id="submitBtn" onclick="submitOrder('${p.id}')">${t('confirm')} <span>${arrow}</span></button>
+      <div class="ofm-trust"><span>🔒 ${t('t1')}</span><span>✅ ${t('t3')}</span><span>💬 ${t('t4')}</span></div>
     </div>
-    <div style="margin-top:18px; padding-top:14px; border-top:1px dashed var(--line); display:grid; gap:7px; font-size:.95rem">
-      <div style="display:flex; justify-content:space-between"><span class="muted">${t('subtotal')}</span><b class="price" id="s_sub">${money(p.price)}</b></div>
-      <div style="display:flex; justify-content:space-between"><span class="muted">${t('shipping')}</span><b class="price" id="s_ship">—</b></div>
-      <div style="display:flex; justify-content:space-between; font-size:1.15rem">
-        <span style="font-weight:800">${t('total')}</span><b class="price" id="s_total" style="color:var(--accent)">${money(p.price)}</b></div>
-    </div>
-    <button class="btn btn-accent" id="submitBtn" style="width:100%; margin-top:16px; padding:15px; font-size:1.05rem"
-      onclick="submitOrder('${p.id}')">${t('confirm')}</button>
-    <p class="muted" style="font-size:.76rem; text-align:center; margin:10px 0 0">🔒 ${t('t1')} — 0542248858</p>
   </form>`;
 }
 let QTY=1;
@@ -1208,6 +1275,8 @@ function bumpQty(n){ QTY=Math.max(1,Math.min(99,QTY+n)); document.getElementById
 function wireOrderForm(){
   QTY=1;
   const w=document.getElementById('f_wilaya'); if(!w) return;
+  const _f=document.getElementById('orderForm');
+  ['input','change'].forEach(ev=>_f.addEventListener(ev,e=>e.target.classList&&e.target.classList.remove('err')));
   w.addEventListener('change',()=>{
     const wc=w.value, sel=document.getElementById('f_commune');
     const row=DZ.find(x=>String(x[0])===String(wc));
@@ -1246,8 +1315,13 @@ async function submitOrder(pid){
   let commune=g('f_commune'); if(commune==='__other') commune=g('f_commune_other');
   const phone=g('f_phone').replace(/\s|-/g,'');
   const wc=g('f_wilaya');
-  if(!g('f_name')||!phone||!wc||!commune||!g('f_addr')) return toast(t('required'));
-  if(!/^0?[5-7]\d{8}$/.test(phone)) return toast(t('badPhone'));
+  const bad=[];
+  if(!g('f_name')) bad.push('f_name');
+  if(!phone) bad.push('f_phone');
+  if(!wc) bad.push('f_wilaya');
+  if(!commune) bad.push(g('f_commune')==='__other'?'f_commune_other':'f_commune');
+  if(bad.length){ bad.forEach(id=>document.getElementById(id)?.classList.add('err')); document.getElementById(bad[0])?.focus(); return toast(t('required')); }
+  if(!/^0?[5-7]\d{8}$/.test(phone)){ const el=document.getElementById('f_phone'); el.classList.add('err'); el.focus(); return toast(t('badPhone')); }
   const type=document.querySelector('input[name="dtype"]:checked')?.value||'home';
   const row=DZ.find(x=>String(x[0])===String(wc));
   const ship=shipFor(wc,type), sub=p.price*QTY;
@@ -1256,9 +1330,9 @@ async function submitOrder(pid){
   btn.disabled=true; btn.innerHTML=`<span class="spinner"></span> ${t('sending')}`;
   const order=await addOrder({
     productId:p.id, productName:L(p.name), unitPrice:p.price, qty:QTY,
-    customer:g('f_name'), phone, phone2:g('f_phone2'),
+    customer:g('f_name'), phone, phone2:'',
     wilayaCode:Number(wc), wilaya:row?row[2]:'', wilayaAr:row?row[1]:'',
-    commune, address:g('f_addr'), notes:g('f_notes'),
+    commune, address:'', notes:'',
     deliveryType:type, carrier:(activeCarrier()||{}).name||'', shipping:ship, subtotal:sub, total:sub+ship, lang:LANG
   });
   S.lastOrder=order;
