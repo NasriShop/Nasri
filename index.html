@@ -517,7 +517,7 @@ ar:{
   dir:"rtl", admin:"لوحة التحكم", tagline:"الدفع عند الاستلام · 58 ولاية",
   shopNow:"اطلب الآن", buyNow:"اشتري الآن — الدفع عند الاستلام", products:"منتجاتنا",
   allProducts:"كل المنتجات", featured:"منتج مميّز", off:"تخفيض", da:"دج",
-  searchPh:"ابحث عن منتج…", noProducts:"لا توجد منتجات حالياً. أضف منتجاتك من لوحة التحكم.",
+  searchPh:"ابحث عن منتج…", moreProducts:"منتجات أخرى قد تعجبك", noProducts:"لا توجد منتجات حالياً. أضف منتجاتك من لوحة التحكم.",
   back:"رجوع", desc:"وصف المنتج", orderForm:"أكمل الطلب", fullName:"الاسم واللقب",
   phone:"رقم الهاتف", phone2:"رقم هاتف ثانٍ (اختياري)", wilaya:"الولاية", commune:"البلدية",
   address:"العنوان بالتفصيل", notes:"ملاحظة (اختياري)", deliveryType:"طريقة التوصيل",
@@ -559,7 +559,7 @@ fr:{
   dir:"ltr", admin:"Admin", tagline:"Paiement à la livraison · 58 wilayas",
   shopNow:"Commander", buyNow:"Commander — paiement à la livraison", products:"Nos produits",
   allProducts:"Tous les produits", featured:"Produit vedette", off:"Remise", da:"DA",
-  searchPh:"Rechercher un produit…", noProducts:"Aucun produit. Ajoutez-en depuis l'admin.",
+  searchPh:"Rechercher un produit…", moreProducts:"Autres produits qui pourraient vous plaire", noProducts:"Aucun produit. Ajoutez-en depuis l'admin.",
   back:"Retour", desc:"Description", orderForm:"Finaliser la commande", fullName:"Nom et prénom",
   phone:"Téléphone", phone2:"2ᵉ téléphone (optionnel)", wilaya:"Wilaya", commune:"Commune",
   address:"Adresse complète", notes:"Remarque (optionnel)", deliveryType:"Mode de livraison",
@@ -601,7 +601,7 @@ en:{
   dir:"ltr", admin:"Admin", tagline:"Cash on delivery · 58 wilayas",
   shopNow:"Order now", buyNow:"Order now — cash on delivery", products:"Our products",
   allProducts:"All products", featured:"Featured", off:"OFF", da:"DA",
-  searchPh:"Search a product…", noProducts:"No products yet. Add them from the admin panel.",
+  searchPh:"Search a product…", moreProducts:"More products you may like", noProducts:"No products yet. Add them from the admin panel.",
   back:"Back", desc:"Description", orderForm:"Complete your order", fullName:"Full name",
   phone:"Phone number", phone2:"Second phone (optional)", wilaya:"Wilaya", commune:"Commune",
   address:"Full address", notes:"Note (optional)", deliveryType:"Delivery method",
@@ -748,9 +748,11 @@ async function initCloud(){
   SAMPLE = key ? makeSampler(key) : null;
   const wasReady = S.ready;
   await loadAll();
+  S._fresh = true;
   if(S.cloud) saveCache();
   loadPixels();
   S.ready = true;
+  if(DEEP) render();
   if(!wasReady || viewSig()!==S._sig){
     if(!wasReady || S.view==='home' || S.view==='policy') render();
     else if(S.view==='product'){ try{ recalc(); }catch(e){} }   // ne jamais effacer un formulaire en cours de saisie
@@ -1016,12 +1018,35 @@ function setLang(l){
   document.getElementById('tagline').textContent=t('tagline');
   render();
 }
-function go(view, id){ S.view=view; S.productId=id||null; window.scrollTo({top:0,behavior:'instant'}); render(); }
+function go(view, id){
+  S.view=view; S.productId=id||null;
+  try{
+    if(view==='product' && id) history.replaceState(null,'',location.pathname+'#p='+encodeURIComponent(id));
+    else if(view==='home') history.replaceState(null,'',location.pathname);
+  }catch(e){}
+  window.scrollTo({top:0,behavior:'instant'}); render();
+}
+/* Deep link: nasrishop.com/#p=ID (or ?p=ID) opens that product directly */
+function readDeepLink(){
+  try{
+    const h=(location.hash||'').match(/^#p=(.+)$/);
+    if(h) return decodeURIComponent(h[1]);
+    const q=new URLSearchParams(location.search).get('p');
+    if(q) return q;
+  }catch(e){}
+  return null;
+}
+let DEEP = readDeepLink();
 
 /* ------------------------------ 5. Router ------------------------------- */
 function render(){
   const app=document.getElementById('app');
   if(!S.ready){ app.innerHTML = skeleton(); return; }
+  if(DEEP){
+    const dp = byId(DEEP);
+    if(dp){ S.view='product'; S.productId=DEEP; }
+    if(dp || S._fresh) DEEP=null;   // keep waiting for fresh cloud data before giving up
+  }
   if(S.view==="product") app.innerHTML = viewProduct();
   else if(S.view==="success") app.innerHTML = viewSuccess();
   else if(S.view==="policy") app.innerHTML = viewPolicy();
@@ -1211,7 +1236,9 @@ function viewProduct(){
       </section>
     </div>
     <aside class="order-box">${orderFormHtml(p)}</aside>
-  </div>`;
+  </div>
+  ${(()=>{ const o=S.products.filter(x=>x.active!==false && x.id!==p.id);
+    return o.length ? `<section style="margin-top:34px"><h2 style="font-size:1.3rem; margin-bottom:12px">${t('moreProducts')}</h2>${gridHtml(o)}</section>` : ''; })()}`;
 }
 function orderFormHtml(p){
   const arrow = LANG==='ar' ? '←' : '→';
@@ -1448,6 +1475,7 @@ function tabProducts(){
       <td><input type="radio" name="feat" ${S.settings.featuredId===p.id?'checked':''} onchange="setFeatured('${p.id}')" style="accent-color:var(--brand)"></td>
       <td><input type="checkbox" ${p.active!==false?'checked':''} onchange="toggleActive('${p.id}',this.checked)" style="accent-color:var(--brand)"></td>
       <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-ghost" onclick="copyProductLink('${p.id}')" title="نسخ رابط الإعلان">🔗</button>
         <button class="btn btn-sm btn-ghost" onclick="openProduct('${p.id}')">${t('edit')}</button>
         <button class="btn btn-sm" style="background:var(--accent-soft); color:var(--accent)" onclick="askDelete('${p.id}')">${t('del')}</button>
       </td></tr>`).join('')||`<tr><td colspan="8" class="muted" style="padding:24px">${t('noProducts')}</td></tr>`}
@@ -1458,6 +1486,11 @@ async function toggleActive(id,v){ const p=byId(id); p.active=v; await saveProdu
 function askDelete(id){ if(confirm(t('confirmDel'))) removeProduct(id).then(ok=>{ if(ok) toast(t('deleted')); render(); }); }
 
 let DRAFT=null;
+function copyProductLink(id){
+  const u=location.origin+location.pathname+'?p='+encodeURIComponent(id);
+  const done=()=>alert('تم نسخ الرابط:\n'+u+'\n\nأو في Meta Ads ضع فقط: p='+id);
+  if(navigator.clipboard) navigator.clipboard.writeText(u).then(done,()=>prompt('انسخ الرابط:',u)); else prompt('انسخ الرابط:',u);
+}
 function openProduct(id){
   const p = id ? JSON.parse(JSON.stringify(byId(id))) :
     {name:{ar:"",fr:"",en:""}, desc:{ar:"",fr:"",en:""}, price:0, oldPrice:0, images:[], stock:0, sold:0, active:true, category:"other"};
