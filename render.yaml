@@ -1,12 +1,19 @@
+# Render Blueprint — موقع ثابت (Static Site) يُنشر من مجلد public/
 services:
   - type: web
-    name: zoubirnasrishop
     runtime: static
-    staticPublishPath: .
+    name: zoubirnasrishop
+    buildCommand: echo "static site - nothing to build"
+    staticPublishPath: ./public
+    pullRequestPreviewsEnabled: false
     headers:
       - path: /*
-        name: X-Frame-Options
-        value: SAMEORIGIN
+        name: X-Content-Type-Options
+        value: nosniff
       - path: /*
         name: Referrer-Policy
         value: strict-origin-when-cross-origin
+      - path: /index.html
+        name: Cache-Control
+        value: public, max-age=0, must-revalidate
+ 
