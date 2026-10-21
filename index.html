@@ -11,8 +11,20 @@
 <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 <script>
+/* ضغط وتصغير أي صورة Cloudinary (حتى القديمة) حسب العرض المطلوب */
+window.znCimg=function(u,w){
+  if(typeof u!=='string') return u;
+  var m=/^(https:\/\/res\.cloudinary\.com\/[^\/]+\/image\/upload\/)(.*)$/.exec(u); if(!m) return u;
+  var rest=m[2].replace(/^f_auto,q_auto,(?:c_limit,)?w_\d+\//,'');
+  if(/^[a-z]{1,3}_[^\/]*\//.test(rest)) return u;   /* تحويل مخصص من صاحب المتجر: لا نلمسه */
+  return m[1]+'f_auto,q_auto,c_limit,w_'+w+'/'+rest;
+};
+window.znSet=function(u,ws){
+  if(typeof u!=='string' || window.znCimg(u,ws[0])===u) return '';
+  return ws.map(function(w){return window.znCimg(u,w)+' '+w+'w';}).join(', ');
+};
 /* تحميل مسبق لصورة الغلاف للزائر العائد (المعلومات محفوظة من الزيارة السابقة) */
-try{var h=JSON.parse(localStorage.getItem('zn_hero')||'null');if(h&&h.set){var l=document.createElement('link');l.rel='preload';l.as='image';l.setAttribute('imagesrcset',h.set);l.setAttribute('imagesizes',h.sizes);l.setAttribute('fetchpriority','high');document.head.appendChild(l);}}catch(e){}
+try{var h=(new URLSearchParams(location.search).get('p'))?null:JSON.parse(localStorage.getItem('zn_hero')||'null');if(h&&h.set){var l=document.createElement('link');l.rel='preload';l.as='image';l.setAttribute('imagesrcset',h.set);l.setAttribute('imagesizes',h.sizes);l.setAttribute('fetchpriority','high');document.head.appendChild(l);}}catch(e){}
 </script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap"></noscript>
@@ -335,6 +347,34 @@ window.CLOUDINARY = {
   CLOUD_NAME: "hwhhltic",
   UPLOAD_PRESET: "zoubirnasrishop"
 };
+</script>
+<script>
+/* جلب مبكر للمنتجات (REST) + تحميل مسبق لصورة المنتج المطلوب من أول زيارة */
+(function(){
+  try{
+    var pid=(window.FIREBASE_CONFIG||{}).projectId; if(!pid) return;
+    var base='https://firestore.googleapis.com/v1/projects/'+pid+'/databases/(default)/documents/';
+    var j=function(u){return fetch(u).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});};
+    var q=new URLSearchParams(location.search).get('p'), hh=/^#(p_[A-Za-z0-9_-]+)$/.exec(location.hash);
+    var want=q||(hh&&hh[1])||null;
+    window.__fsP=Promise.all([j(base+'products?pageSize=300'), j(base+'shop/settings')]);
+    window.__fsP.then(function(r){
+      var pj=r[0], sj=r[1]; if(!pj||!pj.documents) return;
+      var id=want; if(!id&&sj&&sj.fields&&sj.fields.featuredId) id=sj.fields.featuredId.stringValue;
+      var docs=pj.documents, d=null, k;
+      for(k=0;k<docs.length;k++){ if(docs[k].name.split('/').pop()===id){d=docs[k];break;} }
+      if(!d && !want){ for(k=0;k<docs.length;k++){ var a=docs[k].fields&&docs[k].fields.active; if(!a||a.booleanValue!==false){d=docs[k];break;} } }
+      var im=d&&d.fields&&d.fields.images&&d.fields.images.arrayValue&&d.fields.images.arrayValue.values;
+      var u=im&&im[0]&&im[0].stringValue; if(!u) return;
+      var set=window.znSet(u,[480,800,1100]); if(!set) return;
+      var sizes=want?'(min-width:960px) 55vw, 100vw':'(min-width:820px) 50vw, 100vw';
+      if(document.querySelector('link[rel=preload][as=image][imagesrcset="'+set+'"]')) return;
+      var l=document.createElement('link'); l.rel='preload'; l.as='image';
+      l.setAttribute('imagesrcset',set); l.setAttribute('imagesizes',sizes); l.setAttribute('fetchpriority','high');
+      document.head.appendChild(l);
+    });
+  }catch(e){}
+})();
 </script>
 
 <!-- ③ Facebook Pixel — ضع رقم البكسل مكان PIXEL_ID ثم أزل التعليق
@@ -768,9 +808,14 @@ function fsVal(v){
 function fsObj(f){ const o={}; for(const k in f) o[k]=fsVal(f[k]); return o; }
 async function fastLoad(){
   try{
-    const [a,b]=await Promise.all([fetch(FS_BASE+'products?pageSize=300'), fetch(FS_BASE+'shop/settings')]);
-    if(!a.ok || !b.ok) return false;                 // بدون الإعدادات (أسعار التوصيل) لا نعرض شيئاً خاطئاً
-    const pj=await a.json(), sj=await b.json();
+    let pj,sj;
+    if(window.__fsP){ [pj,sj]=await window.__fsP; }
+    else{
+      const [a,b]=await Promise.all([fetch(FS_BASE+'products?pageSize=300'), fetch(FS_BASE+'shop/settings')]);
+      if(!a.ok || !b.ok) return false;
+      pj=await a.json(); sj=await b.json();
+    }
+    if(!pj || !sj) return false;                     // بدون الإعدادات (أسعار التوصيل) لا نعرض شيئاً خاطئاً
     const products=(pj.documents||[]).map(d=>({id:d.name.split('/').pop(), ...fsObj(d.fields||{})}));
     if(!products.length || !sj.fields) return false;
     if(S.ready) return false;
@@ -1044,9 +1089,9 @@ const L = (v) => { // localized field: {ar,fr,en} or plain string
   if(typeof v === "string") return v;
   return v[LANG] || v.ar || v.fr || v.en || "";
 };
-function cimg(u,w){ return (typeof u==='string' && u.includes('/upload/f_auto,q_auto,w_1200/')) ? u.replace('/upload/f_auto,q_auto,w_1200/','/upload/f_auto,q_auto,c_limit,w_'+w+'/') : u; }
+function cimg(u,w){ return window.znCimg(u,w); }
 const HERO_W=[480,800,1100], HERO_SIZES="(min-width:820px) 50vw, 100vw";
-function cset(u,ws){ return (typeof u==='string' && u.includes('/upload/f_auto,q_auto,w_1200/')) ? ws.map(w=>cimg(u,w)+' '+w+'w').join(', ') : ''; }
+function cset(u,ws){ return window.znSet(u,ws); }
 function ia(u,w){ return `src="${esc(cimg(u,w))}" data-o="${esc(u)}" onerror="this.onerror=null;this.removeAttribute('srcset');this.src=this.dataset.o"`; }
 function ias(u,w,ws,sizes){ const s=cset(u,ws); return ia(u,w)+(s?` srcset="${esc(s)}" sizes="${sizes}"`:''); }
 function activeCarrier(){ const cs=S.settings.carriers||[]; return cs.find(c=>c.id===S.settings.activeCarrier)||cs[0]; }
