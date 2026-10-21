@@ -3,13 +3,17 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="ZoubirNasriShop — متجر إلكتروني جزائري: منتجات مختارة بعناية، الدفع عند الاستلام والتوصيل إلى 58 ولاية.">
+<meta name="theme-color" content="#FF6A00">
 <title>ZoubirNasriShop — متجر إلكتروني</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://res.cloudinary.com" crossorigin>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
-<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js">
-<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js">
+<script>
+/* تحميل مسبق لصورة الغلاف للزائر العائد (المعلومات محفوظة من الزيارة السابقة) */
+try{var h=JSON.parse(localStorage.getItem('zn_hero')||'null');if(h&&h.set){var l=document.createElement('link');l.rel='preload';l.as='image';l.setAttribute('imagesrcset',h.set);l.setAttribute('imagesizes',h.sizes);l.setAttribute('fetchpriority','high');document.head.appendChild(l);}}catch(e){}
+</script>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" media="print" onload="this.media='all'">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap"></noscript>
 <style>
@@ -256,12 +260,12 @@ header.topbar::after{content:""; position:absolute; inset-inline:0; bottom:-2px;
 .ofm-sum .tot{border-top:1px dashed var(--line); padding-top:10px; margin-top:2px; font-size:1.2rem}
 .ofm-cta{width:100%; padding:16px; font-size:1.08rem; font-weight:900; border-radius:16px; background:var(--grad); color:#fff;
   box-shadow:0 16px 30px -16px var(--accent); position:relative; overflow:hidden; gap:10px}
-.ofm-cta::before{content:""; position:absolute; top:0; bottom:0; width:60px; inset-inline-start:-80px; transform:skewX(-20deg);
-  background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent); animation:ofmShine 3.2s ease-in-out infinite}
+.ofm-cta::before{content:""; position:absolute; inset:0; pointer-events:none; transform:translateX(-100%);
+  background:linear-gradient(100deg,transparent 35%,rgba(255,255,255,.35) 50%,transparent 65%); animation:ofmShine 3.2s ease-in-out infinite}
 .ofm-cta:disabled{opacity:.7; cursor:wait}
 .ofm-trust{display:flex; flex-wrap:wrap; gap:7px; justify-content:center}
 .ofm-trust span{font-size:.74rem; font-weight:700; color:var(--muted); background:var(--surface-2); border-radius:999px; padding:5px 11px}
-@keyframes ofmShine{0%{inset-inline-start:-80px} 55%,100%{inset-inline-start:115%}}
+@keyframes ofmShine{0%{transform:translateX(-100%)} 55%,100%{transform:translateX(100%)}}
 @keyframes ofmShake{25%{transform:translateX(-4px)} 75%{transform:translateX(4px)}}
 @media (prefers-reduced-motion:reduce){ .ofm-cta::before{animation:none} .ofm .field.err{animation:none} .dcard{transition:none} }
 
@@ -294,9 +298,8 @@ table.tbl tr:hover td{background:var(--surface-2)}
 .spinner{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%;
   animation:spin .7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
-.skel{background:linear-gradient(90deg,var(--surface-2),var(--line),var(--surface-2)); background-size:200% 100%;
-  animation:sh 1.3s infinite; border-radius:16px}
-@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skel{background:var(--line); animation:sh 1.3s ease-in-out infinite; border-radius:16px}
+@keyframes sh{0%,100%{opacity:1}50%{opacity:.45}}
 @media (prefers-reduced-motion: reduce){ *{animation-duration:.01ms !important; transition-duration:.01ms !important} }
 .trust{display:grid; grid-template-columns:repeat(2,1fr); gap:10px}
 @media(min-width:760px){ .trust{grid-template-columns:repeat(4,1fr)} }
@@ -357,22 +360,28 @@ ttq.load('TIKTOK_PIXEL_ID'); ttq.page();
 <script type="module">
   const c = window.FIREBASE_CONFIG || {};
   if (c.apiKey && !String(c.apiKey).includes("PASTE")) {
-    const [{ initializeApp }, fs, au] = await Promise.all([
+    /* المنتجات تُجلب أولاً عبر REST خفيف؛ حزمة Firebase (الثقيلة) تُحمَّل بعد اكتمال الصفحة */
+    if (document.readyState !== "complete") {
+      await Promise.race([
+        new Promise(r => window.addEventListener("load", r, {once:true})),
+        new Promise(r => setTimeout(r, 4000))]);
+    }
+    const [{ initializeApp }, fs] = await Promise.all([
       import("https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"),
-      import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js"),
-      import("https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js")]);
+      import("https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js")]);
     const app = initializeApp(c);
-    const auth = au.getAuth(app);
     const db  = fs.getFirestore(app);
+    let _a = null;   // firebase-auth لا يُحمَّل إلا عند فتح لوحة التحكم
+    const loadAuth = () => _a || (_a = import("https://www.gstatic.com/firebasejs/10.12.5/firebase-auth.js").then(au => ({au, auth:au.getAuth(app)})));
     window.FB = {
       docRef: p => fs.doc(db, p),
       colRef: p => fs.collection(db, p),
       getDoc: fs.getDoc, setDoc: fs.setDoc, updateDoc: fs.updateDoc, deleteDoc: fs.deleteDoc,
       getDocs: fs.getDocs, onSnapshot: fs.onSnapshot, query: fs.query,
       orderBy: fs.orderBy, limit: fs.limit,
-      signIn: (e,p)=>au.signInWithEmailAndPassword(auth,e,p),
-      signOut: ()=>au.signOut(auth),
-      onAuth: cb=>au.onAuthStateChanged(auth,cb)
+      signIn: (e,p)=>loadAuth().then(({au,auth})=>au.signInWithEmailAndPassword(auth,e,p)),
+      signOut: ()=>loadAuth().then(({au,auth})=>au.signOut(auth)),
+      onAuth: cb=>loadAuth().then(({au,auth})=>au.onAuthStateChanged(auth,cb))
     };
   }
   window.__fbDone = true;
@@ -517,7 +526,7 @@ ar:{
   dir:"rtl", admin:"لوحة التحكم", tagline:"الدفع عند الاستلام · 58 ولاية",
   shopNow:"اطلب الآن", buyNow:"اشتري الآن — الدفع عند الاستلام", products:"منتجاتنا",
   allProducts:"كل المنتجات", featured:"منتج مميّز", off:"تخفيض", da:"دج",
-  searchPh:"ابحث عن منتج…", moreProducts:"منتجات أخرى قد تعجبك", noProducts:"لا توجد منتجات حالياً. أضف منتجاتك من لوحة التحكم.",
+  searchPh:"ابحث عن منتج…", noProducts:"لا توجد منتجات حالياً. أضف منتجاتك من لوحة التحكم.",
   back:"رجوع", desc:"وصف المنتج", orderForm:"أكمل الطلب", fullName:"الاسم واللقب",
   phone:"رقم الهاتف", phone2:"رقم هاتف ثانٍ (اختياري)", wilaya:"الولاية", commune:"البلدية",
   address:"العنوان بالتفصيل", notes:"ملاحظة (اختياري)", deliveryType:"طريقة التوصيل",
@@ -559,7 +568,7 @@ fr:{
   dir:"ltr", admin:"Admin", tagline:"Paiement à la livraison · 58 wilayas",
   shopNow:"Commander", buyNow:"Commander — paiement à la livraison", products:"Nos produits",
   allProducts:"Tous les produits", featured:"Produit vedette", off:"Remise", da:"DA",
-  searchPh:"Rechercher un produit…", moreProducts:"Autres produits qui pourraient vous plaire", noProducts:"Aucun produit. Ajoutez-en depuis l'admin.",
+  searchPh:"Rechercher un produit…", noProducts:"Aucun produit. Ajoutez-en depuis l'admin.",
   back:"Retour", desc:"Description", orderForm:"Finaliser la commande", fullName:"Nom et prénom",
   phone:"Téléphone", phone2:"2ᵉ téléphone (optionnel)", wilaya:"Wilaya", commune:"Commune",
   address:"Adresse complète", notes:"Remarque (optionnel)", deliveryType:"Mode de livraison",
@@ -601,7 +610,7 @@ en:{
   dir:"ltr", admin:"Admin", tagline:"Cash on delivery · 58 wilayas",
   shopNow:"Order now", buyNow:"Order now — cash on delivery", products:"Our products",
   allProducts:"All products", featured:"Featured", off:"OFF", da:"DA",
-  searchPh:"Search a product…", moreProducts:"More products you may like", noProducts:"No products yet. Add them from the admin panel.",
+  searchPh:"Search a product…", noProducts:"No products yet. Add them from the admin panel.",
   back:"Back", desc:"Description", orderForm:"Complete your order", fullName:"Full name",
   phone:"Phone number", phone2:"Second phone (optional)", wilaya:"Wilaya", commune:"Commune",
   address:"Full address", notes:"Note (optional)", deliveryType:"Delivery method",
@@ -686,7 +695,7 @@ function fbReady(){
   return new Promise(res=>{
     if(window.__fbDone) return res();
     window.addEventListener('fb-ready', ()=>res(), {once:true});
-    setTimeout(res, 6000);
+    setTimeout(res, 15000);
   });
 }
 /* Firestore adapter — same tiny interface the rest of the app already uses. */
@@ -738,21 +747,53 @@ function loadCache(){
 }
 function saveCache(){
   try{ const raw=JSON.stringify({settings:S.settings, products:S.products}); if(raw.length<1500000) localStorage.setItem(CK,raw); }catch(e){}
+  try{ // مواصفات صورة الغلاف لتحميلها مسبقاً في الزيارة القادمة
+    const p=byId(S.settings.featuredId)||S.products.find(x=>x.active!==false);
+    const set=cset(p&&p.images&&p.images[0], HERO_W);
+    localStorage.setItem('zn_hero', JSON.stringify(set?{set,sizes:HERO_SIZES}:null));
+  }catch(e){}
+}
+/* ---- تحميل سريع للزائر الأول: REST مباشر إلى Firestore دون انتظار حزمة SDK ---- */
+const FS_BASE='https://firestore.googleapis.com/v1/projects/'+((window.FIREBASE_CONFIG||{}).projectId||'')+'/databases/(default)/documents/';
+function fsVal(v){
+  if('stringValue' in v) return v.stringValue;
+  if('integerValue' in v) return Number(v.integerValue);
+  if('doubleValue' in v) return v.doubleValue;
+  if('booleanValue' in v) return v.booleanValue;
+  if('timestampValue' in v) return v.timestampValue;
+  if('mapValue' in v) return fsObj(v.mapValue.fields||{});
+  if('arrayValue' in v) return (v.arrayValue.values||[]).map(fsVal);
+  return null;
+}
+function fsObj(f){ const o={}; for(const k in f) o[k]=fsVal(f[k]); return o; }
+async function fastLoad(){
+  try{
+    const [a,b]=await Promise.all([fetch(FS_BASE+'products?pageSize=300'), fetch(FS_BASE+'shop/settings')]);
+    if(!a.ok || !b.ok) return false;                 // بدون الإعدادات (أسعار التوصيل) لا نعرض شيئاً خاطئاً
+    const pj=await a.json(), sj=await b.json();
+    const products=(pj.documents||[]).map(d=>({id:d.name.split('/').pop(), ...fsObj(d.fields||{})}));
+    if(!products.length || !sj.fields) return false;
+    if(S.ready) return false;
+    S.settings={...DEFAULT_SETTINGS, ...fsObj(sj.fields)}; ensureCarriers(); S.products=products; S._ck=true;
+    return true;
+  }catch(e){ return false; }
+}
+function wireAuth(){
+  if(S._authW || !window.FB || !FB.onAuth) return; S._authW=true;
+  FB.onAuth(u=>{ if(u) enterAdmin(); else if(S.admin && S.cloud){ S.admin=false; if(S.view==='admin') render(); } });
 }
 async function initCloud(){
   await fbReady();
   DB = window.FB ? fbAdapter() : null;
   S.cloud = !!DB;
-  if(window.FB && FB.onAuth) FB.onAuth(u=>{ if(u) enterAdmin(); else if(S.admin && S.cloud){ S.admin=false; if(S.view==='admin') render(); } });
+  if(S.view==='admin') wireAuth();
   const key = localStorage.getItem('zn_aikey');
   SAMPLE = key ? makeSampler(key) : null;
   const wasReady = S.ready;
   await loadAll();
-  S._fresh = true;
   if(S.cloud) saveCache();
   loadPixels();
   S.ready = true;
-  if(DEEP) render();
   if(!wasReady || viewSig()!==S._sig){
     if(!wasReady || S.view==='home' || S.view==='policy') render();
     else if(S.view==='product'){ try{ recalc(); }catch(e){} }   // ne jamais effacer un formulaire en cours de saisie
@@ -903,6 +944,7 @@ async function resetStats(){
   toast('✅ تم تصفير العداد');
 }
 async function addOrder(o){
+  if(!DB && cloudConfigured() && S._cloudP){ try{ await S._cloudP; }catch(e){} }   // لا نحفظ الطلب محلياً بالخطأ قبل جاهزية Firebase
   o.createdAt = new Date().toISOString();
   o.status = "pending";
   const id = "ZN"+Date.now().toString(36).toUpperCase().slice(-6);
@@ -1003,7 +1045,10 @@ const L = (v) => { // localized field: {ar,fr,en} or plain string
   return v[LANG] || v.ar || v.fr || v.en || "";
 };
 function cimg(u,w){ return (typeof u==='string' && u.includes('/upload/f_auto,q_auto,w_1200/')) ? u.replace('/upload/f_auto,q_auto,w_1200/','/upload/f_auto,q_auto,c_limit,w_'+w+'/') : u; }
-function ia(u,w){ return `src="${esc(cimg(u,w))}" data-o="${esc(u)}" onerror="this.onerror=null;this.src=this.dataset.o"`; }
+const HERO_W=[480,800,1100], HERO_SIZES="(min-width:820px) 50vw, 100vw";
+function cset(u,ws){ return (typeof u==='string' && u.includes('/upload/f_auto,q_auto,w_1200/')) ? ws.map(w=>cimg(u,w)+' '+w+'w').join(', ') : ''; }
+function ia(u,w){ return `src="${esc(cimg(u,w))}" data-o="${esc(u)}" onerror="this.onerror=null;this.removeAttribute('srcset');this.src=this.dataset.o"`; }
+function ias(u,w,ws,sizes){ const s=cset(u,ws); return ia(u,w)+(s?` srcset="${esc(s)}" sizes="${sizes}"`:''); }
 function activeCarrier(){ const cs=S.settings.carriers||[]; return cs.find(c=>c.id===S.settings.activeCarrier)||cs[0]; }
 function shipFor(wcode, type, carrier){
   const c=carrier||activeCarrier(); const r=c&&c.rates&&c.rates[String(wcode)];
@@ -1018,35 +1063,12 @@ function setLang(l){
   document.getElementById('tagline').textContent=t('tagline');
   render();
 }
-function go(view, id){
-  S.view=view; S.productId=id||null;
-  try{
-    if(view==='product' && id) history.replaceState(null,'',location.pathname+'#p='+encodeURIComponent(id));
-    else if(view==='home') history.replaceState(null,'',location.pathname);
-  }catch(e){}
-  window.scrollTo({top:0,behavior:'instant'}); render();
-}
-/* Deep link: nasrishop.com/#p=ID (or ?p=ID) opens that product directly */
-function readDeepLink(){
-  try{
-    const h=(location.hash||'').match(/^#p=(.+)$/);
-    if(h) return decodeURIComponent(h[1]);
-    const q=new URLSearchParams(location.search).get('p');
-    if(q) return q;
-  }catch(e){}
-  return null;
-}
-let DEEP = readDeepLink();
+function go(view, id){ S.view=view; S.productId=id||null; window.scrollTo({top:0,behavior:'instant'}); render(); }
 
 /* ------------------------------ 5. Router ------------------------------- */
 function render(){
   const app=document.getElementById('app');
   if(!S.ready){ app.innerHTML = skeleton(); return; }
-  if(DEEP){
-    const dp = byId(DEEP);
-    if(dp){ S.view='product'; S.productId=DEEP; }
-    if(dp || S._fresh) DEEP=null;   // keep waiting for fresh cloud data before giving up
-  }
   if(S.view==="product") app.innerHTML = viewProduct();
   else if(S.view==="success") app.innerHTML = viewSuccess();
   else if(S.view==="policy") app.innerHTML = viewPolicy();
@@ -1054,7 +1076,7 @@ function render(){
   else app.innerHTML = viewHome();
   document.querySelectorAll('[data-i18n]').forEach(e=>e.textContent=t(e.dataset.i18n));
   if(S.view==="product"){ wireOrderForm(); mountDescFrame(); trackViewContent(byId(S.productId)); }
-  if(S.view==="admin") wireAdmin();
+  if(S.view==="admin"){ wireAdmin(); wireAuth(); }
 }
 /* ---------------------------------------------------------------------------
    Isolated, auto-sizing product description.
@@ -1172,7 +1194,7 @@ function discount(p){ return (p.oldPrice && p.oldPrice>p.price) ? Math.round((1-
 function heroHtml(p){
   const d = discount(p);
   return `<section class="hero"><div class="hero-grid">
-    <div class="hero-media"><img fetchpriority="high" decoding="async" ${ia((p.images&&p.images[0])||ph('ZN',150),900)} alt="${esc(L(p.name))}"></div>
+    <div class="hero-media"><img fetchpriority="high" decoding="async" ${ias((p.images&&p.images[0])||ph('ZN',150),800,HERO_W,HERO_SIZES)} alt="${esc(L(p.name))}"></div>
     <div class="hero-body">
       <div style="display:flex; gap:8px; flex-wrap:wrap">
         <span class="badge">★ ${t('featured')}</span>
@@ -1196,7 +1218,7 @@ function cardHtml(p){
   return `<article class="pcard" onclick="go('product','${p.id}')">
     <div class="pcard-media">
       ${d?`<span class="ribbon badge badge-accent">−${d}%</span>`:''}
-      <img loading="lazy" decoding="async" ${ia((p.images&&p.images[0])||ph('ZN',150),480)} alt="${esc(L(p.name))}">
+      <img loading="lazy" decoding="async" ${ias((p.images&&p.images[0])||ph('ZN',150),480,[320,480,720],"(min-width:1000px) 25vw,(min-width:680px) 33vw,50vw")} alt="${esc(L(p.name))}">
     </div>
     <div class="pcard-body">
       <div class="muted" style="font-size:.72rem; font-weight:700">${catIcon(p.category)} ${esc(catLabel(p.category)||catLabel('other'))}</div>
@@ -1228,7 +1250,7 @@ function viewProduct(){
       </div>
       <div class="gallery">
         ${imgs.map((src,i)=>`<figure class="gimg" onclick="this.classList.toggle('zoomed')">
-          <img loading="${i?'lazy':'eager'}" decoding="async" ${ia(src,900)} alt="${esc(L(p.name))} ${i+1}"></figure>`).join('')}
+          <img loading="${i?'lazy':'eager'}" ${i?'':'fetchpriority="high"'} decoding="async" ${ias(src,900,[480,800,1100],"(min-width:960px) 55vw, 100vw")} alt="${esc(L(p.name))} ${i+1}"></figure>`).join('')}
       </div>
       <section class="card" style="padding:22px; margin-top:20px">
         <h2 style="font-size:1.1rem; margin-bottom:8px">${t('desc')}</h2>
@@ -1236,9 +1258,7 @@ function viewProduct(){
       </section>
     </div>
     <aside class="order-box">${orderFormHtml(p)}</aside>
-  </div>
-  ${(()=>{ const o=S.products.filter(x=>x.active!==false && x.id!==p.id);
-    return o.length ? `<section style="margin-top:34px"><h2 style="font-size:1.3rem; margin-bottom:12px">${t('moreProducts')}</h2>${gridHtml(o)}</section>` : ''; })()}`;
+  </div>`;
 }
 function orderFormHtml(p){
   const arrow = LANG==='ar' ? '←' : '→';
@@ -1452,6 +1472,7 @@ async function tryLogin(){
   const pass=document.getElementById('a_pass').value;
   const em=(document.getElementById('a_email')||{value:''}).value.trim();
   if(S.cloud && window.FB && FB.signIn){
+    wireAuth();
     try{ await FB.signIn(em,pass); }catch(e){ console.error(e); toast(t('wrongPass')+' ['+(e.code||e.message)+']'); }   // enterAdmin() runs from onAuth below
   } else if(pass===DEFAULT_SETTINGS.adminPass){ enterAdmin(); }       // local-only mode (no cloud)
   else toast(t('wrongPass'));
@@ -1475,7 +1496,6 @@ function tabProducts(){
       <td><input type="radio" name="feat" ${S.settings.featuredId===p.id?'checked':''} onchange="setFeatured('${p.id}')" style="accent-color:var(--brand)"></td>
       <td><input type="checkbox" ${p.active!==false?'checked':''} onchange="toggleActive('${p.id}',this.checked)" style="accent-color:var(--brand)"></td>
       <td style="white-space:nowrap">
-        <button class="btn btn-sm btn-ghost" onclick="copyProductLink('${p.id}')" title="نسخ رابط الإعلان">🔗</button>
         <button class="btn btn-sm btn-ghost" onclick="openProduct('${p.id}')">${t('edit')}</button>
         <button class="btn btn-sm" style="background:var(--accent-soft); color:var(--accent)" onclick="askDelete('${p.id}')">${t('del')}</button>
       </td></tr>`).join('')||`<tr><td colspan="8" class="muted" style="padding:24px">${t('noProducts')}</td></tr>`}
@@ -1486,11 +1506,6 @@ async function toggleActive(id,v){ const p=byId(id); p.active=v; await saveProdu
 function askDelete(id){ if(confirm(t('confirmDel'))) removeProduct(id).then(ok=>{ if(ok) toast(t('deleted')); render(); }); }
 
 let DRAFT=null;
-function copyProductLink(id){
-  const u=location.origin+location.pathname+'?p='+encodeURIComponent(id);
-  const done=()=>alert('تم نسخ الرابط:\n'+u+'\n\nأو في Meta Ads ضع فقط: p='+id);
-  if(navigator.clipboard) navigator.clipboard.writeText(u).then(done,()=>prompt('انسخ الرابط:',u)); else prompt('انسخ الرابط:',u);
-}
 function openProduct(id){
   const p = id ? JSON.parse(JSON.stringify(byId(id))) :
     {name:{ar:"",fr:"",en:""}, desc:{ar:"",fr:"",en:""}, price:0, oldPrice:0, images:[], stock:0, sold:0, active:true, category:"other"};
@@ -2047,10 +2062,14 @@ document.documentElement.lang=LANG; document.documentElement.dir=I18N[LANG].dir;
 document.querySelectorAll('#langPill button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.lang===LANG));
 document.querySelectorAll('[data-i18n]').forEach(e=>e.textContent=t(e.dataset.i18n));
 document.getElementById('tagline').textContent=t('tagline');
-if(cloudConfigured() && loadCache()){ S.ready=true; S._sig=viewSig(); }
+const _hadCache = cloudConfigured() && loadCache();
+if(_hadCache){ S.ready=true; S._sig=viewSig(); }
 render();
 if(location.hash==='#admin'){ S.view='admin'; try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){} }
-initCloud();
+if(cloudConfigured() && !_hadCache && S.view!=='admin'){
+  fastLoad().then(ok=>{ if(ok && !S.ready){ S.ready=true; S._sig=viewSig(); saveCache(); render(); } });
+}
+S._cloudP = initCloud();
 </script>
 
 </body>
