@@ -823,6 +823,19 @@ async function fastLoad(){
     return true;
   }catch(e){ return false; }
 }
+/* زائر عائد بكاش قديم ورابط منتج جديد: حدّث من REST فوراً دون انتظار حزمة Firebase */
+async function refreshMissingProduct(){
+  try{
+    if(!window.__fsP) return;
+    const [pj,sj]=await window.__fsP;
+    if(!pj||!pj.documents) return;
+    const products=pj.documents.map(d=>({id:d.name.split('/').pop(), ...fsObj(d.fields||{})}));
+    if(!products.some(x=>x.id===S.productId)) return;
+    S.products=products;
+    if(sj&&sj.fields){ S.settings={...DEFAULT_SETTINGS, ...fsObj(sj.fields)}; ensureCarriers(); }
+    S._loaded=true; S._sig=viewSig(); saveCache(); render();
+  }catch(e){}
+}
 function wireAuth(){
   if(S._authW || !window.FB || !FB.onAuth) return; S._authW=true;
   FB.onAuth(u=>{ if(u) enterAdmin(); else if(S.admin && S.cloud){ S.admin=false; if(S.view==='admin') render(); } });
@@ -2137,6 +2150,10 @@ render();
 if(location.hash==='#admin'){ S.view='admin'; try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){} }
 if(cloudConfigured() && !_hadCache && S.view!=='admin'){
   fastLoad().then(ok=>{ if(ok && !S.ready){ S.ready=true; S._loaded=true; S._sig=viewSig(); saveCache(); render(); } });
+}
+if(_hadCache && S.view==='product' && !byId(S.productId)){
+  refreshMissingProduct();
+  setTimeout(()=>{ if(!S._loaded){ S._loaded=true; if(S.view==='product' && S._miss) render(); } }, 7000);
 }
 S._cloudP = initCloud();
 </script>
