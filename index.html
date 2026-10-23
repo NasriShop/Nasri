@@ -838,9 +838,9 @@ async function initCloud(){
   await loadAll();
   if(S.cloud) saveCache();
   loadPixels();
-  S.ready = true;
-  if(!wasReady || viewSig()!==S._sig){
-    if(!wasReady || S.view==='home' || S.view==='policy') render();
+  S.ready = true; S._loaded = true;
+  if(!wasReady || viewSig()!==S._sig || (S.view==='product' && S._miss)){
+    if(!wasReady || S.view==='home' || S.view==='policy' || (S.view==='product' && S._miss)) render();
     else if(S.view==='product'){ try{ recalc(); }catch(e){} }   // ne jamais effacer un formulaire en cours de saisie
   }
   S._sig = viewSig();
@@ -1294,7 +1294,9 @@ function cardHtml(p){
 
 /* -------- product landing page (vertical images, no inner scrollbars) --- */
 function viewProduct(){
-  const p = byId(S.productId); if(!p) return viewHome();
+  const p = byId(S.productId);
+  S._miss = !p;
+  if(!p) return S._loaded ? viewHome() : skeleton();   // المنتج غير موجود في الكاش القديم: انتظر التحميل الحقيقي
   const d = discount(p);
   const imgs = (p.images&&p.images.length?p.images:[ph('ZN',150)]);
   return `
@@ -2134,7 +2136,7 @@ if(_hadCache){ S.ready=true; S._sig=viewSig(); }
 render();
 if(location.hash==='#admin'){ S.view='admin'; try{ history.replaceState(null,'',location.pathname+location.search); }catch(e){} }
 if(cloudConfigured() && !_hadCache && S.view!=='admin'){
-  fastLoad().then(ok=>{ if(ok && !S.ready){ S.ready=true; S._sig=viewSig(); saveCache(); render(); } });
+  fastLoad().then(ok=>{ if(ok && !S.ready){ S.ready=true; S._loaded=true; S._sig=viewSig(); saveCache(); render(); } });
 }
 S._cloudP = initCloud();
 </script>
