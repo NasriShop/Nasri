@@ -288,6 +288,34 @@ header.topbar::after{content:""; position:absolute; inset-inline:0; bottom:-2px;
 @keyframes ofmShake{25%{transform:translateX(-4px)} 75%{transform:translateX(4px)}}
 @media (prefers-reduced-motion:reduce){ .ofm-cta::before{animation:none} .ofm .field.err{animation:none} .dcard{transition:none} }
 
+/* ---------- color / size options ---------- */
+.zsws{display:flex; flex-wrap:wrap; gap:8px}
+.zsw{display:inline-flex; align-items:center; gap:8px; border:1.5px solid var(--line); background:var(--surface); border-radius:999px;
+  padding:6px 14px 6px 8px; font-weight:800; font-size:.85rem; cursor:pointer; transition:border-color .15s, background .15s, transform .12s, box-shadow .15s}
+.zsw i{width:24px; height:24px; border-radius:50%; flex:none; box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.18)}
+.zsw:hover{border-color:var(--brand)}
+.zsw:active{transform:scale(.96)}
+.zsw[data-on="1"]{border-color:var(--brand); background:var(--brand-soft); box-shadow:0 8px 18px -12px var(--brand)}
+.zsz{min-width:48px; border:1.5px solid var(--line); background:var(--surface); border-radius:12px; padding:8px 14px; font-weight:800; font-size:.9rem;
+  cursor:pointer; font-family:"Outfit","Cairo",sans-serif; transition:border-color .15s, background .15s, transform .12s}
+.zsz:hover{border-color:var(--brand)}
+.zsz:active{transform:scale(.95)}
+.zsz[data-on="1"]{border-color:var(--brand); background:var(--grad); color:#fff}
+.zcp{display:flex; align-items:center; gap:12px; margin-top:10px; padding:8px; border:1.5px dashed var(--line); border-radius:16px; background:var(--surface); cursor:pointer}
+.zcp[hidden]{display:none}
+.zcp img{width:84px; height:84px; object-fit:cover; border-radius:12px; flex:none; background:var(--surface-2)}
+.zcp span{font-size:.78rem; font-weight:700; color:var(--muted)}
+.ofm-grp.err{outline:2px solid #E5484D; outline-offset:6px; border-radius:14px; animation:ofmShake .35s}
+.gimg.flash{box-shadow:0 0 0 4px var(--brand); transition:box-shadow .25s}
+.zvbox{border:1.5px solid var(--line); border-radius:14px; padding:12px; background:var(--surface-2)}
+.zvtog{display:flex; gap:8px; align-items:center; font-weight:800; cursor:pointer}
+.zvtog input{accent-color:var(--brand); width:18px; height:18px}
+.zcrow{display:grid; grid-template-columns:44px 1fr; gap:8px; align-items:center; margin-top:10px; padding-top:10px; border-top:1px dashed var(--line)}
+.zcrow input[type=color]{width:44px; height:40px; padding:2px; border:1.5px solid var(--line); border-radius:10px; background:var(--surface); cursor:pointer}
+.zcrow .zr2{grid-column:1 / -1; display:flex; gap:8px; align-items:center}
+.zcrow .zr2 select{flex:1}
+.zcthumb{width:40px; height:40px; border-radius:8px; object-fit:cover; background:var(--surface); border:1px solid var(--line); flex:none}
+
 /* ---------- floating contact ---------- */
 .floaties{position:fixed; inset-inline-end:14px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:60;
   display:flex; flex-direction:column; gap:10px}
@@ -696,6 +724,21 @@ en:{
 }};
 let LANG = localStorage.getItem('zn_lang') || 'ar';
 const t = k => (I18N[LANG] && I18N[LANG][k]) || I18N.ar[k] || k;
+Object.assign(I18N.ar,{color:"اللون", size:"المقاس", pickColorReq:"يرجى اختيار اللون", pickSizeReq:"يرجى اختيار المقاس",
+  enableColors:"تفعيل اختيار اللون لهذا المنتج", enableSizes:"تفعيل اختيار المقاس لهذا المنتج",
+  addColor:"+ إضافة لون", colorName:"اسم اللون (مثال: أحمر)", noImage:"— بدون صورة —", imgN:"الصورة",
+  sizesHint:"المقاسات مفصولة بفاصلة، مثال: S, M, L, XL أو 38, 39, 40", needColors:"أضف لوناً واحداً على الأقل (مع اسمه)", needSizes:"أضف مقاساً واحداً على الأقل",
+  seeImage:"اضغط لعرض صورة هذا اللون"});
+Object.assign(I18N.fr,{color:"Couleur", size:"Taille", pickColorReq:"Veuillez choisir la couleur", pickSizeReq:"Veuillez choisir la taille",
+  enableColors:"Activer le choix de couleur pour ce produit", enableSizes:"Activer le choix de taille pour ce produit",
+  addColor:"+ Ajouter une couleur", colorName:"Nom de la couleur (ex : Rouge)", noImage:"— Sans image —", imgN:"Image",
+  sizesHint:"Tailles séparées par une virgule, ex : S, M, L, XL ou 38, 39, 40", needColors:"Ajoutez au moins une couleur (avec son nom)", needSizes:"Ajoutez au moins une taille",
+  seeImage:"Touchez pour voir la photo de cette couleur"});
+Object.assign(I18N.en,{color:"Color", size:"Size", pickColorReq:"Please choose a color", pickSizeReq:"Please choose a size",
+  enableColors:"Enable color choice for this product", enableSizes:"Enable size choice for this product",
+  addColor:"+ Add color", colorName:"Color name (e.g. Red)", noImage:"— No image —", imgN:"Image",
+  sizesHint:"Sizes separated by commas, e.g. S, M, L, XL or 38, 39, 40", needColors:"Add at least one color (with a name)", needSizes:"Add at least one size",
+  seeImage:"Tap to see this color's photo"});
 /* ------------------------- 2.b Product categories ------------------------ */
 const CATS = [
   {id:"electronics", icon:"📱", label:{ar:"إلكترونيات", fr:"Électronique", en:"Electronics"}},
@@ -1330,7 +1373,7 @@ function viewProduct(){
         ${p.stock!=null && p.stock<20 ? `<span class="badge">${t('limited')} · ${p.stock}</span>`:''}
       </div>
       <div class="gallery">
-        ${imgs.map((src,i)=>`<figure class="gimg" onclick="this.classList.toggle('zoomed')">
+        ${imgs.map((src,i)=>`<figure class="gimg" id="gimg_${i}" onclick="this.classList.toggle('zoomed')">
           <img loading="${i?'lazy':'eager'}" ${i?'':'fetchpriority="high"'} decoding="async" ${ias(src,900,[480,800,1100],"(min-width:960px) 55vw, 100vw")} alt="${esc(L(p.name))} ${i+1}"></figure>`).join('')}
       </div>
       <section class="card" style="padding:22px; margin-top:20px">
@@ -1341,8 +1384,47 @@ function viewProduct(){
     <aside class="order-box">${orderFormHtml(p)}</aside>
   </div>`;
 }
+/* ---- اختيارات اللون / المقاس: تظهر فقط في المنتجات التي فعّلتها يدوياً من لوحة التحكم ---- */
+const safeHex = h => /^#[0-9a-fA-F]{3,8}$/.test(h||'') ? h : '#cccccc';
+const pColors = p => (p && p.colorsOn && Array.isArray(p.colors)) ? p.colors.filter(c=>c && c.name) : [];
+const pSizes  = p => (p && p.sizesOn && Array.isArray(p.sizes)) ? p.sizes.filter(Boolean) : [];
+let SEL_COLOR=null, SEL_SIZE=null, COLOR_IMG=-1;
+function pickColor(i){
+  const p=byId(S.productId); if(!p) return; const c=pColors(p)[i]; if(!c) return;
+  SEL_COLOR=i;
+  document.querySelectorAll('#f_colorGrp .zsw').forEach((b,k)=>{ b.dataset.on=k===i?'1':''; b.setAttribute('aria-pressed',k===i?'true':'false'); });
+  document.getElementById('f_colorName').textContent='— '+c.name;
+  document.getElementById('f_colorGrp').classList.remove('err');
+  const idx = c.img ? (p.images||[]).indexOf(c.img) : -1, pv=document.getElementById('f_colorPrev');
+  COLOR_IMG=idx;
+  if(idx>=0){
+    const im=pv.querySelector('img'); im.onerror=()=>{ im.onerror=null; im.src=c.img; }; im.src=cimg(c.img,300);
+    pv.hidden=false;
+    if(window.matchMedia('(min-width:960px)').matches) showColorImg();   // على الحاسوب النموذج ثابت بجانب الصور، فننتقل للصورة مباشرة
+  } else pv.hidden=true;
+}
+function showColorImg(){
+  const f=document.getElementById('gimg_'+COLOR_IMG); if(!f) return;
+  f.scrollIntoView({behavior:'smooth', block:'center'}); f.classList.add('flash'); setTimeout(()=>f.classList.remove('flash'),1500);
+}
+function pickSize(i){
+  const p=byId(S.productId); if(!p) return; SEL_SIZE=i;
+  document.querySelectorAll('#f_sizeGrp .zsz').forEach((b,k)=>{ b.dataset.on=k===i?'1':''; b.setAttribute('aria-pressed',k===i?'true':'false'); });
+  document.getElementById('f_sizeGrp').classList.remove('err');
+}
 function orderFormHtml(p){
   const arrow = LANG==='ar' ? '←' : '→';
+  const cs=pColors(p), ss=pSizes(p); let stepN=4;
+  const variantsHtml =
+    (cs.length ? `<div class="ofm-grp" id="f_colorGrp">
+        <div class="ofm-step"><b>${stepN++}</b>${t('color')} <span id="f_colorName" class="muted" style="font-weight:700"></span></div>
+        <div class="zsws">${cs.map((c,i)=>`<button type="button" class="zsw" data-on="" aria-pressed="false" onclick="pickColor(${i})"><i style="background:${esc(safeHex(c.hex))}"></i>${esc(c.name)}</button>`).join('')}</div>
+        <div class="zcp" id="f_colorPrev" hidden onclick="showColorImg()"><img alt=""><span>${t('seeImage')}</span></div>
+      </div>` : '') +
+    (ss.length ? `<div class="ofm-grp" id="f_sizeGrp">
+        <div class="ofm-step"><b>${stepN++}</b>${t('size')}</div>
+        <div class="zsws">${ss.map((x,i)=>`<button type="button" class="zsz" data-on="" aria-pressed="false" onclick="pickSize(${i})">${esc(x)}</button>`).join('')}</div>
+      </div>` : '');
   return `<form class="card ofm" id="orderForm" novalidate onsubmit="return false">
     <div class="ofm-head">
       <div class="ofm-spark">✨</div>
@@ -1380,9 +1462,11 @@ function orderFormHtml(p){
         </div>
       </div>
 
+      ${variantsHtml}
+
       <div class="ofm-grp">
         <div class="ofm-qrow">
-          <div class="ofm-step"><b>4</b>${t('qty')}</div>
+          <div class="ofm-step"><b>${stepN}</b>${t('qty')}</div>
           <div class="qty"><button type="button" onclick="bumpQty(-1)" aria-label="-">−</button><span id="f_qty">1</span><button type="button" onclick="bumpQty(1)" aria-label="+">+</button></div>
         </div>
       </div>
@@ -1401,7 +1485,7 @@ function orderFormHtml(p){
 let QTY=1;
 function bumpQty(n){ QTY=Math.max(1,Math.min(99,QTY+n)); document.getElementById('f_qty').textContent=QTY; recalc(); }
 function wireOrderForm(){
-  QTY=1;
+  QTY=1; SEL_COLOR=null; SEL_SIZE=null; COLOR_IMG=-1;
   const w=document.getElementById('f_wilaya'); if(!w) return;
   const _f=document.getElementById('orderForm');
   ['input','change'].forEach(ev=>_f.addEventListener(ev,e=>e.target.classList&&e.target.classList.remove('err')));
@@ -1450,6 +1534,9 @@ async function submitOrder(pid){
   if(!commune) bad.push(g('f_commune')==='__other'?'f_commune_other':'f_commune');
   if(bad.length){ bad.forEach(id=>document.getElementById(id)?.classList.add('err')); document.getElementById(bad[0])?.focus(); return toast(t('required')); }
   if(!/^0?[5-7]\d{8}$/.test(phone)){ const el=document.getElementById('f_phone'); el.classList.add('err'); el.focus(); return toast(t('badPhone')); }
+  const cs=pColors(p), ss=pSizes(p);
+  if(cs.length && SEL_COLOR==null){ const e=document.getElementById('f_colorGrp'); e.classList.add('err'); e.scrollIntoView({block:'center',behavior:'smooth'}); return toast(t('pickColorReq')); }
+  if(ss.length && SEL_SIZE==null){ const e=document.getElementById('f_sizeGrp'); e.classList.add('err'); e.scrollIntoView({block:'center',behavior:'smooth'}); return toast(t('pickSizeReq')); }
   const type=document.querySelector('input[name="dtype"]:checked')?.value||'home';
   const row=DZ.find(x=>String(x[0])===String(wc));
   const ship=shipFor(wc,type), sub=p.price*QTY;
@@ -1458,6 +1545,7 @@ async function submitOrder(pid){
   btn.disabled=true; btn.innerHTML=`<span class="spinner"></span> ${t('sending')}`;
   const order=await addOrder({
     productId:p.id, productName:L(p.name), unitPrice:p.price, qty:QTY,
+    color:cs.length?cs[SEL_COLOR].name:'', size:ss.length?ss[SEL_SIZE]:'',
     customer:g('f_name'), phone, phone2:'',
     wilayaCode:Number(wc), wilaya:row?row[2]:'', wilayaAr:row?row[1]:'',
     commune, address:'', notes:'',
@@ -1592,6 +1680,7 @@ function openProduct(id){
   const p = id ? JSON.parse(JSON.stringify(byId(id))) :
     {name:{ar:"",fr:"",en:""}, desc:{ar:"",fr:"",en:""}, price:0, oldPrice:0, images:[], stock:0, sold:0, active:true, category:"other"};
   DRAFT=p;
+  DRAFT.colors=Array.isArray(DRAFT.colors)?DRAFT.colors:[]; DRAFT.colorsOn=!!DRAFT.colorsOn; DRAFT.sizesOn=!!DRAFT.sizesOn;
   document.getElementById('modalHost').innerHTML = `
   <div class="modal" onclick="if(event.target===this)closeModal()"><div class="modal-panel" style="padding:24px">
     <h2 style="font-size:1.15rem; margin-bottom:16px">${id?t('edit'):t('addProduct')}</h2>
@@ -1619,6 +1708,20 @@ function openProduct(id){
           <input class="field" id="d_url" placeholder="https://… (URL)">
           <button class="btn btn-ghost btn-sm" onclick="addImgUrl()">+</button></div>
       </div>
+      <div class="zvbox">
+        <label class="zvtog"><input type="checkbox" id="d_colorsOn" onchange="toggleVar()" ${p.colorsOn?'checked':''}> 🎨 ${t('enableColors')}</label>
+        <div id="d_colorsBox" ${p.colorsOn?'':'hidden'}>
+          <div id="d_colorRows">${colorRowsHtml()}</div>
+          <button type="button" class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="addColorRow()">${t('addColor')}</button>
+        </div>
+      </div>
+      <div class="zvbox">
+        <label class="zvtog"><input type="checkbox" id="d_sizesOn" onchange="toggleVar()" ${p.sizesOn?'checked':''}> 📏 ${t('enableSizes')}</label>
+        <div id="d_sizesBox" ${p.sizesOn?'':'hidden'} style="margin-top:10px">
+          <input class="field" id="d_sizes" placeholder="S, M, L, XL" value="${esc((p.sizes||[]).join(', '))}">
+          <div class="muted" style="font-size:.76rem; margin-top:6px">${t('sizesHint')}</div>
+        </div>
+      </div>
       <div><label class="lbl">${t('descHtml')} — AR</label><textarea class="field" id="d_dar" rows="5">${esc(p.desc.ar||'')}</textarea></div>
       <details><summary class="muted" style="cursor:pointer; font-size:.85rem">FR / EN</summary>
         <textarea class="field" id="d_dfr" rows="4" style="margin-top:8px" placeholder="Description FR">${esc(p.desc.fr||'')}</textarea>
@@ -1631,6 +1734,29 @@ function openProduct(id){
     </div>
   </div></div>`;
 }
+function colorRowsHtml(){
+  const imgs=DRAFT.images||[];
+  return (DRAFT.colors||[]).map((c,i)=>`<div class="zcrow">
+    <input type="color" value="${esc(safeHex(c.hex).slice(0,7))}" onchange="DRAFT.colors[${i}].hex=this.value" aria-label="color">
+    <input class="field" placeholder="${esc(t('colorName'))}" value="${esc(c.name||'')}" oninput="DRAFT.colors[${i}].name=this.value">
+    <div class="zr2">
+      <select class="field" onchange="DRAFT.colors[${i}].img=this.value;renderColorRows()">
+        <option value="">${esc(t('noImage'))}</option>
+        ${imgs.map((u,k)=>`<option value="${esc(u)}" ${u===c.img?'selected':''}>${esc(t('imgN'))} ${k+1}</option>`).join('')}
+      </select>
+      ${c.img&&imgs.includes(c.img)?`<img class="zcthumb" src="${esc(c.img)}" alt="">`:'<span class="zcthumb"></span>'}
+      <button type="button" class="btn btn-ghost btn-sm" onclick="DRAFT.colors.splice(${i},1);renderColorRows()">×</button>
+    </div>
+  </div>`).join('');
+}
+function renderColorRows(){ const h=document.getElementById('d_colorRows'); if(h) h.innerHTML=colorRowsHtml(); }
+function addColorRow(){ DRAFT.colors.push({name:'', hex:'#e11d48', img:''}); renderColorRows(); }
+function refreshImgs(){ document.getElementById('d_imgs').innerHTML=imgChips(); renderColorRows(); }
+function toggleVar(){
+  const g=id=>document.getElementById(id);
+  g('d_colorsBox').hidden=!g('d_colorsOn').checked; g('d_sizesBox').hidden=!g('d_sizesOn').checked;
+  if(g('d_colorsOn').checked && !DRAFT.colors.length) addColorRow();
+}
 function imgChips(){
   /* the box is fixed (76×76) but the photo itself keeps its own ratio and sits
      fully visible inside it (object-fit:contain + neutral background) instead
@@ -1641,14 +1767,14 @@ function imgChips(){
       overflow:hidden; display:flex; align-items:center; justify-content:center">
       <img src="${esc(src)}" style="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain">
     </div>
-    <button onclick="DRAFT.images.splice(${i},1);document.getElementById('d_imgs').innerHTML=imgChips()"
+    <button onclick="DRAFT.images.splice(${i},1);refreshImgs()"
       style="position:absolute;top:-6px;inset-inline-end:-6px;width:22px;height:22px;border-radius:50%;border:0;background:var(--accent);color:#fff;cursor:pointer">×</button>
   </div>`).join('') || `<span class="muted" style="font-size:.8rem">—</span>`;
 }
 function addImgUrl(){
   const u=document.getElementById('d_url').value.trim(); if(!u) return;
   DRAFT.images.push(u); document.getElementById('d_url').value='';
-  document.getElementById('d_imgs').innerHTML=imgChips();
+  refreshImgs();
 }
 function cloudinaryReady(){
   const c=window.CLOUDINARY||{};
@@ -1684,7 +1810,7 @@ async function uploadImgs(input){
     }
     document.getElementById(tempId)?.remove();
   }
-  input.value=''; document.getElementById('d_imgs').innerHTML=imgChips();
+  input.value=''; refreshImgs();
 }
 function compress(file, max=1000, q=.72){
   return new Promise((res,rej)=>{
@@ -1708,6 +1834,12 @@ async function commitProduct(id){
     category:g('d_cat')||'other',
     active:document.getElementById('d_active').checked};
   if(!p.name.ar) return toast(t('required'));
+  p.colorsOn=document.getElementById('d_colorsOn').checked;
+  p.sizesOn=document.getElementById('d_sizesOn').checked;
+  p.colors=(DRAFT.colors||[]).filter(c=>c.name&&c.name.trim()).map(c=>({name:c.name.trim(), hex:safeHex(c.hex), img:c.img||''}));
+  p.sizes=document.getElementById('d_sizes').value.split(/[,،\n]+/).map(x=>x.trim()).filter(Boolean);
+  if(p.colorsOn && !p.colors.length) return toast(t('needColors'));
+  if(p.sizesOn && !p.sizes.length) return toast(t('needSizes'));
   const nid=await saveProduct(p);
   if(!nid) return;   // فشل الحفظ في السحابة: أبقِ النافذة مفتوحة
   if(!DB){ /* local list already updated */ }
@@ -1788,7 +1920,7 @@ function tabOrders(){
       <td class="muted" style="font-size:.78rem">${new Date(o.createdAt).toLocaleString(LANG==='ar'?'ar-DZ':'fr-FR')}</td>
       <td><b>${esc(o.customer)}</b><div><a href="tel:${esc(o.phone)}" style="font-size:.8rem;color:var(--brand)">${esc(o.phone)}</a></div>
         <a class="muted" style="font-size:.74rem" target="_blank" rel="noopener" href="https://wa.me/213${esc(String(o.phone).replace(/^0/,''))}">WhatsApp</a></td>
-      <td>${esc(o.productName)} ×${o.qty}</td>
+      <td>${esc(o.productName)} ×${o.qty}${(o.color||o.size)?`<div style="font-size:.76rem; font-weight:800; color:var(--brand-ink)">${o.color?'🎨 '+esc(o.color):''}${o.color&&o.size?' · ':''}${o.size?'📏 '+esc(o.size):''}</div>`:''}</td>
       <td>${String(o.wilayaCode).padStart(2,'0')} ${esc(o.wilaya)}<div class="muted" style="font-size:.74rem">${esc(o.commune)} · ${o.deliveryType==='home'?t('home'):t('desk')}</div>
         <div class="muted" style="font-size:.72rem">${esc(o.address||'')}</div></td>
       <td class="price">${money(o.total)}<div class="muted" style="font-size:.72rem">+${money(o.shipping)}</div></td>
@@ -1808,11 +1940,11 @@ async function dropOrder(id){ if(!confirm(t('confirmDel')))return; const ok=awai
 
 function ordersTable(sep){
   const head=["ref","date","customer","phone","phone2","wilaya_code","wilaya","commune","address",
-    "delivery","product","qty","unit_price","shipping","total","status","notes"];
+    "delivery","product","qty","unit_price","shipping","total","status","notes","color","size"];
   const rows=S.orders.map(o=>[o.ref||o.id, o.createdAt, o.customer, o.phone, o.phone2||'',
     o.wilayaCode, o.wilaya, o.commune, (o.address||'').replace(/[\r\n]+/g,' '),
     o.deliveryType==='home'?'Domicile':'Bureau', o.productName, o.qty, o.unitPrice, o.shipping, o.total,
-    o.status, (o.notes||'').replace(/[\r\n]+/g,' ')]);
+    o.status, (o.notes||'').replace(/[\r\n]+/g,' '), o.color||'', o.size||'']);
   const q=v=>{ v=String(v==null?'':v); return sep===','? '"'+v.replace(/"/g,'""')+'"' : v; };
   return [head.join(sep), ...rows.map(r=>r.map(q).join(sep))].join('\r\n');
 }
@@ -1835,7 +1967,7 @@ function pushSheet(orders){
     o.customer, o.phone, o.phone2||'', String(o.wilayaCode).padStart(2,'0'),
     o.wilayaAr||o.wilaya, o.commune, o.address,
     o.deliveryType==='home'?'المنزل':'المكتب',
-    o.productName, o.qty, o.unitPrice, o.shipping, o.total, o.status, o.notes||'']);
+    o.productName, o.qty, o.unitPrice, o.shipping, o.total, o.status, o.notes||'', o.color||'', o.size||'']);
   fetch(url,{method:'POST', mode:'no-cors',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body: JSON.stringify({token:'ZN', rows})}).catch(()=>{});
