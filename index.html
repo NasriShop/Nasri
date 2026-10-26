@@ -636,7 +636,7 @@ ar:{
   viewProduct:"عرض المنتج", stock:"المخزون", sold:"تم بيعها", limited:"كمية محدودة", adLang:"لغة الإعلان",
   category:"التصنيف", pixelsTitle:"بيكسلات الإعلانات (تتبّع)",
   fbPixel:"معرّف Facebook Pixel", fbPixelHelp:"يُستعمل لتتبّع زوار موقعك من إعلانات فيسبوك/إنستغرام وقياس نتائج الحملات. يمكنك نسخه من Meta Events Manager.",
-  ttPixel:"معرّف TikTok Pixel", ttPixelHelp:"يُستعمل لتتبّع زوار موقعك من إعلانات تيك توك وقياس نتائج الحملات. يمكنك نسخه من TikTok Ads Manager."
+  addPixel:"إضافة بيكسل آخر",  ttPixel:"معرّف TikTok Pixel", ttPixelHelp:"يُستعمل لتتبّع زوار موقعك من إعلانات تيك توك وقياس نتائج الحملات. يمكنك نسخه من TikTok Ads Manager."
 },
 fr:{
   dir:"ltr", admin:"Admin", tagline:"Paiement à la livraison · 58 wilayas",
@@ -678,7 +678,7 @@ fr:{
   viewProduct:"Voir le produit", stock:"Stock", sold:"vendus", limited:"Stock limité", adLang:"Langue de l'annonce",
   category:"Catégorie", pixelsTitle:"Pixels publicitaires (suivi)",
   fbPixel:"ID Facebook Pixel", fbPixelHelp:"Utilisé pour suivre les visiteurs venant des pubs Facebook/Instagram et mesurer vos campagnes. Copiez-le depuis Meta Events Manager.",
-  ttPixel:"ID TikTok Pixel", ttPixelHelp:"Utilisé pour suivre les visiteurs venant des pubs TikTok et mesurer vos campagnes. Copiez-le depuis TikTok Ads Manager."
+  addPixel:"Ajouter un autre pixel",  ttPixel:"ID TikTok Pixel", ttPixelHelp:"Utilisé pour suivre les visiteurs venant des pubs TikTok et mesurer vos campagnes. Copiez-le depuis TikTok Ads Manager."
 },
 en:{
   dir:"ltr", admin:"Admin", tagline:"Cash on delivery · 58 wilayas",
@@ -720,7 +720,7 @@ en:{
   viewProduct:"View product", stock:"Stock", sold:"sold", limited:"Limited stock", adLang:"Ad language",
   category:"Category", pixelsTitle:"Ad pixels (tracking)",
   fbPixel:"Facebook Pixel ID", fbPixelHelp:"Used to track visitors coming from Facebook/Instagram ads and measure your campaigns. Copy it from Meta Events Manager.",
-  ttPixel:"TikTok Pixel ID", ttPixelHelp:"Used to track visitors coming from TikTok ads and measure your campaigns. Copy it from TikTok Ads Manager."
+  addPixel:"Add another pixel",  ttPixel:"TikTok Pixel ID", ttPixelHelp:"Used to track visitors coming from TikTok ads and measure your campaigns. Copy it from TikTok Ads Manager."
 }};
 let LANG = localStorage.getItem('zn_lang') || 'ar';
 const t = k => (I18N[LANG] && I18N[LANG][k]) || I18N.ar[k] || k;
@@ -943,10 +943,15 @@ async function loadAll(){
   S.orders   = LS.get('orders',[]);
 }
 /* ---- Facebook / TikTok ads pixels — loaded once IDs exist in settings ---- */
+/* ---- helpers: several pixel IDs per network (comma / space / newline separated) ---- */
+function pxList(v){ return [...new Set(String(v||'').split(/[\s,;]+/).map(x=>x.trim()).filter(Boolean))]; }
 function loadPixels(){
-  const fbId = (S.settings.fbPixel||'').trim();
-  const ttId = (S.settings.ttPixel||'').trim();
-  if(fbId && window.__fbPixelId!==fbId){
+  const fbIds = pxList(S.settings.fbPixel);
+  const ttIds = pxList(S.settings.ttPixel);
+  window.__fbIds = window.__fbIds || [];
+  window.__ttIds = window.__ttIds || [];
+  const fbNew = fbIds.filter(id=>!window.__fbIds.includes(id));
+  if(fbNew.length){
     if(!window.fbq){
       (function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
       n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
@@ -954,28 +959,29 @@ function loadPixels(){
       t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)})(window,document,'script',
       'https://connect.facebook.net/en_US/fbevents.js');
     }
-    fbq('init', fbId); fbq('track', 'PageView');
-    window.__fbPixelId = fbId;
+    fbNew.forEach(id=>{ fbq('init', id); fbq('trackSingle', id, 'PageView'); window.__fbIds.push(id); });
   }
-  if(ttId && window.__ttPixelId!==ttId){
+  const ttNew = ttIds.filter(id=>!window.__ttIds.includes(id));
+  if(ttNew.length){
     if(!window.ttq){
       (function (w, d, t) {
         w.TiktokAnalyticsObject=t;var ttq=w[t]=w[t]||[];ttq.methods=["page","track","identify","instances","debug","on","off","once","ready","alias","group","enableCookie","disableCookie","holdConsent","revokeConsent","grantConsent"],ttq.setAndDefer=function(t,e){t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}};for(var i=0;i<ttq.methods.length;i++)ttq.setAndDefer(ttq,ttq.methods[i]);ttq.instance=function(t){for(var e=ttq._i[t]||[],n=0;n<ttq.methods.length;n++)ttq.setAndDefer(e,ttq.methods[n]);return e},ttq.load=function(e,n){var i="https://analytics.tiktok.com/i18n/pixel/events.js",o=n&&n.partner;ttq._i=ttq._i||{},ttq._i[e]=[],ttq._i[e]._u=i,ttq._t=ttq._t||{},ttq._t[e]=+new Date,ttq._o=ttq._o||{},ttq._o[e]=n||{};n=document.createElement("script");n.type="text/javascript",n.async=!0,n.src=i+"?sdkid="+e+"&lib="+t;e=document.getElementsByTagName("script")[0];e.parentNode.insertBefore(n,e)};
       }(window, document, 'ttq'));
     }
-    ttq.load(ttId); ttq.page();
-    window.__ttPixelId = ttId;
+    const first = window.__ttIds.length===0;
+    ttNew.forEach(id=>{ ttq.load(id); window.__ttIds.push(id); });
+    if(first) ttq.page(); else ttNew.forEach(id=>{ try{ ttq.instance(id).page(); }catch(e){} });
   }
 }
 function trackViewContent(p){
   if(!p) return;
-  try{ if(window.fbq && window.__fbPixelId) fbq('track','ViewContent',{content_name:L(p.name), content_ids:[p.id], value:p.price, currency:'DZD'}); }catch(e){}
-  try{ if(window.ttq && window.__ttPixelId) ttq.track('ViewContent',{content_name:L(p.name), content_id:p.id, value:p.price, currency:'DZD'}); }catch(e){}
+  try{ if(window.fbq && (window.__fbIds||[]).length) fbq('track','ViewContent',{content_name:L(p.name), content_ids:[p.id], value:p.price, currency:'DZD'}); }catch(e){}
+  try{ if(window.ttq && (window.__ttIds||[]).length) ttq.track('ViewContent',{content_name:L(p.name), content_id:p.id, value:p.price, currency:'DZD'}); }catch(e){}
 }
 function trackPurchase(o){
   if(!o) return;
-  try{ if(window.fbq && window.__fbPixelId) fbq('track','Purchase',{content_name:o.productName, content_ids:[o.productId], value:o.total, currency:'DZD', num_items:o.qty}); }catch(e){}
-  try{ if(window.ttq && window.__ttPixelId) ttq.track('CompletePayment',{content_name:o.productName, content_id:o.productId, value:o.total, currency:'DZD', quantity:o.qty}); }catch(e){}
+  try{ if(window.fbq && (window.__fbIds||[]).length) fbq('track','Purchase',{content_name:o.productName, content_ids:[o.productId], value:o.total, currency:'DZD', num_items:o.qty}); }catch(e){}
+  try{ if(window.ttq && (window.__ttIds||[]).length) ttq.track('CompletePayment',{content_name:o.productName, content_id:o.productId, value:o.total, currency:'DZD', quantity:o.qty}); }catch(e){}
 }
 function subscribe(){
   if(S._sub) return; S._sub=true;
@@ -2221,6 +2227,20 @@ Write the ad in ${langName}, in a ${toneName} tone. Return exactly this structur
   btn.disabled=false; btn.innerHTML='✨ '+t('aiGenerate');
 }
 
+/* ---- settings tab: multi-pixel rows ---- */
+const PX_PH = {fb:"1234567890123456", tt:"C4A1B2C3D4E5F6G7H8I9"};
+function pxRow(kind, v){
+  return `<div class="pxrow" style="display:flex; gap:8px; margin-bottom:8px"><input class="field px-${kind}" style="flex:1" placeholder="${PX_PH[kind]}" value="${esc(v)}"><button type="button" class="btn btn-ghost" onclick="this.parentNode.remove()" aria-label="remove">✕</button></div>`;
+}
+function pxBox(kind, val){
+  const l = pxList(val);
+  return `<div id="px_${kind}">${(l.length?l:['']).map(v=>pxRow(kind,v)).join('')}</div>
+    <button type="button" class="btn btn-ghost" onclick="pxAdd('${kind}')">＋ ${t('addPixel')}</button>`;
+}
+function pxAdd(kind){
+  const box=document.getElementById('px_'+kind), tmp=document.createElement('div');
+  tmp.innerHTML=pxRow(kind,''); box.appendChild(tmp.firstChild); box.lastChild.querySelector('input').focus();
+}
 /* ---- settings tab ---- */
 function tabSettings(){
   return `<div class="card" style="padding:22px; display:grid; gap:14px; max-width:620px">
@@ -2230,10 +2250,10 @@ function tabSettings(){
     <div class="card" style="padding:14px; box-shadow:none; background:var(--surface-2); display:grid; gap:12px">
       <b style="font-size:.85rem">📊 ${t('pixelsTitle')}</b>
       <div><label class="lbl">${t('fbPixel')}</label>
-        <input class="field" id="st_fbpx" placeholder="1234567890123456" value="${esc(S.settings.fbPixel||'')}">
+        ${pxBox('fb', S.settings.fbPixel)}
         <p class="muted" style="font-size:.76rem; margin:6px 0 0">${t('fbPixelHelp')}</p></div>
       <div><label class="lbl">${t('ttPixel')}</label>
-        <input class="field" id="st_ttpx" placeholder="C4A1B2C3D4E5F6G7H8I9" value="${esc(S.settings.ttPixel||'')}">
+        ${pxBox('tt', S.settings.ttPixel)}
         <p class="muted" style="font-size:.76rem; margin:6px 0 0">${t('ttPixelHelp')}</p></div>
     </div>
     <div><label class="lbl">${t('sheetUrl')}</label><input class="field" id="st_sheet" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(S.settings.sheetUrl||'')}">
@@ -2257,7 +2277,8 @@ async function commitSettings(){
   if(aik){ localStorage.setItem('zn_aikey',aik); SAMPLE=makeSampler(aik); }
   else { localStorage.removeItem('zn_aikey'); SAMPLE=null; }
   Object.assign(S.settings,{storeName:g('st_name'),    whatsapp:g('st_wa'),facebook:g('st_fb'),sheetUrl:g('st_sheet'),
-    fbPixel:g('st_fbpx'),ttPixel:g('st_ttpx')});
+    fbPixel:pxList([...document.querySelectorAll('.px-fb')].map(i=>i.value).join(',')).join(','),
+    ttPixel:pxList([...document.querySelectorAll('.px-tt')].map(i=>i.value).join(',')).join(',')});
   await saveSettings(); loadPixels(); toast(t('saved')); render();
 }
 function toggleTheme(){
