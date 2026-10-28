@@ -1982,11 +1982,48 @@ function colexCell(o){
   return `<button class="btn btn-sm btn-primary" id="cxb_${o.id}" onclick="colexSend('${o.id}')">🚚 إرسال لكولكس</button>`
     + (o.colexError?`<div style="font-size:.72rem; color:#C81E3A; max-width:170px; margin-top:4px">${esc(o.colexError)}</div>`:'');
 }
+function colexDirectProvider(){
+  const l=(S.integ&&S.integ.providers||[]).filter(p=>p.enabled && p.token && p.apiUrl && (p.type==='colex'||p.type==='ecotrack'||/ecotrack\.dz/i.test(p.apiUrl)));
+  return l.find(p=>p.isDefault)||l[0]||null;
+}
+function colexPayload(x){
+  const dg=v=>String(v==null?'':v).replace(/\D+/g,''), cut=v=>String(v==null?'':v).trim().slice(0,255);
+  const bad=[], ph=dg(x.phone), w=Number(x.wilayaCode);
+  if(ph.length<9||ph.length>10) bad.push('الهاتف');
+  if(!Number.isInteger(w)||w<1||w>58) bad.push('الولاية');
+  if(!cut(x.name)) bad.push('الاسم');
+  if(!cut(x.commune)) bad.push('البلدية');
+  if(!cut(x.address)) bad.push('العنوان');
+  if(!(Number(x.total)>=0)) bad.push('المبلغ');
+  const p={reference:cut(x.id), nom_client:cut(x.name), telephone:ph, adresse:cut(x.address), code_wilaya:w, commune:cut(x.commune),
+    montant:Math.round(Number(x.total)), produit:cut(x.product), type:1, stop_desk:x.stopDesk?1:0};
+  if(x.phone2) p.telephone_2=dg(x.phone2);
+  if(x.note) p.remarque=cut(x.note);
+  return {p,bad};
+}
+/* إرسال مباشر من المتصفح إلى EcoTrack: POST /api/v1/create/order (الحقول في الرابط، Bearer) */
+async function colexDirect(dp, x){
+  const {p,bad}=colexPayload(x);
+  if(bad.length) return {ok:false, error:'بيانات ناقصة/خاطئة: '+bad.join(', ')};
+  const base=String(dp.apiUrl).trim().replace(/\/+$/,'').replace(/\/api\/v1$/i,'');
+  if(!/^https:\/\/[a-z0-9-]+\.ecotrack\.dz$/i.test(base)) return {ok:false, error:'رابط API لازم يكون من شكل https://xxx.ecotrack.dz'};
+  const qs=new URLSearchParams(Object.entries(p).map(([k,v])=>[k,String(v)]));
+  const r=await fetch(base+'/api/v1/create/order?'+qs,{
+    method:'POST',
+    headers:{'Authorization':'Bearer '+dp.token,'Accept':'application/json'},
+    signal:(window.AbortSignal&&AbortSignal.timeout)?AbortSignal.timeout(30000):undefined
+  });
+  const text=await r.text(); let d; try{ d=JSON.parse(text); }catch(e){ d=text; }
+  const failed=!r.ok || (d && typeof d==='object' && (d.success===false || d.errors));
+  return {ok:!failed, status:r.status, colex:d};
+}
 const COLEX_BUSY = new Set();
 async function colexSend(id){
   const o=S.orders.find(x=>x.id===id); if(!o) return;
-  const url=colexUrl(), secret=colexSecret();
-  if(!url || !secret){ toast('⚠︎ أدخل رابط السيرفر وكلمة السر في تبويب 🔌 أولاً'); S.tab='integ'; render(); return; }
+  const url=colexUrl(), secret=colexSecret(), dp=colexDirectProvider();
+  const mode = url ? 'proxy' : (dp ? 'direct' : '');
+  if(!mode){ toast('⚠︎ أضف شركة Colex مع التوكن (أو رابط السيرفر الوسيط) في تبويب 🔌 أولاً'); S.tab='integ'; render(); return; }
+  if(mode==='proxy' && !secret){ toast('⚠︎ أدخل كلمة السر ADMIN_SECRET في تبويب 🔌'); S.tab='integ'; render(); return; }
   if(COLEX_BUSY.has(id)) return;
   const q = o.colexSent
     ? 'هذه الطلبية أُرسلت من قبل إلى Colex. إعادة الإرسال قد تُنشئ طرداً مكرراً. متأكد؟'
@@ -1997,14 +2034,20 @@ async function colexSend(id){
   try{
     const prod=[o.productName+((o.qty||1)>1?' ×'+o.qty:''), o.color, o.size].filter(Boolean).join(' - ');
     const address=(o.address||'').trim() || [o.commune,o.wilaya].filter(Boolean).join(', ');
-    const r=await fetch(url+'/api/colex/send',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','X-Admin-Secret':secret},
-      body:JSON.stringify({order:{id:o.ref||o.id, name:o.customer, phone:o.phone, phone2:o.phone2||'', address,
-        wilayaCode:o.wilayaCode, commune:o.commune, total:o.total, product:prod, note:o.notes||'', stopDesk:o.deliveryType==='desk'}}),
-      signal:(window.AbortSignal&&AbortSignal.timeout)?AbortSignal.timeout(30000):undefined
-    });
-    let j; try{ j=await r.json(); }catch(e){ j={ok:false, error:'رد غير مفهوم من السيرفر (HTTP '+r.status+')'}; }
+    const ord={id:o.ref||o.id, name:o.customer, phone:o.phone, phone2:o.phone2||'', address,
+      wilayaCode:o.wilayaCode, commune:o.commune, total:o.total, product:prod, note:o.notes||'', stopDesk:o.deliveryType==='desk'};
+    let j;
+    if(mode==='proxy'){
+      const r=await fetch(url+'/api/colex/send',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','X-Admin-Secret':secret},
+        body:JSON.stringify({order:ord}),
+        signal:(window.AbortSignal&&AbortSignal.timeout)?AbortSignal.timeout(30000):undefined
+      });
+      try{ j=await r.json(); }catch(e){ j={ok:false, error:'رد غير مفهوم من السيرفر (HTTP '+r.status+')'}; }
+    } else {
+      j=await colexDirect(dp, ord);
+    }
     if(j.dryRun){ alert('DRY_RUN — لم يُرسل أي شيء إلى Colex.\n\n'+JSON.stringify(j.payload,null,2)); return; }
     const now=new Date().toISOString();
     if(!j.ok){
@@ -2019,7 +2062,7 @@ async function colexSend(id){
     if(o.status==='pending' || o.status==='confirmed') await changeStatus(id,'shipped');
     toast(tr ? '✅ أُرسل إلى Colex — رقم التتبع: '+tr : '✅ أُرسل إلى Colex (لم أجد رقم التتبع في الرد، راجع لوحة Colex)');
   }catch(e){
-    toast('⚠︎ تعذّر الاتصال بالسيرفر الوسيط: '+(e&&e.message||e));
+    toast(mode==='direct' ? '⚠︎ المتصفح منع الإرسال المباشر إلى Colex (غالبًا CORS): '+(e&&e.message||e)+' — نحتاج السيرفر الوسيط' : '⚠︎ تعذّر الاتصال بالسيرفر الوسيط: '+(e&&e.message||e));
   }finally{
     COLEX_BUSY.delete(id);
     if(S.view==='admin' && S.tab==='orders') render();
@@ -2029,7 +2072,7 @@ async function colexTest(){
   integCollect();
   const el=document.getElementById('cx_status'), url=colexUrl(), secret=colexSecret();
   const say=(m,ok)=>{ if(el){ el.textContent=m; el.style.color=ok?'#0B7A3B':'#C81E3A'; } };
-  if(!url) return say('أدخل رابط السيرفر أولاً',false);
+  if(!url){ const dp=colexDirectProvider(); return say(dp?('الوضع المباشر: سيُستعمل «'+(dp.name||'Colex')+'» بدون سيرفر. جرّب إرسال طلبية واحدة.'):'أضف شركة Colex مع التوكن في الأسفل، أو أدخل رابط السيرفر الوسيط', !!dp); }
   say('⏳ …',true);
   try{
     const h=await (await fetch(url+'/health')).json();
@@ -2388,6 +2431,7 @@ const INTEG_PRESETS = {
   generic:{label:'مخصص (Custom)', url:''},
   yalidine:{label:'Yalidine', url:'https://api.yalidine.app/v1/'},
   zrexpress:{label:'ZR Express', url:''},
+  colex:{label:'Colex Express (EcoTrack)', url:'https://colex.ecotrack.dz'},
   ecotrack:{label:'EcoTrack / مشتقاتها', url:''},
   other:{label:'أخرى', url:''}
 };
@@ -2457,8 +2501,8 @@ function tabInteg(){
       <p class="muted" style="font-size:.78rem; margin:6px 0 0">تُحفظ في مستند خاص <code>private/shipping</code> لا يقرأه إلا الأدمين المسجَّل (حسب قواعد Firestore)، وليست في إعدادات المتجر العامة.${S.cloud?'':' ⚠︎ السحابة غير مفعّلة: تُحفظ في هذا المتصفح فقط.'}</p>
     </div>
     <div class="card" style="padding:16px; display:grid; gap:10px">
-      <b>🚚 Colex Express — الإرسال عبر السيرفر الوسيط</b>
-      <p class="muted" style="font-size:.78rem; margin:0">توكن Colex يبقى في السيرفر (Render) وما يظهرش في المتصفح. هنا فقط رابط السيرفر وكلمة السر <code>ADMIN_SECRET</code>.</p>
+      <b>🚚 Colex Express — السيرفر الوسيط (اختياري)</b>
+      <p class="muted" style="font-size:.78rem; margin:0">إذا تركت رابط السيرفر فارغًا، يُرسل المتجر مباشرة إلى Colex باستعمال شركة «Colex Express» المضافة في الأسفل (الرابط + التوكن). وإذا المتصفح منع الإرسال المباشر (CORS)، انشر السيرفر الوسيط وحط هنا رابطو وكلمة السر <code>ADMIN_SECRET</code>.</p>
       <input class="field" id="cx_url" dir="ltr" placeholder="https://colex-proxy.onrender.com" value="${esc(S.integ.proxyUrl||'')}">
       <input class="field" id="cx_secret" type="password" dir="ltr" autocomplete="off" placeholder="Admin secret (يُحفظ في هذا المتصفح فقط)" value="${esc(colexSecret())}">
       <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center">
