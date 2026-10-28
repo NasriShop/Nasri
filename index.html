@@ -1621,7 +1621,7 @@ function viewAdmin(){
       <button class="btn btn-primary" style="width:100%; margin-top:12px" onclick="tryLogin()">${t('login')}</button>
       <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="go('home')">${t('back')}</button>
     </div>`;
-  const tabs=[["products",t('tabProducts')],["orders",t('tabOrders')],["shipping",t('tabShipping')],["ai",t('tabAI')],["settings",t('tabSettings')]];
+  const tabs=[["products",t('tabProducts')],["orders",t('tabOrders')],["shipping",t('tabShipping')],["integ","🔌 ربط التوصيل (API)"],["ai",t('tabAI')],["settings",t('tabSettings')]];
   return `
   <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px">
     <h1 style="font-size:1.35rem">${t('admin')}</h1>
@@ -1634,13 +1634,13 @@ function viewAdmin(){
   <div class="tabs" style="margin-bottom:18px">
     ${tabs.map(([k,lbl])=>`<button aria-selected="${S.tab===k}" onclick="S.tab='${k}';render()">${lbl}</button>`).join('')}
   </div>
-  ${S.tab==='products'?tabProducts():S.tab==='orders'?tabOrders():S.tab==='shipping'?tabShipping():S.tab==='ai'?tabAI():tabSettings()}`;
+  ${S.tab==='products'?tabProducts():S.tab==='orders'?tabOrders():S.tab==='shipping'?tabShipping():S.tab==='integ'?tabInteg():S.tab==='ai'?tabAI():tabSettings()}`;
 }
 let _tap=0,_tt;
 function logoTap(){ _tap++; clearTimeout(_tt); _tt=setTimeout(()=>{_tap=0;},1500); if(_tap>=5){ _tap=0; go('admin'); } else go('home'); }
 function enterAdmin(){
   if(S.admin) return;
-  S.admin=true; if(S.view==='admin') render();
+  S.admin=true; integLoad(); if(S.view==='admin') render();
   if(DB){ loadOrders().then(()=>{ if(S.view==='admin') render(); }); subscribe(); }
 }
 async function tryLogin(){
@@ -2280,6 +2280,106 @@ async function commitSettings(){
     fbPixel:pxList([...document.querySelectorAll('.px-fb')].map(i=>i.value).join(',')).join(','),
     ttPixel:pxList([...document.querySelectorAll('.px-tt')].map(i=>i.value).join(',')).join(',')});
   await saveSettings(); loadPixels(); toast(t('saved')); render();
+}
+
+/* ============ Shipping API connections (private tokens) ============
+   Stored in Firestore doc  private/shipping  (NOT in shop/settings, which is public).
+   Firestore rules must allow read/write on /private/** only for signed-in admin. */
+const INTEG_PRESETS = {
+  generic:{label:'مخصص (Custom)', url:''},
+  yalidine:{label:'Yalidine', url:'https://api.yalidine.app/v1/'},
+  zrexpress:{label:'ZR Express', url:''},
+  ecotrack:{label:'EcoTrack / مشتقاتها', url:''},
+  other:{label:'أخرى', url:''}
+};
+S.integ = S.integ || {providers:[], loaded:false};
+async function integLoad(){
+  try{
+    if(DB){ const d=await DB.doc('private/shipping').get(); S.integ.providers = (d.exists && d.data().providers) || []; }
+    else { S.integ.providers = JSON.parse(localStorage.getItem('zn_integ')||'[]'); }
+  }catch(e){ console.warn('integ load failed (check Firestore rules for /private)', e); S.integ.providers = JSON.parse(localStorage.getItem('zn_integ')||'[]'); }
+  S.integ.loaded=true; if(S.view==='admin' && S.tab==='integ') render();
+}
+function integCollect(){
+  const rows=[...document.querySelectorAll('.ig-row')]; if(!rows.length) return;
+  S.integ.providers = rows.map(r=>{
+    const g=c=>r.querySelector('.'+c); const old=S.integ.providers.find(p=>p.id===r.dataset.id)||{};
+    return {...old, id:r.dataset.id, name:g('ig-name').value.trim(), type:g('ig-type').value,
+      apiUrl:g('ig-url').value.trim(), apiId:g('ig-apiid').value.trim(), token:g('ig-token').value.trim(),
+      enabled:g('ig-on').checked, isDefault:g('ig-def').checked};
+  });
+  // only one default
+  let seen=false; S.integ.providers.forEach(p=>{ if(p.isDefault){ if(seen) p.isDefault=false; seen=true; } });
+}
+async function integSave(quiet){
+  integCollect();
+  const data={providers:S.integ.providers, updatedAt:new Date().toISOString()};
+  try{
+    if(DB) await DB.doc('private/shipping').set(data);
+    else localStorage.setItem('zn_integ', JSON.stringify(S.integ.providers));
+    if(!quiet) toast('✅ تم الحفظ');
+  }catch(e){ toast('⚠︎ '+(e.code||e.message)+' — تأكد من قواعد Firestore لـ /private'); return false; }
+  return true;
+}
+function integAdd(){
+  integCollect();
+  S.integ.providers.push({id:'sp_'+Date.now().toString(36), name:'', type:'generic', apiUrl:'', apiId:'', token:'', enabled:true, isDefault:!S.integ.providers.length});
+  render();
+}
+async function integDelete(id){
+  integCollect(); const p=S.integ.providers.find(x=>x.id===id);
+  if(!confirm('حذف '+(p&&p.name||'هذه الشركة')+'؟')) return;
+  S.integ.providers=S.integ.providers.filter(x=>x.id!==id); await integSave(true); render();
+}
+function integPreset(sel){
+  const r=sel.closest('.ig-row'), u=r.querySelector('.ig-url'), pr=INTEG_PRESETS[sel.value];
+  if(pr && pr.url && !u.value) u.value=pr.url;
+  const n=r.querySelector('.ig-name'); if(pr && sel.value!=='generic' && sel.value!=='other' && !n.value) n.value=pr.label;
+}
+function integEye(btn){
+  const i=btn.parentNode.querySelector('.ig-token'); const show=i.type==='password';
+  i.type=show?'text':'password'; btn.textContent=show?'🙈':'👁';
+}
+async function integCopy(btn){
+  const v=btn.parentNode.querySelector('.ig-token').value;
+  try{ await navigator.clipboard.writeText(v); toast('📋 تم النسخ'); }catch(e){ toast('تعذّر النسخ'); }
+}
+function integProviders(){ return (S.integ.providers||[]).filter(p=>p.enabled && p.token); }
+function integDefault(){ const l=integProviders(); return l.find(p=>p.isDefault)||l[0]||null; }
+function tabInteg(){
+  const L=S.integ.providers||[];
+  return `<div style="display:grid; gap:14px; max-width:720px">
+    <div class="card" style="padding:14px; box-shadow:none; background:var(--accent-soft)">
+      <b style="font-size:.85rem">🛡️ لا تشارك هذه التوكنات مع أحد</b>
+      <p class="muted" style="font-size:.78rem; margin:6px 0 0">تُحفظ في مستند خاص <code>private/shipping</code> لا يقرأه إلا الأدمين المسجَّل (حسب قواعد Firestore)، وليست في إعدادات المتجر العامة.${S.cloud?'':' ⚠︎ السحابة غير مفعّلة: تُحفظ في هذا المتصفح فقط.'}</p>
+    </div>
+    ${L.length?'':'<div class="card" style="padding:18px"><p class="muted" style="margin:0">ما فيه حتى شركة مربوطة. كبس «إضافة شركة توصيل».</p></div>'}
+    ${L.map(p=>`<div class="card ig-row" data-id="${esc(p.id)}" style="padding:16px; display:grid; gap:10px">
+      <div style="display:flex; gap:8px; flex-wrap:wrap">
+        <input class="field ig-name" style="flex:1; min-width:140px" placeholder="اسم الشركة" value="${esc(p.name)}">
+        <select class="field ig-type" style="width:auto" onchange="integPreset(this)">
+          ${Object.entries(INTEG_PRESETS).map(([k,v])=>`<option value="${k}" ${p.type===k?'selected':''}>${v.label}</option>`).join('')}
+        </select>
+      </div>
+      <input class="field ig-url" placeholder="رابط الـ API (https://…)" value="${esc(p.apiUrl)}" dir="ltr">
+      <input class="field ig-apiid" placeholder="API ID (إذا الشركة تطلبه، اختياري)" value="${esc(p.apiId||'')}" dir="ltr">
+      <div style="display:flex; gap:8px">
+        <input class="field ig-token" type="password" style="flex:1; font-family:monospace" dir="ltr" autocomplete="off" placeholder="API Token" value="${esc(p.token)}">
+        <button type="button" class="btn btn-ghost" onclick="integEye(this)" aria-label="show">👁</button>
+        <button type="button" class="btn btn-ghost" onclick="integCopy(this)">📋 نسخ</button>
+      </div>
+      <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap">
+        <label style="display:flex; gap:6px; align-items:center"><input type="checkbox" class="ig-on" ${p.enabled?'checked':''}> مفعّلة</label>
+        <label style="display:flex; gap:6px; align-items:center"><input type="checkbox" class="ig-def" ${p.isDefault?'checked':''}> الافتراضية</label>
+        <div style="flex:1"></div>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="integDelete('${esc(p.id)}')">🗑 حذف</button>
+      </div>
+    </div>`).join('')}
+    <div style="display:flex; gap:10px">
+      <button class="btn btn-ghost" onclick="integAdd()">＋ إضافة شركة توصيل</button>
+      <button class="btn btn-primary" onclick="integSave()">${t('save')}</button>
+    </div>
+  </div>`;
 }
 function toggleTheme(){
   const cur=document.documentElement.getAttribute('data-theme');
