@@ -2009,7 +2009,7 @@ async function colexDirect(dp, x){
     const U=new URL(u);   // نأخذ الدومين فقط ونتجاهل أي مسار (مثل /import/orders/man أو /api/v1)
     if(/^[a-z0-9-]+\.ecotrack\.dz$/i.test(U.hostname)) base='https://'+U.hostname;
   }catch(e){}
-  if(!base) return {ok:false, error:'رابط API غير صالح ('+String(dp.apiUrl||'').slice(0,60)+') — لازم يكون https://colex.ecotrack.dz'};
+  if(!base) return {ok:false, error:'رابط API غير صالح — لازم يكون https://colex.ecotrack.dz . تأكد أنك ما وضعتش التوكن في خانة الرابط (التوكن مكانو خانة Token)'};
   const qs=new URLSearchParams(Object.entries(p).map(([k,v])=>[k,String(v)]));
   const r=await fetch(base+'/api/v1/create/order?'+qs,{
     method:'POST',
