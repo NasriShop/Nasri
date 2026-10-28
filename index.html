@@ -1963,15 +1963,12 @@ function colexErrText(j){
   if(j.error==='missing_fields') return 'بيانات ناقصة/خاطئة: '+(j.fields||[]).join(', ');
   if(j.error==='colex_unreachable') return 'تعذّر الوصول إلى Colex';
   if(j.error) return String(j.error);
-  const c=j.colex;
-  if(typeof c==='string') return c.slice(0,200);
-  if(c && typeof c==='object'){
-    if(c.errors) return JSON.stringify(c.errors).slice(0,220);
-    if(c.message) return String(c.message).slice(0,220);
-    if(c.error) return String(c.error).slice(0,220);
-    return JSON.stringify(c).slice(0,220);
-  }
-  return 'فشل الإرسال';
+  const c=j.colex, st=j.status?(' [HTTP '+j.status+']'):'';
+  const hint={401:'التوكن مرفوض أو غير صحيح',403:'ممنوع — راجع التوكن وصلاحيات الحساب',404:'المسار غير موجود',405:'الطريقة غير مسموحة',419:'الجلسة منتهية',429:'طلبات كثيرة، انتظر دقيقة',500:'خطأ من خادم Colex',502:'خطأ من خادم Colex',503:'خادم Colex غير متاح'}[j.status]||'';
+  let body='';
+  if(typeof c==='string') body=c.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,160);
+  else if(c!=null) body=JSON.stringify((c&&(c.errors||c.message||c.error))||c).slice(0,200);
+  return ([hint,body].filter(Boolean).join(' — ')||'فشل الإرسال بدون أي تفاصيل من Colex')+st;
 }
 function colexCell(o){
   if(o.colexSent){
@@ -2056,6 +2053,7 @@ async function colexSend(id){
     if(j.dryRun){ alert('DRY_RUN — لم يُرسل أي شيء إلى Colex.\n\n'+JSON.stringify(j.payload,null,2)); return; }
     const now=new Date().toISOString();
     if(!j.ok){
+      console.warn('Colex response', j);
       const msg=colexErrText(j);
       const patch={colexError:msg.slice(0,300), updatedAt:now};
       await updateOrder(id,patch); Object.assign(o,patch);
