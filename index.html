@@ -1917,6 +1917,7 @@ function tabOrders(){
     <a class="btn btn-primary" href="${esc(S.settings.sheetUrl||'')}" target="_blank" rel="noopener">📄 ${t('openSheet')}</a>
     <button class="btn btn-ghost" onclick="exportCsv()">⬇ ${t('exportCsv')}</button>
     <button class="btn btn-ghost" onclick="archiveSheets()">📊 ${t('archiveSheets')}</button>
+    <button class="btn btn-ghost" onclick="colexRefreshAll()">🔄 تحديث حالات Colex</button>
   </div>
   <div class="card scroll-x" style="padding:6px 12px"><table class="tbl">
     <thead><tr><th>${t('orderNo')}</th><th>${t('date')}</th><th>${t('customer')}</th><th>${t('product')}</th>
@@ -1975,7 +1976,10 @@ function colexCell(o){
   if(o.colexSent){
     return `<div style="font-size:.78rem; font-weight:800; color:#0B7A3B">✅ أُرسل</div>`
       + (o.colexTracking?`<div style="font-size:.74rem; font-family:monospace" dir="ltr">${esc(o.colexTracking)}</div>`:'')
-      + `<button class="btn btn-ghost btn-sm" id="cxb_${o.id}" style="margin-top:4px" title="إعادة الإرسال" onclick="colexSend('${o.id}')">↻</button>`;
+      + (o.colexStatus?`<div style="font-size:.76rem; font-weight:800; color:var(--brand-ink)">${esc(colexStatusLabel(o.colexStatus))}</div>`:'')
+      + `<div style="display:flex; gap:4px; margin-top:4px">`
+      + `<button class="btn btn-ghost btn-sm" title="تحديث الحالة من Colex" onclick="colexRefresh(['${o.id}'])">🔄</button>`
+      + `<button class="btn btn-ghost btn-sm" id="cxb_${o.id}" title="إعادة الإرسال" onclick="colexSend('${o.id}')">↻</button></div>`;
   }
   return `<button class="btn btn-sm btn-primary" id="cxb_${o.id}" onclick="colexSend('${o.id}')">🚚 إرسال لكولكس</button>`
     + (o.colexError?`<div style="font-size:.72rem; color:#C81E3A; max-width:170px; margin-top:4px">${esc(o.colexError)}</div>`:'');
@@ -2019,6 +2023,76 @@ async function colexDirect(dp, x){
   const text=await r.text(); let d; try{ d=JSON.parse(text); }catch(e){ d=text; }
   const failed=!r.ok || (d && typeof d==='object' && (d.success===false || d.errors));
   return {ok:!failed, status:r.status, colex:d};
+}
+/* ---- متابعة حالة الطرد (GET /api/v1/get/orders/status — api_token في الرابط حسب التوثيق) ---- */
+const COLEX_ST = {
+  prete_a_expedier:['جاهز للشحن (في انتظار التأكيد)',null],
+  en_ramassage:['في الاستلام منك','shipped'], en_preparation_stock:['تحضير في المخزن','shipped'],
+  vers_hub:['متجه إلى المركز','shipped'], en_hub:['في المركز','shipped'], vers_wilaya:['متجه إلى الولاية','shipped'],
+  en_preparation:['قيد التحضير','shipped'], en_livraison:['في التوصيل','shipped'], suspendu:['معلّق',null],
+  livre_non_encaisse:['سُلّم للزبون','done'], encaisse_non_paye:['سُلّم وحُصِّل','done'],
+  paiements_prets:['الدفع جاهز','done'], paye_et_archive:['مدفوع ومؤرشف','done'],
+  retour_chez_livreur:['مرتجع عند الموزع',null], retour_transit_entrepot:['مرتجع في الطريق',null],
+  retour_en_traitement:['مرتجع قيد المعالجة',null], retour_recu:['مرتجع وصل',null], retour_archive:['مرتجع مؤرشف',null],
+  annule:['ملغى','cancelled']
+};
+function colexStatusLabel(k){ return (COLEX_ST[k]&&COLEX_ST[k][0])||String(k); }
+function colexBaseUrl(dp){
+  try{
+    let u=String(dp.apiUrl||'').trim(); if(!/^https?:\/\//i.test(u)) u='https://'+u;
+    const U=new URL(u); if(/^[a-z0-9-]+\.ecotrack\.dz$/i.test(U.hostname)) return 'https://'+U.hostname;
+  }catch(e){}
+  return '';
+}
+async function colexFetchStatuses(dp, trackings){
+  const base=colexBaseUrl(dp);
+  if(!base) return {ok:false, error:'رابط API غير صالح — لازم يكون https://colex.ecotrack.dz'};
+  const qs=new URLSearchParams({api_token:dp.token, trackings:trackings.join(','), status:'all'});
+  const r=await fetch(base+'/api/v1/get/orders/status?'+qs,{
+    headers:{'Authorization':'Bearer '+dp.token,'Accept':'application/json'},
+    signal:(window.AbortSignal&&AbortSignal.timeout)?AbortSignal.timeout(30000):undefined
+  });
+  const text=await r.text(); let d; try{ d=JSON.parse(text); }catch(e){ d=text; }
+  const failed=!r.ok || (d && typeof d==='object' && (d.success===false || d.errors));
+  return {ok:!failed, status:r.status, colex:d};
+}
+async function colexApplyStatus(o, st){
+  const now=new Date().toISOString();
+  const patch={colexStatus:st, colexStatusAt:now, updatedAt:now};
+  await updateOrder(o.id,patch); Object.assign(o,patch);
+  const target=COLEX_ST[st]&&COLEX_ST[st][1];
+  if(!target || o.status===target) return;
+  if(target==='shipped' && (o.status==='done'||o.status==='cancelled')) return;   // لا نرجع للخلف
+  await changeStatus(o.id,target);
+}
+async function colexRefresh(ids){
+  const dp=colexDirectProvider();
+  if(!dp){ toast('⚠︎ أضف شركة Colex مع التوكن في تبويب 🔌 (التحديث يعمل بالوضع المباشر)'); return; }
+  const list=S.orders.filter(o=>ids.includes(o.id) && o.colexSent && o.colexTracking);
+  if(!list.length){ toast('لا توجد طلبات مرسلة لها رقم تتبع'); return; }
+  let done=0, miss=0;
+  try{
+    for(let i=0;i<list.length;i+=100){
+      const chunk=list.slice(i,i+100);
+      const j=await colexFetchStatuses(dp, chunk.map(o=>o.colexTracking));
+      if(!j.ok){ console.warn('Colex status response', j); toast('⚠︎ '+colexErrText(j)); return; }
+      const data=(j.colex&&j.colex.data)||{};
+      for(const o of chunk){
+        const it=data[o.colexTracking];
+        if(!it||!it.status){ miss++; continue; }
+        await colexApplyStatus(o,it.status); done++;
+      }
+    }
+    toast('🔄 تم تحديث '+done+' طلبية'+(miss?(' · '+miss+' غير موجودة في رد Colex (ربما مؤرشفة أو محذوفة)'):''));
+  }catch(e){
+    toast('⚠︎ تعذّر تحديث الحالات: '+(e&&e.message||e));
+  }finally{
+    if(S.view==='admin' && S.tab==='orders') render();
+  }
+}
+function colexRefreshAll(){
+  const final=['paye_et_archive','retour_archive','annule'];
+  return colexRefresh(S.orders.filter(o=>o.colexSent && o.colexTracking && !final.includes(o.colexStatus)).map(o=>o.id));
 }
 const COLEX_BUSY = new Set();
 async function colexSend(id){
