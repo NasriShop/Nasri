@@ -1920,7 +1920,7 @@ function tabOrders(){
   </div>
   <div class="card scroll-x" style="padding:6px 12px"><table class="tbl">
     <thead><tr><th>${t('orderNo')}</th><th>${t('date')}</th><th>${t('customer')}</th><th>${t('product')}</th>
-      <th>${t('wilaya')}</th><th>${t('total')}</th><th>${t('status')}</th><th></th></tr></thead>
+      <th>${t('wilaya')}</th><th>${t('total')}</th><th>${t('status')}</th><th>🚚 Colex</th><th></th></tr></thead>
     <tbody>${filtered.map(o=>`<tr>
       <td><b>${esc(o.ref||o.id)}</b></td>
       <td class="muted" style="font-size:.78rem">${new Date(o.createdAt).toLocaleString(LANG==='ar'?'ar-DZ':'fr-FR')}</td>
@@ -1932,8 +1932,9 @@ function tabOrders(){
       <td class="price">${money(o.total)}<div class="muted" style="font-size:.72rem">+${money(o.shipping)}</div></td>
       <td><select class="field" style="padding:6px 8px; font-size:.8rem; font-weight:800; border-color:${STAT_COLOR[o.status]||'var(--line)'}; color:${STAT_COLOR[o.status]||'var(--ink)'}" onchange="changeStatus('${o.id}',this.value)">
         ${ST.map(s=>`<option value="${s}" ${o.status===s?'selected':''}>${stLabel(s)}</option>`).join('')}</select></td>
+      <td>${colexCell(o)}</td>
       <td><button class="btn btn-sm" style="background:var(--accent-soft); color:var(--accent)" onclick="dropOrder('${o.id}')">${t('del')}</button></td>
-    </tr>`).join('')||`<tr><td colspan="8" class="muted" style="padding:24px">${t('noOrders')}</td></tr>`}
+    </tr>`).join('')||`<tr><td colspan="9" class="muted" style="padding:24px">${t('noOrders')}</td></tr>`}
     </tbody></table></div>`;
 }
 async function changeStatus(id,v){
@@ -1943,6 +1944,104 @@ async function changeStatus(id,v){
   toast(t('saved'));
 }
 async function dropOrder(id){ if(!confirm(t('confirmDel')))return; const ok=await removeOrder(id); render(); if(ok) toast(t('deleted')); }
+
+/* ============ Colex (EcoTrack) — الإرسال عبر السيرفر الوسيط ============
+   المتصفح يكلّم السيرفر الوسيط فقط (colex-proxy على Render)؛ توكن Colex يبقى هناك. */
+function colexSecret(){ try{ return localStorage.getItem('zn_colex_secret')||''; }catch(e){ return ''; } }
+function colexUrl(){ let u=S.integ&&S.integ.proxyUrl; if(!u){ try{ u=localStorage.getItem('zn_colex_proxy')||''; }catch(e){} } return String(u||'').trim().replace(/\/+$/,''); }
+function colexTracking(v,d){
+  d=d||0; if(v==null||d>4) return '';
+  if(typeof v==='object'){
+    for(const [k,x] of Object.entries(v)){ if(/^tracking/i.test(k) && (typeof x==='string'||typeof x==='number') && String(x).trim()) return String(x).trim(); }
+    for(const x of Object.values(v)){ const r=colexTracking(x,d+1); if(r) return r; }
+  }
+  return '';
+}
+function colexErrText(j){
+  if(!j) return 'لا يوجد رد';
+  if(j.error==='unauthorized') return 'كلمة السر غير صحيحة (ADMIN_SECRET)';
+  if(j.error==='missing_fields') return 'بيانات ناقصة/خاطئة: '+(j.fields||[]).join(', ');
+  if(j.error==='colex_unreachable') return 'تعذّر الوصول إلى Colex';
+  if(j.error) return String(j.error);
+  const c=j.colex;
+  if(typeof c==='string') return c.slice(0,200);
+  if(c && typeof c==='object'){
+    if(c.errors) return JSON.stringify(c.errors).slice(0,220);
+    if(c.message) return String(c.message).slice(0,220);
+    if(c.error) return String(c.error).slice(0,220);
+    return JSON.stringify(c).slice(0,220);
+  }
+  return 'فشل الإرسال';
+}
+function colexCell(o){
+  if(o.colexSent){
+    return `<div style="font-size:.78rem; font-weight:800; color:#0B7A3B">✅ أُرسل</div>`
+      + (o.colexTracking?`<div style="font-size:.74rem; font-family:monospace" dir="ltr">${esc(o.colexTracking)}</div>`:'')
+      + `<button class="btn btn-ghost btn-sm" id="cxb_${o.id}" style="margin-top:4px" title="إعادة الإرسال" onclick="colexSend('${o.id}')">↻</button>`;
+  }
+  return `<button class="btn btn-sm btn-primary" id="cxb_${o.id}" onclick="colexSend('${o.id}')">🚚 إرسال لكولكس</button>`
+    + (o.colexError?`<div style="font-size:.72rem; color:#C81E3A; max-width:170px; margin-top:4px">${esc(o.colexError)}</div>`:'');
+}
+const COLEX_BUSY = new Set();
+async function colexSend(id){
+  const o=S.orders.find(x=>x.id===id); if(!o) return;
+  const url=colexUrl(), secret=colexSecret();
+  if(!url || !secret){ toast('⚠︎ أدخل رابط السيرفر وكلمة السر في تبويب 🔌 أولاً'); S.tab='integ'; render(); return; }
+  if(COLEX_BUSY.has(id)) return;
+  const q = o.colexSent
+    ? 'هذه الطلبية أُرسلت من قبل إلى Colex. إعادة الإرسال قد تُنشئ طرداً مكرراً. متأكد؟'
+    : 'إرسال الطلبية '+(o.ref||o.id)+' ('+(o.customer||'')+') إلى Colex؟';
+  if(!confirm(q)) return;
+  COLEX_BUSY.add(id);
+  const btn=document.getElementById('cxb_'+id); if(btn){ btn.disabled=true; btn.textContent='⏳…'; }
+  try{
+    const prod=[o.productName+((o.qty||1)>1?' ×'+o.qty:''), o.color, o.size].filter(Boolean).join(' - ');
+    const address=(o.address||'').trim() || [o.commune,o.wilaya].filter(Boolean).join(', ');
+    const r=await fetch(url+'/api/colex/send',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Admin-Secret':secret},
+      body:JSON.stringify({order:{id:o.ref||o.id, name:o.customer, phone:o.phone, phone2:o.phone2||'', address,
+        wilayaCode:o.wilayaCode, commune:o.commune, total:o.total, product:prod, note:o.notes||'', stopDesk:o.deliveryType==='desk'}}),
+      signal:(window.AbortSignal&&AbortSignal.timeout)?AbortSignal.timeout(30000):undefined
+    });
+    let j; try{ j=await r.json(); }catch(e){ j={ok:false, error:'رد غير مفهوم من السيرفر (HTTP '+r.status+')'}; }
+    if(j.dryRun){ alert('DRY_RUN — لم يُرسل أي شيء إلى Colex.\n\n'+JSON.stringify(j.payload,null,2)); return; }
+    const now=new Date().toISOString();
+    if(!j.ok){
+      const msg=colexErrText(j);
+      const patch={colexError:msg.slice(0,300), updatedAt:now};
+      await updateOrder(id,patch); Object.assign(o,patch);
+      toast('⚠︎ '+msg); return;
+    }
+    const tr=colexTracking(j.colex);
+    const patch={colexSent:true, colexTracking:tr, colexSentAt:now, colexError:'', colexRaw:JSON.stringify(j.colex==null?'':j.colex).slice(0,600), updatedAt:now};
+    await updateOrder(id,patch); Object.assign(o,patch);
+    if(o.status==='pending' || o.status==='confirmed') await changeStatus(id,'shipped');
+    toast(tr ? '✅ أُرسل إلى Colex — رقم التتبع: '+tr : '✅ أُرسل إلى Colex (لم أجد رقم التتبع في الرد، راجع لوحة Colex)');
+  }catch(e){
+    toast('⚠︎ تعذّر الاتصال بالسيرفر الوسيط: '+(e&&e.message||e));
+  }finally{
+    COLEX_BUSY.delete(id);
+    if(S.view==='admin' && S.tab==='orders') render();
+  }
+}
+async function colexTest(){
+  integCollect();
+  const el=document.getElementById('cx_status'), url=colexUrl(), secret=colexSecret();
+  const say=(m,ok)=>{ if(el){ el.textContent=m; el.style.color=ok?'#0B7A3B':'#C81E3A'; } };
+  if(!url) return say('أدخل رابط السيرفر أولاً',false);
+  say('⏳ …',true);
+  try{
+    const h=await (await fetch(url+'/health')).json();
+    let auth='';
+    if(secret){
+      const r=await fetch(url+'/api/colex/send',{method:'POST',headers:{'Content-Type':'application/json','X-Admin-Secret':secret},body:'{}'});
+      auth = r.status===401 ? ' · ❌ كلمة السر غير صحيحة' : ' · ✅ كلمة السر صحيحة';
+    } else auth=' · ⚠︎ لم تُدخل كلمة السر';
+    say('السيرفر يعمل'+(h.dryRun?' (وضع تجريبي DRY_RUN)':'')+' · التوكن '+(h.tokenSet?'✅':'❌ غير مضبوط')+auth, !!(h.tokenSet||h.dryRun));
+  }catch(e){ say('تعذّر الاتصال بالسيرفر (تأكد من الرابط، وأن ALLOWED_ORIGINS يحتوي رابط متجرك)',false); }
+}
+
 
 function ordersTable(sep){
   const head=["ref","date","customer","phone","phone2","wilaya_code","wilaya","commune","address",
@@ -2292,15 +2391,18 @@ const INTEG_PRESETS = {
   ecotrack:{label:'EcoTrack / مشتقاتها', url:''},
   other:{label:'أخرى', url:''}
 };
-S.integ = S.integ || {providers:[], loaded:false};
+S.integ = S.integ || {providers:[], loaded:false, proxyUrl:''};
 async function integLoad(){
   try{
-    if(DB){ const d=await DB.doc('private/shipping').get(); S.integ.providers = (d.exists && d.data().providers) || []; }
+    if(DB){ const d=await DB.doc('private/shipping').get(); S.integ.providers = (d.exists && d.data().providers) || []; S.integ.proxyUrl = (d.exists && d.data().proxyUrl) || ''; }
     else { S.integ.providers = JSON.parse(localStorage.getItem('zn_integ')||'[]'); }
   }catch(e){ console.warn('integ load failed (check Firestore rules for /private)', e); S.integ.providers = JSON.parse(localStorage.getItem('zn_integ')||'[]'); }
+  try{ if(!S.integ.proxyUrl) S.integ.proxyUrl = localStorage.getItem('zn_colex_proxy')||''; }catch(e){}
   S.integ.loaded=true; if(S.view==='admin' && S.tab==='integ') render();
 }
 function integCollect(){
+  const _pu=document.getElementById('cx_url'); if(_pu) S.integ.proxyUrl=_pu.value.trim().replace(/\/+$/,'');
+  const _ps=document.getElementById('cx_secret'); if(_ps){ try{ localStorage.setItem('zn_colex_secret', _ps.value.trim()); }catch(e){} }
   const rows=[...document.querySelectorAll('.ig-row')]; if(!rows.length) return;
   S.integ.providers = rows.map(r=>{
     const g=c=>r.querySelector('.'+c); const old=S.integ.providers.find(p=>p.id===r.dataset.id)||{};
@@ -2313,7 +2415,8 @@ function integCollect(){
 }
 async function integSave(quiet){
   integCollect();
-  const data={providers:S.integ.providers, updatedAt:new Date().toISOString()};
+  const data={providers:S.integ.providers, proxyUrl:S.integ.proxyUrl||'', updatedAt:new Date().toISOString()};
+  try{ localStorage.setItem('zn_colex_proxy', S.integ.proxyUrl||''); }catch(e){}
   try{
     if(DB) await DB.doc('private/shipping').set(data);
     else localStorage.setItem('zn_integ', JSON.stringify(S.integ.providers));
@@ -2352,6 +2455,16 @@ function tabInteg(){
     <div class="card" style="padding:14px; box-shadow:none; background:var(--accent-soft)">
       <b style="font-size:.85rem">🛡️ لا تشارك هذه التوكنات مع أحد</b>
       <p class="muted" style="font-size:.78rem; margin:6px 0 0">تُحفظ في مستند خاص <code>private/shipping</code> لا يقرأه إلا الأدمين المسجَّل (حسب قواعد Firestore)، وليست في إعدادات المتجر العامة.${S.cloud?'':' ⚠︎ السحابة غير مفعّلة: تُحفظ في هذا المتصفح فقط.'}</p>
+    </div>
+    <div class="card" style="padding:16px; display:grid; gap:10px">
+      <b>🚚 Colex Express — الإرسال عبر السيرفر الوسيط</b>
+      <p class="muted" style="font-size:.78rem; margin:0">توكن Colex يبقى في السيرفر (Render) وما يظهرش في المتصفح. هنا فقط رابط السيرفر وكلمة السر <code>ADMIN_SECRET</code>.</p>
+      <input class="field" id="cx_url" dir="ltr" placeholder="https://colex-proxy.onrender.com" value="${esc(S.integ.proxyUrl||'')}">
+      <input class="field" id="cx_secret" type="password" dir="ltr" autocomplete="off" placeholder="Admin secret (يُحفظ في هذا المتصفح فقط)" value="${esc(colexSecret())}">
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center">
+        <button type="button" class="btn btn-ghost" onclick="colexTest()">🔎 اختبار الاتصال</button>
+        <span id="cx_status" class="muted" style="font-size:.78rem"></span>
+      </div>
     </div>
     ${L.length?'':'<div class="card" style="padding:18px"><p class="muted" style="margin:0">ما فيه حتى شركة مربوطة. كبس «إضافة شركة توصيل».</p></div>'}
     ${L.map(p=>`<div class="card ig-row" data-id="${esc(p.id)}" style="padding:16px; display:grid; gap:10px">
