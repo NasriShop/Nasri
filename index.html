@@ -1968,6 +1968,7 @@ function colexErrText(j){
   let body='';
   if(typeof c==='string') body=c.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ').trim().slice(0,160);
   else if(c!=null) body=JSON.stringify((c&&(c.errors||c.message||c.error))||c).slice(0,200);
+  if(!body && c==null) body='الرد: '+JSON.stringify(j).slice(0,200);
   return ([hint,body].filter(Boolean).join(' — ')||'فشل الإرسال بدون أي تفاصيل من Colex')+st;
 }
 function colexCell(o){
@@ -2053,8 +2054,8 @@ async function colexSend(id){
     if(j.dryRun){ alert('DRY_RUN — لم يُرسل أي شيء إلى Colex.\n\n'+JSON.stringify(j.payload,null,2)); return; }
     const now=new Date().toISOString();
     if(!j.ok){
-      console.warn('Colex response', j);
-      const msg=colexErrText(j);
+      console.warn('Colex response', mode, j);
+      const msg=(mode==='proxy' ? '[وضع: سيرفر وسيط '+url+'] ' : '[وضع: مباشر إلى Colex] ')+colexErrText(j);
       const patch={colexError:msg.slice(0,300), updatedAt:now};
       await updateOrder(id,patch); Object.assign(o,patch);
       toast('⚠︎ '+msg); return;
