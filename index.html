@@ -49,8 +49,8 @@ textarea{resize:vertical}[hidden],.hidden{display:none}
 <style>
 :root{
   --bg:#FFF8F1; --surface:#FFFFFF; --surface-2:#FFF1E1;
-  --ink:#241539; --muted:#78698A; --line:#F1E1CE;
-  --brand:#FF6A00; --brand-soft:#FFE7CC; --brand-ink:#C74E00;
+  --ink:#241539; --muted:#6A5B7C; --line:#F1E1CE;
+  --brand:#FF6A00; --brand-soft:#FFE7CC; --brand-ink:#A63E00;
   --accent:#8B2FE0; --accent-soft:#F1E3FC; --accent-ink:#6B1FB0;
   --gold:#FFB800; --gold-soft:#FFF2CC;
   --grad:linear-gradient(135deg,var(--brand),var(--accent));
@@ -391,6 +391,24 @@ window.CLOUDINARY = {
     var base='https://firestore.googleapis.com/v1/projects/'+pid+'/databases/(default)/documents/';
     var j=function(u){return fetch(u).then(function(r){return r.ok?r.json():null;}).catch(function(){return null;});};
     var want=window.znPid();
+    var SETW=[360,540,720,1000];
+    var firstImg=function(d){var im=d&&d.fields&&d.fields.images&&d.fields.images.arrayValue&&d.fields.images.arrayValue.values;return im&&im[0]&&im[0].stringValue;};
+    var doPre=function(u){
+      if(!u) return;
+      var set=window.znSet(u,SETW); if(!set) return;
+      var sizes=want?'(min-width:960px) 55vw, 100vw':'(min-width:820px) 50vw, 100vw';
+      if(document.querySelector('link[rel=preload][as=image][imagesrcset="'+set+'"]')) return;
+      var l=document.createElement('link'); l.rel='preload'; l.as='image';
+      l.setAttribute('imagesrcset',set); l.setAttribute('imagesizes',sizes); l.setAttribute('fetchpriority','high');
+      document.head.appendChild(l);
+    };
+    /* طلب صغير جداً (حقل الصور فقط) لبدء تحميل الصورة قبل وصول قائمة المنتجات كاملة */
+    var mk='?mask.fieldPaths=images';
+    if(want){ j(base+'products/'+encodeURIComponent(want)+mk).then(function(d){doPre(firstImg(d));}); }
+    else{ j(base+'shop/settings?mask.fieldPaths=featuredId').then(function(st){
+      var fid=st&&st.fields&&st.fields.featuredId&&st.fields.featuredId.stringValue;
+      if(fid) return j(base+'products/'+encodeURIComponent(fid)+mk).then(function(d){doPre(firstImg(d));});
+    }); }
     window.__fsP=Promise.all([j(base+'products?pageSize=300'), j(base+'shop/settings')]);
     window.__fsP.then(function(r){
       var pj=r[0], sj=r[1]; if(!pj||!pj.documents) return;
@@ -400,12 +418,7 @@ window.CLOUDINARY = {
       if(!d && !want){ for(k=0;k<docs.length;k++){ var a=docs[k].fields&&docs[k].fields.active; if(!a||a.booleanValue!==false){d=docs[k];break;} } }
       var im=d&&d.fields&&d.fields.images&&d.fields.images.arrayValue&&d.fields.images.arrayValue.values;
       var u=im&&im[0]&&im[0].stringValue; if(!u) return;
-      var set=window.znSet(u,[480,800,1100]); if(!set) return;
-      var sizes=want?'(min-width:960px) 55vw, 100vw':'(min-width:820px) 50vw, 100vw';
-      if(document.querySelector('link[rel=preload][as=image][imagesrcset="'+set+'"]')) return;
-      var l=document.createElement('link'); l.rel='preload'; l.as='image';
-      l.setAttribute('imagesrcset',set); l.setAttribute('imagesizes',sizes); l.setAttribute('fetchpriority','high');
-      document.head.appendChild(l);
+      doPre(u);
     });
   }catch(e){}
 })();
@@ -437,8 +450,9 @@ ttq.load('TIKTOK_PIXEL_ID'); ttq.page();
     /* المنتجات تُجلب أولاً عبر REST خفيف؛ حزمة Firebase (الثقيلة) تُحمَّل بعد اكتمال الصفحة */
     if (document.readyState !== "complete") {
       await Promise.race([
-        new Promise(r => window.addEventListener("load", r, {once:true})),
-        new Promise(r => setTimeout(r, 4000))]);
+        new Promise(r => window.addEventListener("load", () => setTimeout(r, 1500), {once:true})),
+        new Promise(r => ["pointerdown","touchstart","keydown","scroll"].forEach(ev => window.addEventListener(ev, r, {once:true, passive:true}))),
+        new Promise(r => setTimeout(r, 12000))]);
     }
     const [{ initializeApp }, fs] = await Promise.all([
       import("https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js"),
@@ -1158,7 +1172,7 @@ const L = (v) => { // localized field: {ar,fr,en} or plain string
   return v[LANG] || v.ar || v.fr || v.en || "";
 };
 function cimg(u,w){ return window.znCimg(u,w); }
-const HERO_W=[480,800,1100], HERO_SIZES="(min-width:820px) 50vw, 100vw";
+const HERO_W=[360,540,720,1000], HERO_SIZES="(min-width:820px) 50vw, 100vw";
 function cset(u,ws){ return window.znSet(u,ws); }
 function ia(u,w){ return `src="${esc(cimg(u,w))}" data-o="${esc(u)}" onerror="this.onerror=null;this.removeAttribute('srcset');this.src=this.dataset.o"`; }
 function ias(u,w,ws,sizes){ const s=cset(u,ws); return ia(u,w)+(s?` srcset="${esc(s)}" sizes="${sizes}"`:''); }
@@ -1322,7 +1336,7 @@ function discount(p){ return (p.oldPrice && p.oldPrice>p.price) ? Math.round((1-
 function heroHtml(p){
   const d = discount(p);
   return `<section class="hero"><div class="hero-grid">
-    <div class="hero-media"><img fetchpriority="high" decoding="async" ${ias((p.images&&p.images[0])||ph('ZN',150),800,HERO_W,HERO_SIZES)} alt="${esc(L(p.name))}"></div>
+    <div class="hero-media"><img fetchpriority="high" decoding="async" ${ias((p.images&&p.images[0])||ph('ZN',150),720,HERO_W,HERO_SIZES)} alt="${esc(L(p.name))}"></div>
     <div class="hero-body">
       <div style="display:flex; gap:8px; flex-wrap:wrap">
         <span class="badge">★ ${t('featured')}</span>
@@ -1380,7 +1394,7 @@ function viewProduct(){
       </div>
       <div class="gallery">
         ${imgs.map((src,i)=>`<figure class="gimg" id="gimg_${i}" onclick="this.classList.toggle('zoomed')">
-          <img loading="${i?'lazy':'eager'}" ${i?'':'fetchpriority="high"'} decoding="async" ${ias(src,900,[480,800,1100],"(min-width:960px) 55vw, 100vw")} alt="${esc(L(p.name))} ${i+1}"></figure>`).join('')}
+          <img loading="${i?'lazy':'eager'}" ${i?'':'fetchpriority="high"'} decoding="async" ${ias(src,720,[360,540,720,1000],"(min-width:960px) 55vw, 100vw")} alt="${esc(L(p.name))} ${i+1}"></figure>`).join('')}
       </div>
       <section class="card" style="padding:22px; margin-top:20px">
         <h2 style="font-size:1.1rem; margin-bottom:8px">${t('desc')}</h2>
