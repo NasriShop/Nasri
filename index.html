@@ -2137,6 +2137,84 @@ function colexRefreshAll(){
   const final=['paye_et_archive','retour_archive','annule'];
   return colexRefresh(S.orders.filter(o=>o.colexSent && o.colexTracking && !final.includes(o.colexStatus)).map(o=>o.id));
 }
+const CX_AR={'ا':'a','أ':'a','إ':'i','آ':'a','ب':'b','ت':'t','ث':'th','ج':'dj','ح':'h','خ':'kh','د':'d','ذ':'d','ر':'r','ز':'z','س':'s','ش':'ch','ص':'s','ض':'d','ط':'t','ظ':'z','ع':'a','غ':'gh','ف':'f','ق':'k','ك':'k','ل':'l','م':'m','ن':'n','ه':'h','ة':'a','و':'ou','ي':'i','ى':'a','ء':'','ئ':'i','ؤ':'ou','گ':'g','ڤ':'v','پ':'p'};
+function cxHasAr(s){ return /[\u0600-\u06FF]/.test(String(s||'')); }
+function cxAr2Lat(s){
+  s=String(s||'').replace(/[\u064B-\u065F\u0670\u0640]/g,'');
+  return s.split(/\s+/).filter(Boolean).map(w=>{
+    let pre=''; if(/^ال/.test(w)&&w.length>3){ pre='El '; w=w.slice(2); }
+    let o=''; for(const c of w) o+=(CX_AR[c]!==undefined?CX_AR[c]:c);
+    return pre+o.charAt(0).toUpperCase()+o.slice(1);
+  }).join(' ').replace(/\s+/g,' ').trim();
+}
+function cxSkel(s){
+  s=String(s||'');
+  if(cxHasAr(s)) s=cxAr2Lat(s);
+  s=s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z\s]/g,' ');
+  s=s.split(/\s+/).filter(w=>w&&w!=='el'&&w!=='al'&&w!=='el-'&&w!=='de'&&w!=='des'&&w!=='du').join('');
+  s=s.replace(/ou/g,'').replace(/ph/g,'f').replace(/th/g,'t').replace(/dh/g,'d').replace(/sh|ch/g,'x').replace(/kh/g,'k')
+     .replace(/gh/g,'g').replace(/dj/g,'j').replace(/ck/g,'k').replace(/q/g,'k').replace(/c/g,'k')
+     .replace(/[aeiouyhw]/g,'').replace(/(.)\1+/g,'$1');
+  return s;
+}
+function cxLev(a,b){ const m=a.length,n=b.length; if(!m) return n; if(!n) return m; let p=Array.from({length:n+1},(_,i)=>i);
+  for(let i=1;i<=m;i++){ const c=[i]; for(let j=1;j<=n;j++) c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1)); p=c; } return p[n]; }
+function cxBest(written,list,min){
+  min=min||0.8; const k=cxSkel(written); if(!k||!(list||[]).length) return null;
+  let best=null,bs=0,second=0;
+  for(const c of list){ const kc=cxSkel(c); if(!kc) continue;
+    const sc=k===kc?1:1-cxLev(k,kc)/Math.max(k.length,kc.length);
+    if(sc>bs){ second=bs; bs=sc; best=c; } else if(sc>second) second=sc; }
+  if(!best||bs<min) return null;
+  if(bs<1 && k.length<4) return null;
+  if(bs<1 && bs-second<0.05) return null;
+  return best;
+}
+function cxScore(a,b){ const k=cxSkel(a), kc=cxSkel(b); if(!k||!kc) return 0; return k===kc?1:1-cxLev(k,kc)/Math.max(k.length,kc.length); }
+/* إذا كتب الزبون في خانة البلدية بلدية + عنواناً مفصّلاً: نفصل اسم البلدية (من القائمة) ونعيد الباقي ليوضع تحتها في العنوان */
+function cxSplit(written,list){
+  const w=String(written||'').trim(); if(!w) return {commune:'',rest:''};
+  list=list||[];
+  if(list.some(c=>c.toLowerCase()===w.toLowerCase())) return {commune:w,rest:''};
+  const segs=w.split(/\s*[,،;\/\n]\s*|\s+[-–]\s+/).filter(Boolean);
+  const first=segs[0], tail=segs.slice(1).join(' ');
+  const toks=first.split(/\s+/);
+  let bn=0, bs=0;
+  for(let n=1;n<=Math.min(toks.length,4);n++){
+    const part=toks.slice(0,n).join(' '), m=cxBest(part,list,0.85);
+    if(m){ const sc=cxScore(part,m); if(sc>=bs){ bs=sc; bn=n; } }
+  }
+  if(bn && (bn<toks.length || tail)) return {commune:toks.slice(0,bn).join(' '), rest:[toks.slice(bn).join(' '),tail].filter(Boolean).join(' ')};
+  if(segs.length>1) return {commune:first, rest:tail};
+  return {commune:w, rest:''};
+}
+function cxCommuneCands(written,list){
+  const out=[], add=v=>{ v=String(v||'').trim(); if(v && !out.some(x=>x.toLowerCase()===v.toLowerCase())) out.push(v); };
+  const w=String(written||'').trim(); if(!w) return out;
+  const ex=(list||[]).find(c=>c.toLowerCase()===w.toLowerCase()); if(ex) add(ex);
+  else add(cxBest(w,list));
+  if(cxHasAr(w)) add(cxAr2Lat(w)); else add(w);
+  /* صيغ إملائية بديلة: بدون علامات (Koléa → Kolea) وبدون شرطات */
+  out.slice().forEach(c=>{ add(c.normalize('NFD').replace(/[\u0300-\u036f]/g,'')); add(c.replace(/-/g,' ')); add(c.replace(/'/g,'')); });
+  return out;
+}
+/* قائمة بلديات Colex للولاية (محاولة اختيارية؛ إن لم تتوفر نكمل بدونها) */
+const CX_CACHE={};
+async function cxColexCommunes(dp,wcode){
+  const key=String(wcode); if(CX_CACHE[key]) return CX_CACHE[key];
+  try{
+    let u=String(dp.apiUrl||'').trim(); if(!/^https?:\/\//i.test(u)) u='https://'+u;
+    const U=new URL(u); if(!/^[a-z0-9-]+\.ecotrack\.dz$/i.test(U.hostname)) return [];
+    const r=await fetch('https://'+U.hostname+'/api/v1/get/communes?wilaya_id='+encodeURIComponent(wcode),{headers:{'Authorization':'Bearer '+dp.token,'Accept':'application/json'},
+      signal:(window.AbortSignal&&AbortSignal.timeout)?AbortSignal.timeout(8000):undefined});
+    if(!r.ok) return [];
+    const d=await r.json(), out=[];
+    const walk=v=>{ if(Array.isArray(v)) v.forEach(walk);
+      else if(v&&typeof v==='object'){ const n=v.nom||v.name||v.commune||v.nom_commune||v.commune_name||v.libelle; if(typeof n==='string') out.push(n); else Object.values(v).forEach(walk); }
+      else if(typeof v==='string') out.push(v); };
+    walk(d); return (CX_CACHE[key]=[...new Set(out.map(x=>x.trim()).filter(Boolean))]);
+  }catch(e){ return []; }
+}
 function cxAsk(title,msg,okLabel,noLabel){
   return new Promise(res=>{
     const d=document.createElement('div'); d.className='cx-modal'; d.setAttribute('role','dialog'); d.setAttribute('aria-modal','true');
@@ -2165,9 +2243,13 @@ async function colexSend(id){
   const btn=document.getElementById('cxb_'+id); if(btn){ btn.disabled=true; btn.textContent='⏳…'; }
   try{
     const prod=[o.productName+((o.qty||1)>1?' ×'+o.qty:''), o.color, o.size].filter(Boolean).join(' - ');
-    const address=(o.address||'').trim() || [o.commune,o.wilaya].filter(Boolean).join(', ');
+    const wrow=(typeof DZ!=='undefined')?DZ.find(x=>Number(x[0])===Number(o.wilayaCode)):null;
+    const sp=cxSplit(o.commune, wrow?wrow[3]:[]);
+    const written=sp.commune||String(o.commune||'').trim();
+    /* الترتيب في Colex: الولاية ثم البلدية ثم العنوان التفصيلي تحت البلدية */
+    const address=[sp.rest,(o.address||'').trim()].filter(Boolean).join(' - ') || [written,o.wilaya].filter(Boolean).join(', ');
     const ord={id:o.ref||o.id, name:o.customer, phone:o.phone, phone2:o.phone2||'', address,
-      wilayaCode:o.wilayaCode, commune:o.commune, total:o.total, product:prod, note:o.notes||'', stopDesk:o.deliveryType==='desk'};
+      wilayaCode:o.wilayaCode, commune:written, total:o.total, product:prod, note:o.notes||'', stopDesk:o.deliveryType==='desk'};
     const doSend=async(od)=>{
       if(mode==='proxy'){
         const r=await fetch(url+'/api/colex/send',{
@@ -2180,24 +2262,35 @@ async function colexSend(id){
       }
       return await colexDirect(dp, od);
     };
-    let j=await doSend(ord), cur=ord, communeFallback=false, deskToHome=false, usedCom=false, usedDesk=false, cancelled=false;
-    for(let k=0; k<2 && !j.ok && !j.dryRun; k++){
+    /* مطابقة ذكية: عربية ↔ لاتينية وتقريبية (عكاشة ≈ Akacha) مع قائمة المتجر قبل الإرسال */
+    const cands=cxCommuneCands(written, wrow?wrow[3]:[]); let ci=0, colexListTried=false;
+    const first=cands.length?Object.assign({},ord,{commune:cands[0]}):ord;
+    let j=await doSend(first), cur=first, communeFallback=false, deskToHome=false, usedCom=false, usedDesk=false, cancelled=false;
+    for(let k=0; k<10 && !j.ok && !j.dryRun; k++){
       const txt=JSON.stringify(j);
       if(cur.stopDesk && !usedDesk && /stop.?desk|bureau|desk|مكتب/i.test(txt)){
         /* الطلب إلى مكتب توصيل لكن لا يوجد مكتب في هذه البلدية: نسأل الإدارة */
         usedDesk=true;
         if(!(await cxAsk('لا يوجد مكتب توصيل في هذه البلدية','طلب «'+(o.customer||'')+'» موجّه إلى مكتب توصيل في «'+(o.commune||'')+'» ولم تجد Colex مكتباً هناك. هل توافق على تحويله إلى التوصيل للمنزل؟','أوافق (للمنزل)','ألغي الإرسال'))){ cancelled=true; break; }
-        cur=Object.assign({},cur,{stopDesk:false, note:[cur.note,'طُلب مكتب توصيل غير متوفر، حُوّل إلى التوصيل للمنزل بموافقة الإدارة'].filter(Boolean).join(' | ')});
+        cur=Object.assign({},cur,{stopDesk:false});
         deskToHome=true;
-      } else if(!usedCom && /commune|بلدية|municip/i.test(txt)){
-        /* Colex رفضت اسم البلدية: نعيد بالبلدية الرئيسية للولاية ونضع البلدية المكتوبة في العنوان والملاحظة */
-        usedCom=true;
-        const row=(typeof DZ!=='undefined')?DZ.find(x=>Number(x[0])===Number(o.wilayaCode)):null;
-        const fb=row?String(row[2]||'').trim():'', written=String(o.commune||'').trim();
-        if(!fb || !written || fb.toLowerCase()===written.toLowerCase()) break;
-        cur=Object.assign({},cur,{commune:fb, address:[written,(o.address||'').trim()].filter(Boolean).join(' - '),
-          note:[cur.note,'البلدية كما كتبها الزبون: '+written].filter(Boolean).join(' | ')});
-        communeFallback=true;
+      } else if(!communeFallback && /commune|بلدية|municip/i.test(txt)){
+        let next=cands[++ci];
+        if(!next && !colexListTried && dp && mode==='direct'){
+          colexListTried=true;
+          const m=cxBest(written, await cxColexCommunes(dp,o.wilayaCode));
+          if(m && !cands.some(c=>c.toLowerCase()===m.toLowerCase())){ cands.push(m); next=m; }
+        }
+        if(next){ cur=Object.assign({},cur,{commune:next}); }
+        else{
+          /* لم نجد أي مطابقة: الرسالة تبقى، ونعرض خيار الإرسال بالبلدية الرئيسية للولاية */
+          const fb=wrow?String(wrow[2]||'').trim():'';
+          if(usedCom || !fb || !written || fb.toLowerCase()===written.toLowerCase()) break;
+          usedCom=true;
+          if(!(await cxAsk('لم نجد بلدية مطابقة','تعذّر إيجاد «'+written+'» في قائمة Colex. هل توافق على الإرسال بالبلدية الرئيسية «'+fb+'» مع كتابة اسم البلدية في العنوان؟','أوافق','ألغي الإرسال'))){ cancelled=true; break; }
+          cur=Object.assign({},cur,{commune:fb, address:[written,ord.address].filter(Boolean).join(' - ')});
+          communeFallback=true;
+        }
       } else break;
       j=await doSend(cur);
     }
@@ -2217,7 +2310,7 @@ async function colexSend(id){
     if(deskToHome){ patch.deliveryType='home'; patch.notes=[o.notes,'تحويل من مكتب إلى المنزل (لا يوجد مكتب)'].filter(Boolean).join(' | '); }
     await updateOrder(id,patch); Object.assign(o,patch);
     if(o.status==='pending' || o.status==='confirmed') await changeStatus(id,'shipped');
-    toast((tr ? '✅ أُرسل إلى Colex — رقم التتبع: '+tr : '✅ أُرسل إلى Colex (لم أجد رقم التتبع في الرد، راجع لوحة Colex)')+(deskToHome?' · ⚠︎ حُوّل إلى التوصيل للمنزل، راجع سعر التوصيل':'')+(communeFallback?' · ⚠︎ البلدية «'+(o.commune||'')+'» لم تُطابق قائمة Colex، فأُرسلت باسم الولاية والبلدية كما كُتبت في العنوان':''));
+    toast((tr ? '✅ أُرسل إلى Colex — رقم التتبع: '+tr : '✅ أُرسل إلى Colex (لم أجد رقم التتبع في الرد، راجع لوحة Colex)')+(deskToHome?' · ⚠︎ حُوّل إلى التوصيل للمنزل، راجع سعر التوصيل':'')+(j.ok && !communeFallback && cur.commune && cur.commune.toLowerCase()!==written.toLowerCase()?' · البلدية «'+written+'» أُرسلت باسم «'+cur.commune+'»':'')+(communeFallback?' · ⚠︎ البلدية «'+(o.commune||'')+'» لم تُطابق قائمة Colex، فأُرسلت باسم الولاية والبلدية كما كُتبت في العنوان':''));
   }catch(e){
     toast(mode==='direct' ? '⚠︎ المتصفح منع الإرسال المباشر إلى Colex (غالبًا CORS): '+(e&&e.message||e)+' — نحتاج السيرفر الوسيط' : '⚠︎ تعذّر الاتصال بالسيرفر الوسيط: '+(e&&e.message||e));
   }finally{
