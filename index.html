@@ -372,6 +372,83 @@ footer.site{background:var(--surface); border-top:1px solid var(--line); margin-
 .cx-box h3{margin:0 0 6px; font-size:1rem} .cx-box p{margin:0 0 14px; font-size:.84rem; color:var(--muted); line-height:1.7}
 .cx-box .acts{display:flex; gap:10px} .cx-box .acts button{flex:1; padding:11px; border-radius:14px; border:1px solid var(--line); font:inherit; font-weight:800; cursor:pointer; background:var(--surface-2,#f4f4f4); color:inherit}
 .cx-box .acts button.ok{background:linear-gradient(135deg,#FF8A1F,#FF5A00); color:#fff; border-color:transparent}
+
+/* ===================== Professional skin ===================== */
+:root{
+  --bg:#F5F6F8; --surface:#FFFFFF; --surface-2:#F2F4F7;
+  --ink:#0F1B2D; --muted:#5B6B7F; --line:#E3E8EF;
+  --brand:#E8590C; --brand-soft:#FDEBDD; --brand-ink:#B8430A;
+  --accent:#12294B; --accent-soft:#E6ECF5; --accent-ink:#0B1D38;
+  --gold:#E8A317; --gold-soft:#FFF4D6;
+  --grad:linear-gradient(180deg,#EE6314,#E0540A);
+  --shadow:0 1px 2px rgba(16,24,40,.05), 0 6px 16px -8px rgba(16,24,40,.14);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1624; --surface:#152033; --surface-2:#1B2840; --ink:#EAF0F8; --muted:#9AA9BD; --line:#26344C;
+    --brand:#FF7A2B; --brand-soft:#3A2414; --brand-ink:#FFB27D; --accent:#9DB8E8; --accent-soft:#1E2E4A; --accent-ink:#C6D6F2;
+    --grad:linear-gradient(180deg,#FF8036,#F0661A); --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 20px -10px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1624; --surface:#152033; --surface-2:#1B2840; --ink:#EAF0F8; --muted:#9AA9BD; --line:#26344C;
+  --brand:#FF7A2B; --brand-soft:#3A2414; --brand-ink:#FFB27D; --accent:#9DB8E8; --accent-soft:#1E2E4A; --accent-ink:#C6D6F2;
+  --grad:linear-gradient(180deg,#FF8036,#F0661A); --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 20px -10px rgba(0,0,0,.6);
+}
+body{font-size:15.5px}
+h1,h2,h3{letter-spacing:0}
+.annbar{background:#0F1B2D; color:#fff; font-size:.78rem; font-weight:700}
+.annbar .wrap{display:flex; justify-content:center; flex-wrap:wrap; gap:4px 28px; padding-block:7px}
+.annbar span{display:inline-flex; align-items:center; gap:6px; white-space:nowrap}
+.annbar i{font-style:normal}
+@media(max-width:560px){ .annbar .wrap{justify-content:space-between; gap:4px 8px; font-size:.68rem} .annbar span:nth-child(3){display:none} }
+header.topbar{background:color-mix(in srgb,var(--surface) 95%,transparent); box-shadow:0 1px 0 var(--line)}
+header.topbar::after{display:none}
+.logo-mark{background:var(--brand); box-shadow:none; border-radius:10px}
+.logo-txt span{color:var(--brand)}
+.lang-pill button[aria-pressed="true"]{color:var(--brand)}
+.card{border-radius:14px; box-shadow:var(--shadow)}
+.btn{border-radius:10px; font-weight:800}
+.btn-primary,.btn-accent{background:var(--brand); color:#fff; box-shadow:none}
+.btn-primary:hover,.btn-accent:hover{background:var(--brand-ink)}
+.btn-ghost{background:var(--surface); border-color:var(--line)}
+.field{border-radius:10px}
+.badge{border-radius:6px; padding:3px 10px; font-size:.74rem}
+.badge-accent{background:var(--accent-soft); color:var(--accent)}
+.ribbon.badge{background:#D92D20; color:#fff}
+.hero{border-radius:16px}
+.hero-title{font-weight:900; line-height:1.3}
+.trust>div{border-radius:12px; box-shadow:none; font-size:.84rem}
+.pcard{border-radius:14px}
+.pcard:hover{transform:none; box-shadow:var(--shadow)}
+.pcard:hover .pcard-media img{transform:scale(1.04)}
+.cat-pill{font-weight:700}
+.cat-pill[data-on="1"]{background:var(--brand); box-shadow:none}
+.ofm::before{height:3px; background:var(--brand)}
+.ofm-spark{background:var(--brand-soft); box-shadow:none; border-radius:12px}
+.ofm-grp{border-radius:12px}
+.ofm-step b{background:var(--brand)}
+.ofm-cta{background:var(--brand); border-radius:12px; box-shadow:0 10px 20px -12px var(--brand)}
+.ofm-cta::before{display:none}
+.ofm .qty button{background:var(--brand); box-shadow:none}
+.dcard{border-radius:12px}
+.dcard::after{background:var(--brand)}
+.dcard[data-on="1"]{transform:none; box-shadow:none}
+.zsz[data-on="1"]{background:var(--brand); border-color:var(--brand)}
+.ofm-sum{border-style:solid; border-radius:12px}
+.ofm-trust span{border-radius:6px}
+footer.site{background:#0F1B2D; color:#CBD5E1; border-top:0; margin-top:64px}
+footer.site h3{color:#fff}
+footer.site .muted{color:#94A3B8}
+footer.site a{color:#E2E8F0}
+footer.site a:hover{color:#fff; text-decoration:underline}
+footer.site .logo-txt{color:#fff}
+footer.site .wrap[style*="border-top"]{border-color:#24344D !important}
+.tabs button{border-radius:10px}
+.tabs button[aria-selected="true"]{background:var(--brand); border-color:var(--brand)}
+.stat-card{border-radius:12px}
+.stat-card:hover{transform:none}
+table.tbl th{background:var(--surface); position:sticky; top:0}
 </style>
 
 <!-- ==========================================================================
@@ -495,6 +572,10 @@ ttq.load('TIKTOK_PIXEL_ID'); ttq.page();
 </script>
 </head>
 <body>
+
+<div class="annbar"><div class="wrap">
+  <span><i>💵</i><b data-i18n="t1"></b></span><span><i>🚚</i><b data-i18n="t2"></b></span><span><i>✅</i><b data-i18n="t3"></b></span>
+</div></div>
 
 <header class="topbar">
   <div class="wrap" style="display:flex; align-items:center; gap:12px; height:66px">
@@ -1465,7 +1546,7 @@ function orderFormHtml(p){
       </div>` : '');
   return `<form class="card ofm" id="orderForm" novalidate onsubmit="return false">
     <div class="ofm-head">
-      <div class="ofm-spark">✨</div>
+      <div class="ofm-spark">📦</div>
       <div><h2>${t('orderForm')}</h2><p>${t('t1')} · ${t('t2')}</p></div>
     </div>
     <div class="ofm-body">
@@ -1579,6 +1660,8 @@ async function submitOrder(pid){
   const row=DZ.find(x=>String(x[0])===String(wc));
   const ship=shipFor(wc,type), sub=p.price*QTY;
   if(ship==null) return toast(t('noPrice'));
+  const _pl=cxSplit(commune, row?row[3]:[]);          // «بلدية + عنوان مفصّل» → البلدية في خانتها والعنوان تحتها
+  const _commune=String(_pl.commune||commune).trim(), _addr=String(_pl.rest||'').trim();
   const btn=document.getElementById('submitBtn');
   btn.disabled=true; btn.innerHTML=`<span class="spinner"></span> ${t('sending')}`;
   const order=await addOrder({
@@ -1586,7 +1669,7 @@ async function submitOrder(pid){
     color:cs.length?cs[SEL_COLOR].name:'', size:ss.length?ss[SEL_SIZE]:'',
     customer:g('f_name'), phone, phone2:'',
     wilayaCode:Number(wc), wilaya:row?row[2]:'', wilayaAr:row?row[1]:'',
-    commune, address:'', notes:'',
+    commune:_commune, address:_addr, notes:'',
     deliveryType:type, carrier:(activeCarrier()||{}).name||'', shipping:ship, subtotal:sub, total:sub+ship, lang:LANG
   });
   S.lastOrder=order;
@@ -1653,7 +1736,7 @@ function viewAdmin(){
       <button class="btn btn-primary" style="width:100%; margin-top:12px" onclick="tryLogin()">${t('login')}</button>
       <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="go('home')">${t('back')}</button>
     </div>`;
-  const tabs=[["products",t('tabProducts')],["orders",t('tabOrders')],["shipping",t('tabShipping')],["integ","🔌 ربط التوصيل (API)"],["ai",t('tabAI')],["settings",t('tabSettings')]];
+  const tabs=[["products",t('tabProducts')],["orders",t('tabOrders')+' ('+S.orders.filter(o=>!isShipped(o)).length+')'],["shipped",'🚚 '+(({ar:'المشحونة',fr:'Expédiées',en:'Shipped'})[LANG]||'Shipped')+' ('+S.orders.filter(isShipped).length+')'],["shipping",t('tabShipping')],["integ","🔌 ربط التوصيل (API)"],["ai",t('tabAI')],["settings",t('tabSettings')]];
   return `
   <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px">
     <h1 style="font-size:1.35rem">${t('admin')}</h1>
@@ -1666,7 +1749,7 @@ function viewAdmin(){
   <div class="tabs" style="margin-bottom:18px">
     ${tabs.map(([k,lbl])=>`<button aria-selected="${S.tab===k}" onclick="S.tab='${k}';render()">${lbl}</button>`).join('')}
   </div>
-  ${S.tab==='products'?tabProducts():S.tab==='orders'?tabOrders():S.tab==='shipping'?tabShipping():S.tab==='integ'?tabInteg():S.tab==='ai'?tabAI():tabSettings()}`;
+  ${S.tab==='products'?tabProducts():S.tab==='orders'?tabOrders():S.tab==='shipped'?tabShipped():S.tab==='shipping'?tabShipping():S.tab==='integ'?tabInteg():S.tab==='ai'?tabAI():tabSettings()}`;
 }
 let _tap=0,_tt;
 function logoTap(){ _tap++; clearTimeout(_tt); _tt=setTimeout(()=>{_tap=0;},1500); if(_tap>=5){ _tap=0; go('admin'); } else go('home'); }
@@ -1912,7 +1995,7 @@ function applyOrderRange(){
 }
 function tabOrders(){
   const f = S.orderFilter || {mode:'all', from:'', to:''};
-  const filtered = filterOrdersByDate(S.orders, f);
+  const filtered = filterOrdersByDate(S.orders.filter(o=>!isShipped(o)), f);
   const ls = ensureStats();     // lifetime counters — independent of the date filter and of deletions
   const stats=[
     ["📦", t('orderNo'), ls.count||0, "var(--brand)"],
@@ -1947,9 +2030,6 @@ function tabOrders(){
   </p>
   <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap">
     <a class="btn btn-primary" href="${esc(S.settings.sheetUrl||'')}" target="_blank" rel="noopener">📄 ${t('openSheet')}</a>
-    <button class="btn btn-ghost" onclick="exportCsv()">⬇ ${t('exportCsv')}</button>
-    <button class="btn btn-ghost" onclick="archiveSheets()">📊 ${t('archiveSheets')}</button>
-    <button class="btn btn-ghost" onclick="colexRefreshAll()">🔄 تحديث حالات Colex</button>
   </div>
   <div class="card scroll-x" style="padding:6px 12px"><table class="tbl">
     <thead><tr><th>${t('orderNo')}</th><th>${t('date')}</th><th>${t('customer')}</th><th>${t('product')}</th>
@@ -1960,8 +2040,7 @@ function tabOrders(){
       <td><b>${esc(o.customer)}</b><div><a href="tel:${esc(o.phone)}" style="font-size:.8rem;color:var(--brand)">${esc(o.phone)}</a></div>
         <a class="muted" style="font-size:.74rem" target="_blank" rel="noopener" href="https://wa.me/213${esc(String(o.phone).replace(/^0/,''))}">WhatsApp</a></td>
       <td>${esc(o.productName)} ×${o.qty}${(o.color||o.size)?`<div style="font-size:.76rem; font-weight:800; color:var(--brand-ink)">${o.color?'🎨 '+esc(o.color):''}${o.color&&o.size?' · ':''}${o.size?'📏 '+esc(o.size):''}</div>`:''}</td>
-      <td>${String(o.wilayaCode).padStart(2,'0')} ${esc(o.wilaya)}<div class="muted" style="font-size:.74rem">${esc(o.commune)} · ${o.deliveryType==='home'?t('home'):t('desk')}</div>
-        <div class="muted" style="font-size:.72rem">${esc(o.address||'')}</div></td>
+      <td>${placeCell(o)}</td>
       <td class="price">${money(o.total)}<div class="muted" style="font-size:.72rem">+${money(o.shipping)}</div></td>
       <td><select class="field" style="padding:6px 8px; font-size:.8rem; font-weight:800; border-color:${STAT_COLOR[o.status]||'var(--line)'}; color:${STAT_COLOR[o.status]||'var(--ink)'}" onchange="changeStatus('${o.id}',this.value)">
         ${ST.map(s=>`<option value="${s}" ${o.status===s?'selected':''}>${stLabel(s)}</option>`).join('')}</select></td>
@@ -1970,11 +2049,80 @@ function tabOrders(){
     </tr>`).join('')||`<tr><td colspan="9" class="muted" style="padding:24px">${t('noOrders')}</td></tr>`}
     </tbody></table></div>`;
 }
-async function changeStatus(id,v){
+
+/* ---- العنوان: الولاية ← البلدية ← العنوان التفصيلي (يُفصل تلقائياً إن كُتب مع البلدية) ---- */
+function placeOf(o){
+  const w=(typeof DZ!=='undefined')?DZ.find(x=>Number(x[0])===Number(o.wilayaCode)):null;
+  const sp=cxSplit(o.commune, w?w[3]:[]);
+  return {commune:String(sp.commune||o.commune||'').trim(),
+          address:[sp.rest,String(o.address||'').trim()].filter(Boolean).join(' - ')};
+}
+function placeCell(o){
+  const pl=placeOf(o);
+  return `<b>${String(o.wilayaCode).padStart(2,'0')} ${esc(o.wilaya)}</b>
+    <div style="font-size:.82rem">${esc(pl.commune)} <span class="muted">· ${o.deliveryType==='home'?t('home'):t('desk')}</span></div>
+    ${pl.address?`<div class="muted" style="font-size:.74rem">📍 ${esc(pl.address)}</div>`:''}`;
+}
+function statusSel(o){
+  return `<select class="field" style="padding:6px 8px; font-size:.8rem; font-weight:800; border-color:${STAT_COLOR[o.status]||'var(--line)'}; color:${STAT_COLOR[o.status]||'var(--ink)'}" onchange="changeStatus('${o.id}',this.value)">
+    ${ST.map(x=>`<option value="${x}" ${o.status===x?'selected':''}>${stLabel(x)}</option>`).join('')}</select>`;
+}
+/* ---- قائمة الطلبات المشحونة (منفصلة عن قائمة الطلبات) ---- */
+function isShipped(o){ return o.status==='shipped' || o.status==='done' || (o.status==='cancelled' && !!o.colexSent); }
+function shippedList(){
+  const f=S.shipF||{st:'all',q:''};
+  let l=S.orders.filter(isShipped);
+  if(f.st!=='all') l=l.filter(o=>o.status===f.st);
+  const q=String(f.q||'').trim().toLowerCase();
+  if(q) l=l.filter(o=>[o.ref,o.id,o.customer,o.phone,o.colexTracking,o.wilaya,o.commune,o.productName].join(' ').toLowerCase().includes(q));
+  const when=o=>String(o.colexSentAt||o.updatedAt||o.createdAt||'');
+  return l.sort((a,b)=>when(b).localeCompare(when(a)));
+}
+function shipRowsHtml(){
+  const list=shippedList();
+  return list.map(o=>{
+    const when=o.colexSentAt||o.updatedAt||o.createdAt;
+    return `<tr>
+      <td><b>${esc(o.ref||o.id)}</b><div class="muted" style="font-size:.72rem">${when?new Date(when).toLocaleDateString(LANG==='ar'?'ar-DZ':'fr-FR'):''}</div></td>
+      <td><b>${esc(o.customer)}</b><div><a href="tel:${esc(o.phone)}" style="font-size:.8rem;color:var(--brand)">${esc(o.phone)}</a></div>
+        <a class="muted" style="font-size:.74rem" target="_blank" rel="noopener" href="https://wa.me/213${esc(String(o.phone).replace(/^0/,''))}">WhatsApp</a></td>
+      <td>${esc(o.productName)} ×${o.qty}${(o.color||o.size)?`<div style="font-size:.76rem; font-weight:800; color:var(--brand-ink)">${o.color?'🎨 '+esc(o.color):''}${o.color&&o.size?' · ':''}${o.size?'📏 '+esc(o.size):''}</div>`:''}</td>
+      <td>${placeCell(o)}</td>
+      <td class="price">${money(o.total)}</td>
+      <td>${statusSel(o)}</td>
+      <td>${colexCell(o)}</td>
+      <td><button class="btn btn-sm" style="background:var(--accent-soft); color:var(--accent)" onclick="dropOrder('${o.id}')">${t('del')}</button></td>
+    </tr>`;
+  }).join('')||`<tr><td colspan="8" class="muted" style="padding:24px">لا توجد طلبات مشحونة.</td></tr>`;
+}
+function setShipF(patch){ S.shipF={...(S.shipF||{st:'all',q:''}),...patch}; render(); }
+function shipSearch(v){ S.shipF={...(S.shipF||{st:'all',q:''}),q:v}; const h=document.getElementById('shipRows'); if(h) h.innerHTML=shipRowsHtml(); }
+function tabShipped(){
+  const f=S.shipF||{st:'all',q:''};
+  const all=S.orders.filter(isShipped);
+  const cnt=k=>all.filter(o=>o.status===k).length;
+  const onRoad=all.filter(o=>o.status==='shipped').reduce((a,o)=>a+(Number(o.total)||0),0);
+  const stats=[["🚚",stLabel('shipped'),cnt('shipped'),STAT_COLOR.shipped],["✅",stLabel('done'),cnt('done'),STAT_COLOR.done],
+    ["↩️",stLabel('cancelled'),cnt('cancelled'),STAT_COLOR.cancelled],["💰","المبلغ قيد التحصيل",money(onRoad),"var(--gold)"]];
+  const seg=[['all',t('filterAll'),all.length],['shipped',stLabel('shipped'),cnt('shipped')],['done',stLabel('done'),cnt('done')],['cancelled',stLabel('cancelled'),cnt('cancelled')]];
+  return `<div class="stat-grid">${stats.map(([icon,label,val,color])=>`<div class="stat-card" style="--stat-c:${color}">
+      <span class="stat-icon">${icon}</span><div class="stat-label">${label}</div><div class="stat-value">${val}</div></div>`).join('')}</div>
+  <div class="filter-bar">
+    <div class="seg">${seg.map(([k,l,n])=>`<button class="${f.st===k?'on':''}" onclick="setShipF({st:'${k}'})">${l} (${n})</button>`).join('')}</div>
+    <input class="field" style="max-width:260px; padding:9px 12px" placeholder="🔍 اسم، هاتف، رقم التتبع…" value="${esc(f.q||'')}" oninput="shipSearch(this.value)">
+    <div style="flex:1"></div>
+    <button class="btn btn-primary btn-sm" onclick="colexRefreshAll()">🔄 تحديث حالات Colex</button>
+  </div>
+  <div class="card scroll-x" style="padding:6px 12px"><table class="tbl">
+    <thead><tr><th>${t('orderNo')}</th><th>${t('customer')}</th><th>${t('product')}</th><th>${t('wilaya')}</th><th>${t('total')}</th><th>${t('status')}</th><th>🚚 Colex</th><th></th></tr></thead>
+    <tbody id="shipRows">${shipRowsHtml()}</tbody></table></div>`;
+}
+async function changeStatus(id,v,quiet){
   const o=S.orders.find(x=>x.id===id); const old=o?o.status:null;
   await updateOrder(id,{status:v, updatedAt:new Date().toISOString()});
   if(o){ bumpStatsOnStatusChange(old, v, o.total); o.status=v; await saveSettings(); }
   toast(t('saved'));
+  if(!quiet && S.view==='admin' && (S.tab==='orders'||S.tab==='shipped')) render();   // الطلبية تنتقل بين القائمتين فوراً
 }
 async function dropOrder(id){ if(!confirm(t('confirmDel')))return; const ok=await removeOrder(id); render(); if(ok) toast(t('deleted')); }
 
@@ -2106,7 +2254,7 @@ async function colexApplyStatus(o, st){
   const target=COLEX_ST[st]&&COLEX_ST[st][1];
   if(!target || o.status===target) return;
   if(target==='shipped' && (o.status==='done'||o.status==='cancelled')) return;   // لا نرجع للخلف
-  await changeStatus(o.id,target);
+  await changeStatus(o.id,target,true);
 }
 async function colexRefresh(ids){
   const dp=colexDirectProvider();
@@ -2130,7 +2278,7 @@ async function colexRefresh(ids){
   }catch(e){
     toast('⚠︎ تعذّر تحديث الحالات: '+(e&&e.message||e));
   }finally{
-    if(S.view==='admin' && S.tab==='orders') render();
+    if(S.view==='admin' && (S.tab==='orders'||S.tab==='shipped')) render();
   }
 }
 function colexRefreshAll(){
@@ -2182,7 +2330,7 @@ function cxSplit(written,list){
   let bn=0, bs=0;
   for(let n=1;n<=Math.min(toks.length,4);n++){
     const part=toks.slice(0,n).join(' '), m=cxBest(part,list,0.85);
-    if(m){ const sc=cxScore(part,m); if(sc>=bs){ bs=sc; bn=n; } }
+    if(m){ const sc=cxScore(part,m); if(sc>bs+1e-9){ bs=sc; bn=n; } }   // عند التساوي نفضّل أقصر جزء (لا نبتلع كلمات العنوان)
   }
   if(bn && (bn<toks.length || tail)) return {commune:toks.slice(0,bn).join(' '), rest:[toks.slice(bn).join(' '),tail].filter(Boolean).join(' ')};
   if(segs.length>1) return {commune:first, rest:tail};
@@ -2309,13 +2457,13 @@ async function colexSend(id){
     const patch={colexSent:true, colexTracking:tr, colexSentAt:now, colexError:'', colexErrorRaw:'', colexRaw:JSON.stringify(j.colex==null?'':j.colex).slice(0,600), updatedAt:now};
     if(deskToHome){ patch.deliveryType='home'; patch.notes=[o.notes,'تحويل من مكتب إلى المنزل (لا يوجد مكتب)'].filter(Boolean).join(' | '); }
     await updateOrder(id,patch); Object.assign(o,patch);
-    if(o.status==='pending' || o.status==='confirmed') await changeStatus(id,'shipped');
+    if(o.status==='pending' || o.status==='confirmed') await changeStatus(id,'shipped',true);
     toast((tr ? '✅ أُرسل إلى Colex — رقم التتبع: '+tr : '✅ أُرسل إلى Colex (لم أجد رقم التتبع في الرد، راجع لوحة Colex)')+(deskToHome?' · ⚠︎ حُوّل إلى التوصيل للمنزل، راجع سعر التوصيل':'')+(j.ok && !communeFallback && cur.commune && cur.commune.toLowerCase()!==written.toLowerCase()?' · البلدية «'+written+'» أُرسلت باسم «'+cur.commune+'»':'')+(communeFallback?' · ⚠︎ البلدية «'+(o.commune||'')+'» لم تُطابق قائمة Colex، فأُرسلت باسم الولاية والبلدية كما كُتبت في العنوان':''));
   }catch(e){
     toast(mode==='direct' ? '⚠︎ المتصفح منع الإرسال المباشر إلى Colex (غالبًا CORS): '+(e&&e.message||e)+' — نحتاج السيرفر الوسيط' : '⚠︎ تعذّر الاتصال بالسيرفر الوسيط: '+(e&&e.message||e));
   }finally{
     COLEX_BUSY.delete(id);
-    if(S.view==='admin' && S.tab==='orders') render();
+    if(S.view==='admin' && (S.tab==='orders'||S.tab==='shipped')) render();
   }
 }
 async function colexTest(){
@@ -2336,24 +2484,6 @@ async function colexTest(){
 }
 
 
-function ordersTable(sep){
-  const head=["ref","date","customer","phone","phone2","wilaya_code","wilaya","commune","address",
-    "delivery","product","qty","unit_price","shipping","total","status","notes","color","size"];
-  const rows=S.orders.map(o=>[o.ref||o.id, o.createdAt, o.customer, o.phone, o.phone2||'',
-    o.wilayaCode, o.wilaya, o.commune, (o.address||'').replace(/[\r\n]+/g,' '),
-    o.deliveryType==='home'?'Domicile':'Bureau', o.productName, o.qty, o.unitPrice, o.shipping, o.total,
-    o.status, (o.notes||'').replace(/[\r\n]+/g,' '), o.color||'', o.size||'']);
-  const q=v=>{ v=String(v==null?'':v); return sep===','? '"'+v.replace(/"/g,'""')+'"' : v; };
-  return [head.join(sep), ...rows.map(r=>r.map(q).join(sep))].join('\r\n');
-}
-async function exportCsv(){
-  const csv="\uFEFF"+ordersTable(",");              // UTF-8 BOM → Arabic opens correctly in Excel
-  const filename=`ZoubirNasriShop-orders-${new Date().toISOString().slice(0,10)}.csv`;
-  if(DOWNLOADS){ try{ await DOWNLOADS.save({filename, data:csv}); return toast('✅ '+t('exportCsv')); }catch(e){} }
-  try{ const a=document.createElement('a');
-    a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})); a.download=filename; a.click();
-  }catch(e){ await navigator.clipboard.writeText(csv); toast(t('copied')); }
-}
 /* Sends rows to the Google Apps Script web app. `no-cors` means we never
    read the reply — Apps Script does not send CORS headers — but the rows
    do arrive in the sheet. */
@@ -2370,49 +2500,8 @@ function pushSheet(orders){
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body: JSON.stringify({token:'ZN', rows})}).catch(()=>{});
 }
-/* Each order is already sent to the sheet once, the moment it's created
-   (see pushSheet() call in addOrder, which sets o.sheetSynced) — that's the
-   live backup. Archiving only needs to (re-)send orders that were never
-   synced — e.g. created before a Sheets link existed, or a push that failed
-   — then clear everything out of the store; already-synced orders are only
-   deleted here, never re-pushed, so nothing ends up duplicated in the sheet. */
-async function archiveSheets(){
-  if(!S.orders.length) return toast('لا توجد طلبات لأرشفتها');
-  const url = S.settings.sheetUrl || window.SHEETS_URL;
-  if(url){
-    const notSynced = S.orders.filter(o=>!o.sheetSynced);
-    const msg = notSynced.length
-      ? `سيتم إرسال ${notSynced.length} طلبية غير مسجّلة بعد إلى Google Sheets، ثم حذف كل الطلبات (${S.orders.length}) من المتجر. هل أنت متأكد؟`
-      : `سيتم حذف ${S.orders.length} طلبية من المتجر (هي محفوظة أصلاً في Google Sheets منذ إنشائها). هل أنت متأكد؟`;
-    if(!confirm(msg)) return;
-    if(notSynced.length) pushSheet(notSynced);
-    const ok = await deleteAllOrders();
-    if(ok) toast('✅ تم حذف الطلبات من المتجر — نسختها محفوظة في Google Sheets');
-    return;
-  }
-  try{
-    await navigator.clipboard.writeText(ordersTable("\t"));
-    toast('📋 '+t('copied')+' → الصق الجدول في Google Sheets (Ctrl+V)');
-    if(confirm('هل قمت بلصق الجدول في Google Sheets؟ في حال الموافقة، سيتم حذف الطلبات من المتجر.')){
-      const ok = await deleteAllOrders();
-      if(ok) toast('✅ تم حذف الطلبات من المتجر');
-    }
-  }catch(e){ toast('⚠︎ '+e.message); }
-}
-async function deleteAllOrders(){
-  const ids = S.orders.map(o=>o.id);
-  let failed = 0;
-  for(const id of ids){
-    const ok = await removeOrder(id);
-    if(!ok) failed++;
-  }
-  if(S.tab==='orders') render();
-  if(failed){
-    toast(`⚠︎ تعذّر حذف ${failed} من أصل ${ids.length} طلبية — تأكد من نشر صلاحية الحذف (allow delete) في Firestore Rules`);
-    return false;
-  }
-  return true;
-}
+/* Chaque commande est envoyée automatiquement à la Google Sheet à sa création (addOrder → pushSheet)
+   et y reste telle quelle : plus d'export Excel ni d'archivage manuel. */
 
 /* ---- shipping tab (plusieurs societes de livraison) ---- */
 function editCarrier(){ const cs=S.settings.carriers; return cs.find(c=>c.id===S.editCarrier)||cs.find(c=>c.id===S.settings.activeCarrier)||cs[0]; }
