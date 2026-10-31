@@ -354,6 +354,24 @@ table.tbl tr:hover td{background:var(--surface-2)}
   border-radius:16px; padding:12px 14px; font-size:.86rem; font-weight:700}
 footer.site{background:var(--surface); border-top:1px solid var(--line); margin-top:56px;
   padding:34px 0 calc(90px + env(safe-area-inset-bottom,0px))}
+/* ===== Colex cell (compact, smaller than the page text) ===== */
+.cx{display:flex; flex-direction:column; gap:5px; align-items:flex-start; min-width:150px; max-width:190px; font-size:.68rem; line-height:1.45}
+.cx-btn{display:inline-flex; align-items:center; gap:5px; border:0; cursor:pointer; font:inherit; font-size:.7rem; font-weight:800; color:#fff;
+  padding:5px 11px; border-radius:999px; background:linear-gradient(135deg,#FF8A1F,#FF5A00); box-shadow:0 4px 10px -5px #FF5A00; transition:transform .12s,box-shadow .12s}
+.cx-btn:hover{transform:translateY(-1px)} .cx-btn:active{transform:translateY(1px)} .cx-btn:disabled{opacity:.6; cursor:wait}
+.cx-chip{display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; font-size:.66rem; font-weight:800; background:#E6F6EC; color:#0B7A3B}
+.cx-chip.st{background:var(--surface-2,#F6EFE6); color:var(--brand-ink)}
+.cx-trk{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:.66rem; color:var(--muted); letter-spacing:.02em}
+.cx-row{display:flex; gap:4px}
+.cx-ico{border:1px solid var(--line); background:var(--surface); color:inherit; border-radius:8px; cursor:pointer; font-size:.7rem; padding:3px 8px}
+.cx-err{width:100%; border:1px solid #F4C2C9; background:#FFF1F3; color:#B3152F; border-radius:10px; padding:5px 8px; font-size:.66rem; font-weight:700}
+.cx-err details{margin-top:3px; font-weight:500; color:#7A1B2B} .cx-err summary{cursor:pointer; font-size:.62rem; opacity:.8}
+.cx-err pre{margin:3px 0 0; white-space:pre-wrap; word-break:break-word; font:inherit; font-size:.62rem; direction:ltr; text-align:left}
+.cx-modal{position:fixed; inset:0; z-index:9999; display:grid; place-items:center; background:rgba(20,10,30,.55); padding:18px; backdrop-filter:blur(3px)}
+.cx-box{width:min(420px,100%); background:var(--surface,#fff); color:var(--ink,#222); border-radius:20px; padding:20px; box-shadow:0 20px 60px -20px rgba(0,0,0,.5); text-align:center}
+.cx-box h3{margin:0 0 6px; font-size:1rem} .cx-box p{margin:0 0 14px; font-size:.84rem; color:var(--muted); line-height:1.7}
+.cx-box .acts{display:flex; gap:10px} .cx-box .acts button{flex:1; padding:11px; border-radius:14px; border:1px solid var(--line); font:inherit; font-weight:800; cursor:pointer; background:var(--surface-2,#f4f4f4); color:inherit}
+.cx-box .acts button.ok{background:linear-gradient(135deg,#FF8A1F,#FF5A00); color:#fff; border-color:transparent}
 </style>
 
 <!-- ==========================================================================
@@ -1986,17 +2004,28 @@ function colexErrText(j){
   if(!body && c==null) body='الرد: '+JSON.stringify(j).slice(0,200);
   return ([hint,body].filter(Boolean).join(' — ')||'فشل الإرسال بدون أي تفاصيل من Colex')+st;
 }
+function colexShort(txt){
+  const t=String(txt||'');
+  if(/commune/i.test(t)) return 'البلدية غير مطابقة لقائمة Colex';
+  if(/stop.?desk|bureau|desk|مكتب/i.test(t)) return 'لا يوجد مكتب توصيل متاح هنا';
+  if(/401|403|توكن|token/i.test(t)) return 'التوكن مرفوض — راجع إعدادات Colex';
+  if(/CORS|المتصفح منع/i.test(t)) return 'المتصفح منع الإرسال المباشر';
+  return t.replace(/^\[[^\]]*\]\s*/,'').slice(0,70)+(t.length>70?'…':'');
+}
 function colexCell(o){
   if(o.colexSent){
-    return `<div style="font-size:.78rem; font-weight:800; color:#0B7A3B">✅ أُرسل</div>`
-      + (o.colexTracking?`<div style="font-size:.74rem; font-family:monospace" dir="ltr">${esc(o.colexTracking)}</div>`:'')
-      + (o.colexStatus?`<div style="font-size:.76rem; font-weight:800; color:var(--brand-ink)">${esc(colexStatusLabel(o.colexStatus))}</div>`:'')
-      + `<div style="display:flex; gap:4px; margin-top:4px">`
-      + `<button class="btn btn-ghost btn-sm" title="تحديث الحالة من Colex" onclick="colexRefresh(['${o.id}'])">🔄</button>`
-      + `<button class="btn btn-ghost btn-sm" id="cxb_${o.id}" title="إعادة الإرسال" onclick="colexSend('${o.id}')">↻</button></div>`;
+    return `<div class="cx">`
+      + `<span class="cx-chip">✅ أُرسل</span>`
+      + (o.colexTracking?`<span class="cx-trk" dir="ltr">${esc(o.colexTracking)}</span>`:'')
+      + (o.colexStatus?`<span class="cx-chip st">${esc(colexStatusLabel(o.colexStatus))}</span>`:'')
+      + `<div class="cx-row">`
+      + `<button class="cx-ico" title="تحديث الحالة من Colex" onclick="colexRefresh(['${o.id}'])">🔄</button>`
+      + `<button class="cx-ico" id="cxb_${o.id}" title="إعادة الإرسال" onclick="colexSend('${o.id}')">↻</button></div></div>`;
   }
-  return `<button class="btn btn-sm btn-primary" id="cxb_${o.id}" onclick="colexSend('${o.id}')">🚚 إرسال لكولكس</button>`
-    + (o.colexError?`<div style="font-size:.72rem; color:#C81E3A; max-width:170px; margin-top:4px">${esc(o.colexError)}</div>`:'');
+  const raw=o.colexErrorRaw||o.colexError||'';
+  return `<div class="cx"><button class="cx-btn" id="cxb_${o.id}" onclick="colexSend('${o.id}')">🚚 إرسال لكولكس</button>`
+    + (o.colexError?`<div class="cx-err">⚠︎ ${esc(colexShort(o.colexError))}<details><summary>التفاصيل</summary><pre>${esc(raw)}</pre></details></div>`:'')
+    + `</div>`;
 }
 function colexDirectProvider(){
   const l=(S.integ&&S.integ.providers||[]).filter(p=>p.enabled && p.token && p.apiUrl && (p.type==='colex'||p.type==='ecotrack'||/ecotrack\.dz/i.test(p.apiUrl)));
@@ -2108,6 +2137,18 @@ function colexRefreshAll(){
   const final=['paye_et_archive','retour_archive','annule'];
   return colexRefresh(S.orders.filter(o=>o.colexSent && o.colexTracking && !final.includes(o.colexStatus)).map(o=>o.id));
 }
+function cxAsk(title,msg,okLabel,noLabel){
+  return new Promise(res=>{
+    const d=document.createElement('div'); d.className='cx-modal'; d.setAttribute('role','dialog'); d.setAttribute('aria-modal','true');
+    d.innerHTML='<div class="cx-box"><h3></h3><p></p><div class="acts"><button class="ok"></button><button class="no"></button></div></div>';
+    d.querySelector('h3').textContent='⚠︎ '+title; d.querySelector('p').textContent=msg;
+    d.querySelector('.ok').textContent=okLabel; d.querySelector('.no').textContent=noLabel;
+    const done=v=>{ d.remove(); res(v); };
+    d.querySelector('.ok').onclick=()=>done(true); d.querySelector('.no').onclick=()=>done(false);
+    d.addEventListener('click',e=>{ if(e.target===d) done(false); });
+    document.body.appendChild(d); d.querySelector('.ok').focus();
+  });
+}
 const COLEX_BUSY = new Set();
 async function colexSend(id){
   const o=S.orders.find(x=>x.id===id); if(!o) return;
@@ -2127,32 +2168,56 @@ async function colexSend(id){
     const address=(o.address||'').trim() || [o.commune,o.wilaya].filter(Boolean).join(', ');
     const ord={id:o.ref||o.id, name:o.customer, phone:o.phone, phone2:o.phone2||'', address,
       wilayaCode:o.wilayaCode, commune:o.commune, total:o.total, product:prod, note:o.notes||'', stopDesk:o.deliveryType==='desk'};
-    let j;
-    if(mode==='proxy'){
-      const r=await fetch(url+'/api/colex/send',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','X-Admin-Secret':secret},
-        body:JSON.stringify({order:ord}),
-        signal:(window.AbortSignal&&AbortSignal.timeout)?AbortSignal.timeout(30000):undefined
-      });
-      try{ j=await r.json(); }catch(e){ j={ok:false, error:'رد غير مفهوم من السيرفر (HTTP '+r.status+')'}; }
-    } else {
-      j=await colexDirect(dp, ord);
+    const doSend=async(od)=>{
+      if(mode==='proxy'){
+        const r=await fetch(url+'/api/colex/send',{
+          method:'POST',
+          headers:{'Content-Type':'application/json','X-Admin-Secret':secret},
+          body:JSON.stringify({order:od}),
+          signal:(window.AbortSignal&&AbortSignal.timeout)?AbortSignal.timeout(30000):undefined
+        });
+        try{ return await r.json(); }catch(e){ return {ok:false, error:'رد غير مفهوم من السيرفر (HTTP '+r.status+')'}; }
+      }
+      return await colexDirect(dp, od);
+    };
+    let j=await doSend(ord), cur=ord, communeFallback=false, deskToHome=false, usedCom=false, usedDesk=false, cancelled=false;
+    for(let k=0; k<2 && !j.ok && !j.dryRun; k++){
+      const txt=JSON.stringify(j);
+      if(cur.stopDesk && !usedDesk && /stop.?desk|bureau|desk|مكتب/i.test(txt)){
+        /* الطلب إلى مكتب توصيل لكن لا يوجد مكتب في هذه البلدية: نسأل الإدارة */
+        usedDesk=true;
+        if(!(await cxAsk('لا يوجد مكتب توصيل في هذه البلدية','طلب «'+(o.customer||'')+'» موجّه إلى مكتب توصيل في «'+(o.commune||'')+'» ولم تجد Colex مكتباً هناك. هل توافق على تحويله إلى التوصيل للمنزل؟','أوافق (للمنزل)','ألغي الإرسال'))){ cancelled=true; break; }
+        cur=Object.assign({},cur,{stopDesk:false, note:[cur.note,'طُلب مكتب توصيل غير متوفر، حُوّل إلى التوصيل للمنزل بموافقة الإدارة'].filter(Boolean).join(' | ')});
+        deskToHome=true;
+      } else if(!usedCom && /commune|بلدية|municip/i.test(txt)){
+        /* Colex رفضت اسم البلدية: نعيد بالبلدية الرئيسية للولاية ونضع البلدية المكتوبة في العنوان والملاحظة */
+        usedCom=true;
+        const row=(typeof DZ!=='undefined')?DZ.find(x=>Number(x[0])===Number(o.wilayaCode)):null;
+        const fb=row?String(row[2]||'').trim():'', written=String(o.commune||'').trim();
+        if(!fb || !written || fb.toLowerCase()===written.toLowerCase()) break;
+        cur=Object.assign({},cur,{commune:fb, address:[written,(o.address||'').trim()].filter(Boolean).join(' - '),
+          note:[cur.note,'البلدية كما كتبها الزبون: '+written].filter(Boolean).join(' | ')});
+        communeFallback=true;
+      } else break;
+      j=await doSend(cur);
     }
+    if(cancelled){ toast('تم إلغاء الإرسال إلى Colex'); return; }
+    if(!j.ok) communeFallback=false;
     if(j.dryRun){ alert('DRY_RUN — لم يُرسل أي شيء إلى Colex.\n\n'+JSON.stringify(j.payload,null,2)); return; }
     const now=new Date().toISOString();
     if(!j.ok){
       console.warn('Colex response', mode, j);
       const msg=(mode==='proxy' ? '[وضع: سيرفر وسيط '+url+'] ' : '[وضع: مباشر إلى Colex] ')+colexErrText(j);
-      const patch={colexError:msg.slice(0,300), updatedAt:now};
+      const patch={colexError:colexShort(msg), colexErrorRaw:msg.slice(0,500), updatedAt:now};
       await updateOrder(id,patch); Object.assign(o,patch);
       toast('⚠︎ '+msg); return;
     }
     const tr=colexTracking(j.colex);
-    const patch={colexSent:true, colexTracking:tr, colexSentAt:now, colexError:'', colexRaw:JSON.stringify(j.colex==null?'':j.colex).slice(0,600), updatedAt:now};
+    const patch={colexSent:true, colexTracking:tr, colexSentAt:now, colexError:'', colexErrorRaw:'', colexRaw:JSON.stringify(j.colex==null?'':j.colex).slice(0,600), updatedAt:now};
+    if(deskToHome){ patch.deliveryType='home'; patch.notes=[o.notes,'تحويل من مكتب إلى المنزل (لا يوجد مكتب)'].filter(Boolean).join(' | '); }
     await updateOrder(id,patch); Object.assign(o,patch);
     if(o.status==='pending' || o.status==='confirmed') await changeStatus(id,'shipped');
-    toast(tr ? '✅ أُرسل إلى Colex — رقم التتبع: '+tr : '✅ أُرسل إلى Colex (لم أجد رقم التتبع في الرد، راجع لوحة Colex)');
+    toast((tr ? '✅ أُرسل إلى Colex — رقم التتبع: '+tr : '✅ أُرسل إلى Colex (لم أجد رقم التتبع في الرد، راجع لوحة Colex)')+(deskToHome?' · ⚠︎ حُوّل إلى التوصيل للمنزل، راجع سعر التوصيل':'')+(communeFallback?' · ⚠︎ البلدية «'+(o.commune||'')+'» لم تُطابق قائمة Colex، فأُرسلت باسم الولاية والبلدية كما كُتبت في العنوان':''));
   }catch(e){
     toast(mode==='direct' ? '⚠︎ المتصفح منع الإرسال المباشر إلى Colex (غالبًا CORS): '+(e&&e.message||e)+' — نحتاج السيرفر الوسيط' : '⚠︎ تعذّر الاتصال بالسيرفر الوسيط: '+(e&&e.message||e));
   }finally{
