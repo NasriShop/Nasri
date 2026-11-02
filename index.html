@@ -305,6 +305,16 @@ header.topbar::after{content:""; position:absolute; inset-inline:0; bottom:-2px;
 .zcp[hidden]{display:none}
 .zcp img{width:84px; height:84px; object-fit:cover; border-radius:12px; flex:none; background:var(--surface-2)}
 .zcp span{font-size:.78rem; font-weight:700; color:var(--muted)}
+.zcl{display:grid; gap:8px}
+.zcr{display:flex; align-items:center; justify-content:space-between; gap:10px; border:1.5px solid var(--line); background:var(--surface); border-radius:14px; padding:6px 8px 6px 10px; transition:border-color .15s, background .15s}
+.zcr[data-on="1"]{border-color:var(--brand); background:var(--brand-soft)}
+.zcr .nm{display:flex; align-items:center; gap:8px; font-weight:800; font-size:.9rem; min-width:0}
+.zcr .nm i{width:24px; height:24px; border-radius:50%; flex:none; box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.18)}
+.zcr .qty{background:var(--surface); box-shadow:inset 0 0 0 1.5px var(--line); border-radius:999px; padding:3px; gap:2px}
+.zcr .qty button{width:34px; height:34px; border-radius:50%; background:var(--brand); color:#fff; font-size:1.1rem; line-height:1; border:0; cursor:pointer}
+.zcr .qty button:disabled{opacity:.35; cursor:default}
+.zcr .qty span{min-width:34px; font-size:1rem}
+.zctot{display:flex; justify-content:space-between; font-size:.82rem; font-weight:800; color:var(--muted); margin-top:8px}
 .ofm-grp.err{outline:2px solid #E5484D; outline-offset:6px; border-radius:14px; animation:ofmShake .35s}
 .gimg.flash{box-shadow:0 0 0 4px var(--brand); transition:box-shadow .25s}
 .zvbox{border:1.5px solid var(--line); border-radius:14px; padding:12px; background:var(--surface-2)}
@@ -315,17 +325,6 @@ header.topbar::after{content:""; position:absolute; inset-inline:0; bottom:-2px;
 .zcrow .zr2{grid-column:1 / -1; display:flex; gap:8px; align-items:center}
 .zcrow .zr2 select{flex:1}
 .zcthumb{width:40px; height:40px; border-radius:8px; object-fit:cover; background:var(--surface); border:1px solid var(--line); flex:none}
-
-.zsw[disabled],.zsz[disabled]{opacity:.45; cursor:not-allowed; text-decoration:line-through}
-.zsw[disabled]:hover,.zsz[disabled]:hover{border-color:var(--line)}
-.zadd{font-size:.7rem; font-weight:800; color:var(--brand-ink); margin-inline-start:6px; text-decoration:none; display:inline-block}
-.zsw[disabled] .zadd,.zsz[disabled] .zadd{color:#C81E3A}
-.zpre{display:flex; gap:6px; flex-wrap:wrap; margin-top:8px}
-.zpre button{border:1px dashed var(--line); background:var(--surface); border-radius:8px; padding:4px 10px; font-size:.74rem; font-weight:700; cursor:pointer}
-.zpre button:hover{border-color:var(--brand); color:var(--brand)}
-.zcrow .zr3{grid-column:1 / -1; display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-.zcrow .zr3 input[type=number]{max-width:130px; padding:7px 10px}
-.zcrow .zr3 label{display:flex; gap:6px; align-items:center; font-size:.8rem; font-weight:700}
 
 /* ---------- floating contact ---------- */
 .floaties{position:fixed; inset-inline-end:14px; bottom:calc(16px + env(safe-area-inset-bottom,0px)); z-index:60;
@@ -865,23 +864,20 @@ en:{
 }};
 let LANG = localStorage.getItem('zn_lang') || 'ar';
 const t = k => (I18N[LANG] && I18N[LANG][k]) || I18N.ar[k] || k;
-Object.assign(I18N.ar,{soldOut:"نفد", optDefault:"الخيار", pickOptReq:"يرجى اختيار", enableOpt:"تفعيل خيار إضافي مخصّص (سعة، نموذج، نكهة…)", optLabelPh:"اسم الخيار (مثال: السعة)", optValsPh:"64GB, 128GB+500, 256GB+1000", needOpts:"أضف قيمة واحدة على الأقل للخيار", sizeNotePh:"ملاحظة تحت المقاسات (مثال: المقاس يصغر قليلاً، ننصح بأخذ مقاس أكبر)", addPrice:"زيادة السعر (دج)", outLabel:"نفد المخزون",
-  color:"اللون", size:"المقاس", pickColorReq:"يرجى اختيار اللون", pickSizeReq:"يرجى اختيار المقاس",
+Object.assign(I18N.ar,{color:"اللون", size:"المقاس", pickColorReq:"يرجى اختيار اللون", pickSizeReq:"يرجى اختيار المقاس",
   enableColors:"تفعيل اختيار اللون لهذا المنتج", enableSizes:"تفعيل اختيار المقاس لهذا المنتج",
   addColor:"+ إضافة لون", colorName:"اسم اللون (مثال: أحمر)", noImage:"— بدون صورة —", imgN:"الصورة",
-  sizesHint:"مفصولة بفاصلة. أضف +200 لزيادة السعر (XL+200) و ! لتعطيل المقاس عند نفاد مخزونه (XXL!)", needColors:"أضف لوناً واحداً على الأقل (مع اسمه)", needSizes:"أضف مقاساً واحداً على الأقل",
+  sizesHint:"المقاسات مفصولة بفاصلة، مثال: S, M, L, XL أو 38, 39, 40", needColors:"أضف لوناً واحداً على الأقل (مع اسمه)", needSizes:"أضف مقاساً واحداً على الأقل",
   seeImage:"اضغط لعرض صورة هذا اللون"});
-Object.assign(I18N.fr,{soldOut:"Épuisé", optDefault:"Option", pickOptReq:"Veuillez choisir", enableOpt:"Activer une option personnalisée (capacité, modèle, parfum…)", optLabelPh:"Nom de l'option (ex : Capacité)", optValsPh:"64GB, 128GB+500, 256GB+1000", needOpts:"Ajoutez au moins une valeur", sizeNotePh:"Note sous les tailles (ex : taille petit, prenez une taille au-dessus)", addPrice:"Supplément (DA)", outLabel:"Épuisé",
-  color:"Couleur", size:"Taille", pickColorReq:"Veuillez choisir la couleur", pickSizeReq:"Veuillez choisir la taille",
+Object.assign(I18N.fr,{color:"Couleur", size:"Taille", pickColorReq:"Veuillez choisir la couleur", pickSizeReq:"Veuillez choisir la taille",
   enableColors:"Activer le choix de couleur pour ce produit", enableSizes:"Activer le choix de taille pour ce produit",
   addColor:"+ Ajouter une couleur", colorName:"Nom de la couleur (ex : Rouge)", noImage:"— Sans image —", imgN:"Image",
-  sizesHint:"Séparées par une virgule. +200 ajoute un supplément (XL+200), ! marque rupture de stock (XXL!)", needColors:"Ajoutez au moins une couleur (avec son nom)", needSizes:"Ajoutez au moins une taille",
+  sizesHint:"Tailles séparées par une virgule, ex : S, M, L, XL ou 38, 39, 40", needColors:"Ajoutez au moins une couleur (avec son nom)", needSizes:"Ajoutez au moins une taille",
   seeImage:"Touchez pour voir la photo de cette couleur"});
-Object.assign(I18N.en,{soldOut:"Sold out", optDefault:"Option", pickOptReq:"Please choose", enableOpt:"Enable a custom option (capacity, model, flavor…)", optLabelPh:"Option name (e.g. Capacity)", optValsPh:"64GB, 128GB+500, 256GB+1000", needOpts:"Add at least one value", sizeNotePh:"Note under sizes (e.g. runs small, order one size up)", addPrice:"Surcharge (DA)", outLabel:"Sold out",
-  color:"Color", size:"Size", pickColorReq:"Please choose a color", pickSizeReq:"Please choose a size",
+Object.assign(I18N.en,{color:"Color", size:"Size", pickColorReq:"Please choose a color", pickSizeReq:"Please choose a size",
   enableColors:"Enable color choice for this product", enableSizes:"Enable size choice for this product",
   addColor:"+ Add color", colorName:"Color name (e.g. Red)", noImage:"— No image —", imgN:"Image",
-  sizesHint:"Comma-separated. Add +200 for a surcharge (XL+200), ! marks sold out (XXL!)", needColors:"Add at least one color (with a name)", needSizes:"Add at least one size",
+  sizesHint:"Sizes separated by commas, e.g. S, M, L, XL or 38, 39, 40", needColors:"Add at least one color (with a name)", needSizes:"Add at least one size",
   seeImage:"Tap to see this color's photo"});
 /* ------------------------- 2.b Product categories ------------------------ */
 const CATS = [
@@ -1532,36 +1528,27 @@ function viewProduct(){
 }
 /* ---- اختيارات اللون / المقاس: تظهر فقط في المنتجات التي فعّلتها يدوياً من لوحة التحكم ---- */
 const safeHex = h => /^#[0-9a-fA-F]{3,8}$/.test(h||'') ? h : '#cccccc';
-/* صيغة مختصرة للقيم: "XL+200" = زيادة 200 دج، "XXL!" = نفد المخزون */
-const parseOpt = x => { x=String(x==null?'':x).trim(); let out=false, add=0;
-  if(/[!！]$/.test(x)){ out=true; x=x.replace(/[!！]+$/,'').trim(); }
-  const m=x.match(/^(.*?)\s*\+\s*(\d+)$/); if(m){ x=m[1].trim(); add=Number(m[2]); }
-  return {label:x, add, out}; };
-const pColors = p => (p && p.colorsOn && Array.isArray(p.colors)) ? p.colors.filter(c=>c && c.name).map(c=>({...c, add:Number(c.add)||0, out:!!c.out})) : [];
-const pSizes  = p => (p && p.sizesOn && Array.isArray(p.sizes)) ? p.sizes.map(parseOpt).filter(o=>o.label) : [];
-const pOpts   = p => (p && p.optOn && Array.isArray(p.opts)) ? p.opts.map(parseOpt).filter(o=>o.label) : [];
-let SEL_COLOR=null, SEL_SIZE=null, SEL_OPT=null, COLOR_IMG=-1;
-function varAdd(p){
-  const cs=pColors(p), ss=pSizes(p), os=pOpts(p);
-  return (SEL_COLOR!=null&&cs[SEL_COLOR]?cs[SEL_COLOR].add:0)+(SEL_SIZE!=null&&ss[SEL_SIZE]?ss[SEL_SIZE].add:0)+(SEL_OPT!=null&&os[SEL_OPT]?os[SEL_OPT].add:0);
-}
-function varLine(o){
-  if(!(o.color||o.size||o.opt)) return '';
-  return `<div style="font-size:.76rem; font-weight:800; color:var(--brand-ink)">${[o.color?'🎨 '+esc(o.color):'', o.size?'📏 '+esc(o.size):'', o.opt?'🔖 '+esc(o.opt):''].filter(Boolean).join(' · ')}</div>`;
-}
-function pickColor(i,quiet){
-  const p=byId(S.productId); if(!p) return; const c=pColors(p)[i]; if(!c||c.out) return;
-  SEL_COLOR=i;
-  document.querySelectorAll('#f_colorGrp .zsw').forEach((b,k)=>{ b.dataset.on=k===i?'1':''; b.setAttribute('aria-pressed',k===i?'true':'false'); });
-  document.getElementById('f_colorName').textContent='— '+c.name;
+const pColors = p => (p && p.colorsOn && Array.isArray(p.colors)) ? p.colors.filter(c=>c && c.name) : [];
+const pSizes  = p => (p && p.sizesOn && Array.isArray(p.sizes)) ? p.sizes.filter(Boolean) : [];
+let SEL_COLOR=null, SEL_SIZE=null, COLOR_IMG=-1, CQ=[];
+function bumpColor(i,n){
+  const p=byId(S.productId); if(!p) return; const cs=pColors(p), c=cs[i]; if(!c) return;
+  CQ[i]=Math.max(0,Math.min(99,(CQ[i]||0)+n));
+  QTY=cs.reduce((a,_,k)=>a+(CQ[k]||0),0);
+  document.getElementById('f_cq'+i).textContent=CQ[i];
+  document.getElementById('f_cr'+i).dataset.on=CQ[i]>0?'1':'';
+  document.getElementById('f_cm'+i).disabled=CQ[i]<=0;
+  const tt=document.getElementById('f_cqTot'); if(tt) tt.textContent=QTY;
   document.getElementById('f_colorGrp').classList.remove('err');
-  const idx = c.img ? (p.images||[]).indexOf(c.img) : -1, pv=document.getElementById('f_colorPrev');
-  COLOR_IMG=idx;
-  if(idx>=0){
-    const im=pv.querySelector('img'); im.onerror=()=>{ im.onerror=null; im.src=c.img; }; im.src=cimg(c.img,300);
-    pv.hidden=false;
-    if(!quiet && window.matchMedia('(min-width:960px)').matches) showColorImg();   // على الحاسوب النموذج ثابت بجانب الصور، فننتقل للصورة مباشرة
-  } else pv.hidden=true;
+  if(n>0){
+    const idx = c.img ? (p.images||[]).indexOf(c.img) : -1, pv=document.getElementById('f_colorPrev');
+    COLOR_IMG=idx;
+    if(idx>=0){
+      const im=pv.querySelector('img'); im.onerror=()=>{ im.onerror=null; im.src=c.img; }; im.src=cimg(c.img,300);
+      pv.hidden=false;
+      if(window.matchMedia('(min-width:960px)').matches) showColorImg();
+    } else pv.hidden=true;
+  }
   recalc();
 }
 function showColorImg(){
@@ -1569,43 +1556,24 @@ function showColorImg(){
   f.scrollIntoView({behavior:'smooth', block:'center'}); f.classList.add('flash'); setTimeout(()=>f.classList.remove('flash'),1500);
 }
 function pickSize(i){
-  const p=byId(S.productId); if(!p) return; const o=pSizes(p)[i]; if(!o||o.out) return; SEL_SIZE=i;
+  const p=byId(S.productId); if(!p) return; SEL_SIZE=i;
   document.querySelectorAll('#f_sizeGrp .zsz').forEach((b,k)=>{ b.dataset.on=k===i?'1':''; b.setAttribute('aria-pressed',k===i?'true':'false'); });
   document.getElementById('f_sizeGrp').classList.remove('err');
-  recalc();
-}
-function pickOpt(i){
-  const p=byId(S.productId); if(!p) return; const o=pOpts(p)[i]; if(!o||o.out) return; SEL_OPT=i;
-  document.querySelectorAll('#f_optGrp .zsz').forEach((b,k)=>{ b.dataset.on=k===i?'1':''; b.setAttribute('aria-pressed',k===i?'true':'false'); });
-  document.getElementById('f_optGrp').classList.remove('err');
-  recalc();
-}
-/* إذا بقي خيار واحد متاح فقط في مجموعة، يُختار تلقائياً (خطوة أقل للزبون) */
-function autoPick(p){
-  if(!p) return;
-  const one=l=>{ const a=l.map((x,i)=>x.out?-1:i).filter(i=>i>=0); return a.length===1?a[0]:-1; };
-  let i=one(pColors(p)); if(i>=0) pickColor(i,true);
-  i=one(pSizes(p)); if(i>=0) pickSize(i);
-  i=one(pOpts(p)); if(i>=0) pickOpt(i);
 }
 function orderFormHtml(p){
   const arrow = LANG==='ar' ? '←' : '→';
-  const cs=pColors(p), ss=pSizes(p), os=pOpts(p); let stepN=4;
-  const tag = o => o.out ? `<small class="zadd">${t('soldOut')}</small>` : (o.add ? `<small class="zadd">+${o.add}</small>` : '');
+  const cs=pColors(p), ss=pSizes(p); let stepN=4;
   const variantsHtml =
     (cs.length ? `<div class="ofm-grp" id="f_colorGrp">
-        <div class="ofm-step"><b>${stepN++}</b>${t('color')} <span id="f_colorName" class="muted" style="font-weight:700"></span></div>
-        <div class="zsws">${cs.map((c,i)=>`<button type="button" class="zsw" data-on="" aria-pressed="false" ${c.out?'disabled':''} onclick="pickColor(${i})"><i style="background:${esc(safeHex(c.hex))}"></i>${esc(c.name)}${tag(c)}</button>`).join('')}</div>
+        <div class="ofm-step"><b>${stepN++}</b>${t('color')} · ${t('qty')}</div>
+        <div class="zcl">${cs.map((c,i)=>`<div class="zcr" id="f_cr${i}" data-on=""><div class="nm"><i style="background:${esc(safeHex(c.hex))}"></i><span>${esc(c.name)}</span></div>
+          <div class="qty"><button type="button" id="f_cm${i}" onclick="bumpColor(${i},-1)" aria-label="-" disabled>−</button><span id="f_cq${i}">0</span><button type="button" onclick="bumpColor(${i},1)" aria-label="+">+</button></div></div>`).join('')}</div>
+        <div class="zctot"><span>${t('qty')}</span><b id="f_cqTot">0</b></div>
         <div class="zcp" id="f_colorPrev" hidden onclick="showColorImg()"><img alt=""><span>${t('seeImage')}</span></div>
       </div>` : '') +
     (ss.length ? `<div class="ofm-grp" id="f_sizeGrp">
         <div class="ofm-step"><b>${stepN++}</b>${t('size')}</div>
-        <div class="zsws">${ss.map((x,i)=>`<button type="button" class="zsz" data-on="" aria-pressed="false" ${x.out?'disabled':''} onclick="pickSize(${i})">${esc(x.label)}${tag(x)}</button>`).join('')}</div>
-        ${p.sizeNote?`<div class="muted" style="font-size:.78rem; margin-top:8px">📐 ${esc(p.sizeNote)}</div>`:''}
-      </div>` : '') +
-    (os.length ? `<div class="ofm-grp" id="f_optGrp">
-        <div class="ofm-step"><b>${stepN++}</b>${esc(p.optLabel||t('optDefault'))}</div>
-        <div class="zsws">${os.map((x,i)=>`<button type="button" class="zsz" data-on="" aria-pressed="false" ${x.out?'disabled':''} onclick="pickOpt(${i})">${esc(x.label)}${tag(x)}</button>`).join('')}</div>
+        <div class="zsws">${ss.map((x,i)=>`<button type="button" class="zsz" data-on="" aria-pressed="false" onclick="pickSize(${i})">${esc(x)}</button>`).join('')}</div>
       </div>` : '');
   return `<form class="card ofm" id="orderForm" novalidate onsubmit="return false">
     <div class="ofm-head">
@@ -1646,12 +1614,12 @@ function orderFormHtml(p){
 
       ${variantsHtml}
 
-      <div class="ofm-grp">
+      ${cs.length?'':`<div class="ofm-grp">
         <div class="ofm-qrow">
           <div class="ofm-step"><b>${stepN}</b>${t('qty')}</div>
           <div class="qty"><button type="button" onclick="bumpQty(-1)" aria-label="-">−</button><span id="f_qty">1</span><button type="button" onclick="bumpQty(1)" aria-label="+">+</button></div>
         </div>
-      </div>
+      </div>`}
 
       <div class="ofm-sum">
         <div class="row"><span class="muted">${t('subtotal')}</span><b class="price" id="s_sub">${money(p.price)}</b></div>
@@ -1665,9 +1633,9 @@ function orderFormHtml(p){
   </form>`;
 }
 let QTY=1;
-function bumpQty(n){ QTY=Math.max(1,Math.min(99,QTY+n)); document.getElementById('f_qty').textContent=QTY; recalc(); }
+function bumpQty(n){ QTY=Math.max(1,Math.min(99,QTY+n)); const e=document.getElementById('f_qty'); if(e) e.textContent=QTY; recalc(); }
 function wireOrderForm(){
-  QTY=1; SEL_COLOR=null; SEL_SIZE=null; SEL_OPT=null; COLOR_IMG=-1;
+  { const _p=byId(S.productId), _n=pColors(_p).length; CQ=[]; QTY=_n?0:1; } SEL_COLOR=null; SEL_SIZE=null; COLOR_IMG=-1;
   const w=document.getElementById('f_wilaya'); if(!w) return;
   const _f=document.getElementById('orderForm');
   ['input','change'].forEach(ev=>_f.addEventListener(ev,e=>e.target.classList&&e.target.classList.remove('err')));
@@ -1688,7 +1656,6 @@ function wireOrderForm(){
     document.getElementById('rc_desk').dataset.on = r.form.dtype.value==='desk'?'1':'';
     recalc();
   }));
-  autoPick(byId(S.productId));
   recalc();
 }
 function recalc(){
@@ -1699,7 +1666,7 @@ function recalc(){
   const pm=v=>v==null?'—':money(v);
   if(wc){ h.textContent=pm(shipFor(wc,'home')); dk.textContent=pm(shipFor(wc,'desk')); }
   else { h.textContent='—'; dk.textContent='—'; }
-  const sub=(p.price+varAdd(p))*QTY, ship=wc?(shipFor(wc,type)||0):0;
+  const sub=p.price*QTY, ship=wc?(shipFor(wc,type)||0):0;
   document.getElementById('s_sub').textContent=money(sub);
   document.getElementById('s_ship').textContent=(wc&&shipFor(wc,type)!=null)?money(ship):'—';
   document.getElementById('s_total').textContent=money(sub+ship);
@@ -1717,22 +1684,20 @@ async function submitOrder(pid){
   if(!commune) bad.push(g('f_commune')==='__other'?'f_commune_other':'f_commune');
   if(bad.length){ bad.forEach(id=>document.getElementById(id)?.classList.add('err')); document.getElementById(bad[0])?.focus(); return toast(t('required')); }
   if(!/^0?[5-7]\d{8}$/.test(phone)){ const el=document.getElementById('f_phone'); el.classList.add('err'); el.focus(); return toast(t('badPhone')); }
-  const cs=pColors(p), ss=pSizes(p), os=pOpts(p);
-  if(cs.length && SEL_COLOR==null){ const e=document.getElementById('f_colorGrp'); e.classList.add('err'); e.scrollIntoView({block:'center',behavior:'smooth'}); return toast(t('pickColorReq')); }
+  const cs=pColors(p), ss=pSizes(p);
+  if(cs.length && QTY<1){ const e=document.getElementById('f_colorGrp'); e.classList.add('err'); e.scrollIntoView({block:'center',behavior:'smooth'}); return toast(t('pickColorReq')); }
   if(ss.length && SEL_SIZE==null){ const e=document.getElementById('f_sizeGrp'); e.classList.add('err'); e.scrollIntoView({block:'center',behavior:'smooth'}); return toast(t('pickSizeReq')); }
-  if(os.length && SEL_OPT==null){ const e=document.getElementById('f_optGrp'); e.classList.add('err'); e.scrollIntoView({block:'center',behavior:'smooth'}); return toast(t('pickOptReq')+' '+(p.optLabel||'')); }
   const type=document.querySelector('input[name="dtype"]:checked')?.value||'home';
   const row=DZ.find(x=>String(x[0])===String(wc));
-  const unit=p.price+varAdd(p);
-  const ship=shipFor(wc,type), sub=unit*QTY;
+  const ship=shipFor(wc,type), sub=p.price*QTY;
   if(ship==null) return toast(t('noPrice'));
   const _pl=cxSplit(commune, row?row[3]:[]);          // «بلدية + عنوان مفصّل» → البلدية في خانتها والعنوان تحتها
   const _commune=String(_pl.commune||commune).trim(), _addr=String(_pl.rest||'').trim();
   const btn=document.getElementById('submitBtn');
   btn.disabled=true; btn.innerHTML=`<span class="spinner"></span> ${t('sending')}`;
   const order=await addOrder({
-    productId:p.id, productName:L(p.name), unitPrice:unit, qty:QTY,
-    color:cs.length?cs[SEL_COLOR].name:'', size:ss.length?ss[SEL_SIZE].label:'', opt:os.length?((p.optLabel||t('optDefault'))+': '+os[SEL_OPT].label):'',
+    productId:p.id, productName:L(p.name), unitPrice:p.price, qty:QTY,
+    color:cs.length?cs.map((c,k)=>(CQ[k]>0)?(c.name+' ×'+CQ[k]):'').filter(Boolean).join('، '):'', size:ss.length?ss[SEL_SIZE]:'',
     customer:g('f_name'), phone, phone2:'',
     wilayaCode:Number(wc), wilaya:row?row[2]:'', wilayaAr:row?row[1]:'',
     commune:_commune, address:_addr, notes:'',
@@ -1867,7 +1832,7 @@ function openProduct(id){
   const p = id ? JSON.parse(JSON.stringify(byId(id))) :
     {name:{ar:"",fr:"",en:""}, desc:{ar:"",fr:"",en:""}, price:0, oldPrice:0, images:[], stock:0, sold:0, active:true, category:"other"};
   DRAFT=p;
-  DRAFT.colors=Array.isArray(DRAFT.colors)?DRAFT.colors:[]; DRAFT.colorsOn=!!DRAFT.colorsOn; DRAFT.sizesOn=!!DRAFT.sizesOn; DRAFT.optOn=!!DRAFT.optOn;
+  DRAFT.colors=Array.isArray(DRAFT.colors)?DRAFT.colors:[]; DRAFT.colorsOn=!!DRAFT.colorsOn; DRAFT.sizesOn=!!DRAFT.sizesOn;
   document.getElementById('modalHost').innerHTML = `
   <div class="modal" onclick="if(event.target===this)closeModal()"><div class="modal-panel" style="padding:24px">
     <h2 style="font-size:1.15rem; margin-bottom:16px">${id?t('edit'):t('addProduct')}</h2>
@@ -1905,18 +1870,8 @@ function openProduct(id){
       <div class="zvbox">
         <label class="zvtog"><input type="checkbox" id="d_sizesOn" onchange="toggleVar()" ${p.sizesOn?'checked':''}> 📏 ${t('enableSizes')}</label>
         <div id="d_sizesBox" ${p.sizesOn?'':'hidden'} style="margin-top:10px">
-          <input class="field" id="d_sizes" placeholder="S, M, L, XL+200, XXL!" value="${esc((p.sizes||[]).join(', '))}">
-          <div class="zpre"><button type="button" onclick="fillSizes('S, M, L, XL, XXL')">S → XXL</button><button type="button" onclick="fillSizes('36, 37, 38, 39, 40, 41, 42, 43, 44, 45')">👟 36 → 45</button><button type="button" onclick="fillSizes('2 ans, 4 ans, 6 ans, 8 ans, 10 ans, 12 ans')">👶 2 → 12 ans</button></div>
+          <input class="field" id="d_sizes" placeholder="S, M, L, XL" value="${esc((p.sizes||[]).join(', '))}">
           <div class="muted" style="font-size:.76rem; margin-top:6px">${t('sizesHint')}</div>
-          <input class="field" id="d_sizeNote" style="margin-top:8px" placeholder="${esc(t('sizeNotePh'))}" value="${esc(p.sizeNote||'')}">
-        </div>
-      </div>
-      <div class="zvbox">
-        <label class="zvtog"><input type="checkbox" id="d_optOn" onchange="toggleVar()" ${p.optOn?'checked':''}> 🔖 ${t('enableOpt')}</label>
-        <div id="d_optBox" ${p.optOn?'':'hidden'} style="margin-top:10px; display:grid; gap:8px">
-          <input class="field" id="d_optLabel" placeholder="${esc(t('optLabelPh'))}" value="${esc(p.optLabel||'')}">
-          <input class="field" id="d_opts" placeholder="${esc(t('optValsPh'))}" value="${esc((p.opts||[]).join(', '))}">
-          <div class="muted" style="font-size:.76rem">${t('sizesHint')}</div>
         </div>
       </div>
       <div><label class="lbl">${t('descHtml')} — AR</label><textarea class="field" id="d_dar" rows="5">${esc(p.desc.ar||'')}</textarea></div>
@@ -1944,19 +1899,14 @@ function colorRowsHtml(){
       ${c.img&&imgs.includes(c.img)?`<img class="zcthumb" src="${esc(c.img)}" alt="">`:'<span class="zcthumb"></span>'}
       <button type="button" class="btn btn-ghost btn-sm" onclick="DRAFT.colors.splice(${i},1);renderColorRows()">×</button>
     </div>
-    <div class="zr3">
-      <input class="field" type="number" min="0" placeholder="${esc(t('addPrice'))}" value="${c.add?Number(c.add):''}" oninput="DRAFT.colors[${i}].add=Number(this.value)||0">
-      <label><input type="checkbox" ${c.out?'checked':''} onchange="DRAFT.colors[${i}].out=this.checked" style="accent-color:var(--brand)"> ${t('outLabel')}</label>
-    </div>
   </div>`).join('');
 }
 function renderColorRows(){ const h=document.getElementById('d_colorRows'); if(h) h.innerHTML=colorRowsHtml(); }
-function addColorRow(){ DRAFT.colors.push({name:'', hex:'#e11d48', img:'', add:0, out:false}); renderColorRows(); }
+function addColorRow(){ DRAFT.colors.push({name:'', hex:'#e11d48', img:''}); renderColorRows(); }
 function refreshImgs(){ document.getElementById('d_imgs').innerHTML=imgChips(); renderColorRows(); }
-function fillSizes(v){ const i=document.getElementById('d_sizes'); if(i) i.value=v; }
 function toggleVar(){
   const g=id=>document.getElementById(id);
-  g('d_colorsBox').hidden=!g('d_colorsOn').checked; g('d_sizesBox').hidden=!g('d_sizesOn').checked; g('d_optBox').hidden=!g('d_optOn').checked;
+  g('d_colorsBox').hidden=!g('d_colorsOn').checked; g('d_sizesBox').hidden=!g('d_sizesOn').checked;
   if(g('d_colorsOn').checked && !DRAFT.colors.length) addColorRow();
 }
 function imgChips(){
@@ -2038,14 +1988,10 @@ async function commitProduct(id){
   if(!p.name.ar) return toast(t('required'));
   p.colorsOn=document.getElementById('d_colorsOn').checked;
   p.sizesOn=document.getElementById('d_sizesOn').checked;
-  p.colors=(DRAFT.colors||[]).filter(c=>c.name&&c.name.trim()).map(c=>({name:c.name.trim(), hex:safeHex(c.hex), img:c.img||'', add:Number(c.add)||0, out:!!c.out}));
-  p.sizeNote=g('d_sizeNote').trim();
-  p.optOn=document.getElementById('d_optOn').checked; p.optLabel=g('d_optLabel').trim();
-  p.opts=g('d_opts').split(/[,،\n]+/).map(x=>x.trim()).filter(Boolean);
+  p.colors=(DRAFT.colors||[]).filter(c=>c.name&&c.name.trim()).map(c=>({name:c.name.trim(), hex:safeHex(c.hex), img:c.img||''}));
   p.sizes=document.getElementById('d_sizes').value.split(/[,،\n]+/).map(x=>x.trim()).filter(Boolean);
   if(p.colorsOn && !p.colors.length) return toast(t('needColors'));
   if(p.sizesOn && !p.sizes.length) return toast(t('needSizes'));
-  if(p.optOn && !p.opts.length) return toast(t('needOpts'));
   const nid=await saveProduct(p);
   if(!nid) return;   // فشل الحفظ في السحابة: أبقِ النافذة مفتوحة
   if(!DB){ /* local list already updated */ }
@@ -2118,7 +2064,7 @@ function tabOrders(){
       <td class="muted" style="font-size:.78rem">${new Date(o.createdAt).toLocaleString(LANG==='ar'?'ar-DZ':'fr-FR')}</td>
       <td><b>${esc(o.customer)}</b><div><a href="tel:${esc(o.phone)}" style="font-size:.8rem;color:var(--brand)">${esc(o.phone)}</a></div>
         <a class="muted" style="font-size:.74rem" target="_blank" rel="noopener" href="https://wa.me/213${esc(String(o.phone).replace(/^0/,''))}">WhatsApp</a></td>
-      <td>${esc(o.productName)} ×${o.qty}${varLine(o)}</td>
+      <td>${esc(o.productName)} ×${o.qty}${(o.color||o.size)?`<div style="font-size:.76rem; font-weight:800; color:var(--brand-ink)">${o.color?'🎨 '+esc(o.color):''}${o.color&&o.size?' · ':''}${o.size?'📏 '+esc(o.size):''}</div>`:''}</td>
       <td>${placeCell(o)}</td>
       <td class="price">${money(o.total)}<div class="muted" style="font-size:.72rem">+${money(o.shipping)}</div></td>
       <td><select class="field" style="padding:6px 8px; font-size:.8rem; font-weight:800; border-color:${STAT_COLOR[o.status]||'var(--line)'}; color:${STAT_COLOR[o.status]||'var(--ink)'}" onchange="changeStatus('${o.id}',this.value)">
@@ -2172,7 +2118,7 @@ function cust(o){
     <a class="muted" style="font-size:.74rem" target="_blank" rel="noopener" href="https://wa.me/213${esc(String(o.phone).replace(/^0/,''))}">WhatsApp</a>`;
 }
 function prodCell(o){
-  return `${esc(o.productName)} ×${o.qty}${varLine(o)}`;
+  return `${esc(o.productName)} ×${o.qty}${(o.color||o.size)?`<div style="font-size:.76rem; font-weight:800; color:var(--brand-ink)">${o.color?'🎨 '+esc(o.color):''}${o.color&&o.size?' · ':''}${o.size?'📏 '+esc(o.size):''}</div>`:''}`;
 }
 /* مزامنة صامتة تلقائية مع Colex: عند فتح لوحة التحكم وكل بضع دقائق وعند التنقل بين التبويبات.
    تكتب في قاعدة البيانات فقط عندما تتغيّر حالة الطرد فعلاً (خفيف على Firestore). */
@@ -2646,7 +2592,7 @@ async function colexSend(id){
   COLEX_BUSY.add(id);
   const btn=document.getElementById('cxb_'+id); if(btn){ btn.disabled=true; btn.textContent='⏳…'; }
   try{
-    const prod=[o.productName+((o.qty||1)>1?' ×'+o.qty:''), o.color, o.size, o.opt].filter(Boolean).join(' - ');
+    const prod=[o.productName+((o.qty||1)>1?' ×'+o.qty:''), o.color, o.size].filter(Boolean).join(' - ');
     const wrow=(typeof DZ!=='undefined')?DZ.find(x=>Number(x[0])===Number(o.wilayaCode)):null;
     const sp=cxSplit(o.commune, wrow?wrow[3]:[]);
     const written=sp.commune||String(o.commune||'').trim();
@@ -2753,7 +2699,7 @@ function pushSheet(orders){
     o.customer, o.phone, o.phone2||'', String(o.wilayaCode).padStart(2,'0'),
     o.wilayaAr||o.wilaya, o.commune, o.address,
     o.deliveryType==='home'?'المنزل':'المكتب',
-    o.productName, o.qty, o.unitPrice, o.shipping, o.total, o.status, o.notes||'', o.color||'', (o.size||'')+(o.opt?((o.size?' | ':'')+o.opt):'')]);
+    o.productName, o.qty, o.unitPrice, o.shipping, o.total, o.status, o.notes||'', o.color||'', o.size||'']);
   fetch(url,{method:'POST', mode:'no-cors',
     headers:{'Content-Type':'text/plain;charset=utf-8'},
     body: JSON.stringify({token:'ZN', rows})}).catch(()=>{});
