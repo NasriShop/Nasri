@@ -2070,7 +2070,9 @@ function tabOrders(){
       <td><select class="field" style="padding:6px 8px; font-size:.8rem; font-weight:800; border-color:${STAT_COLOR[o.status]||'var(--line)'}; color:${STAT_COLOR[o.status]||'var(--ink)'}" onchange="changeStatus('${o.id}',this.value)">
         ${ST.map(s=>`<option value="${s}" ${o.status===s?'selected':''}>${stLabel(s)}</option>`).join('')}</select></td>
       <td>${colexCell(o)}</td>
-      <td><button class="btn btn-sm" style="background:var(--accent-soft); color:var(--accent)" onclick="dropOrder('${o.id}')">${t('del')}</button></td>
+      <td><div style="display:flex; flex-direction:column; gap:6px; min-width:96px">
+        <button class="btn btn-ghost btn-sm" onclick="editOrder('${o.id}')">✏️ تعديل</button>
+        <button class="btn btn-sm" style="background:var(--accent-soft); color:var(--accent)" onclick="dropOrder('${o.id}')">${t('del')}</button></div></td>
     </tr>`).join('')||`<tr><td colspan="9" class="muted" style="padding:24px">${t('noOrders')}</td></tr>`}
     </tbody></table></div>`;
 }
@@ -2226,6 +2228,85 @@ function retRowsHtml(){
 }
 function setRetF(patch){ S.retF={...(S.retF||{g:'all',q:''}),...patch}; render(); }
 function retSearch(v){ S.retF={...(S.retF||{g:'all',q:''}),q:v}; const h=document.getElementById('retRows'); if(h) h.innerHTML=retRowsHtml(); }
+
+/* ===================== ✏️ تعديل الطلبية قبل الإرسال إلى Colex ===================== */
+function editOrder(id){
+  const o=S.orders.find(x=>x.id===id); if(!o) return;
+  const wopts=DZ.map(w=>`<option value="${w[0]}" ${Number(o.wilayaCode)===Number(w[0])?'selected':''}>${String(w[0]).padStart(2,'0')} ${esc(w[1])}</option>`).join('');
+  const warn=o.colexSent?`<div style="background:var(--accent-soft); color:var(--accent); padding:10px 12px; border-radius:12px; font-size:.82rem; font-weight:700">⚠︎ هذه الطلبية أُرسلت إلى Colex سابقاً. التعديل هنا لا يغيّر الطرد الموجود عندهم، وإعادة الإرسال تنشئ طرداً جديداً.</div>`:'';
+  document.getElementById('modalHost').innerHTML=`
+  <div class="modal" onclick="if(event.target===this)closeModal()"><div class="modal-panel" style="padding:24px">
+    <h2 style="font-size:1.15rem; margin-bottom:4px">✏️ تعديل الطلبية ${esc(o.ref||o.id)}</h2>
+    <div class="muted" style="font-size:.82rem; margin-bottom:14px">${esc(o.productName||'')}</div>
+    <div style="display:grid; gap:12px">
+      ${warn}
+      <div><label class="lbl">الاسم واللقب</label><input class="field" id="eo_name" value="${esc(o.customer||'')}"></div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+        <div><label class="lbl">رقم الهاتف</label><input class="field" id="eo_phone" type="tel" dir="ltr" value="${esc(o.phone||'')}"></div>
+        <div><label class="lbl">هاتف ثانٍ</label><input class="field" id="eo_phone2" type="tel" dir="ltr" value="${esc(o.phone2||'')}"></div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+        <div><label class="lbl">الولاية</label><select class="field" id="eo_wilaya" onchange="eoRecalc()">${wopts}</select></div>
+        <div><label class="lbl">البلدية</label><input class="field" id="eo_commune" value="${esc(o.commune||'')}"></div>
+      </div>
+      <div><label class="lbl">العنوان بالتفصيل</label><input class="field" id="eo_address" value="${esc(o.address||'')}"></div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+        <div><label class="lbl">طريقة التوصيل</label><select class="field" id="eo_type" onchange="eoRecalc()">
+          <option value="home" ${o.deliveryType!=='desk'?'selected':''}>${t('home')}</option>
+          <option value="desk" ${o.deliveryType==='desk'?'selected':''}>${t('desk')}</option></select></div>
+        <div><label class="lbl">الكمية</label><input class="field" id="eo_qty" type="number" min="1" value="${Number(o.qty)||1}" oninput="eoRecalc(true)"></div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+        <div><label class="lbl">سعر التوصيل</label><input class="field" id="eo_ship" type="number" min="0" value="${Number(o.shipping)||0}" oninput="eoTotal()"></div>
+        <div><label class="lbl">المجموع</label><input class="field" id="eo_total" type="number" min="0" value="${Number(o.total)||0}"></div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+        <div><label class="lbl">اللون</label><input class="field" id="eo_color" value="${esc(o.color||'')}"></div>
+        <div><label class="lbl">المقاس</label><input class="field" id="eo_size" value="${esc(o.size||'')}"></div>
+      </div>
+      <div><label class="lbl">ملاحظة</label><textarea class="field" id="eo_notes" rows="2">${esc(o.notes||'')}</textarea></div>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:20px">
+      <button class="btn btn-primary" style="flex:1" onclick="saveOrderEdit('${o.id}')">${t('save')}</button>
+      <button class="btn btn-ghost" onclick="closeModal()">${t('cancel')}</button>
+    </div>
+  </div></div>`;
+  S._eoId=id;
+}
+/* يحسب سعر التوصيل تلقائياً عند تغيير الولاية/النوع (ويمكن تعديله يدوياً بعدها) */
+function eoRecalc(qtyOnly){
+  const o=S.orders.find(x=>x.id===S._eoId); if(!o) return;
+  const v=i=>document.getElementById(i);
+  if(!qtyOnly){
+    const ship=shipFor(v('eo_wilaya').value, v('eo_type').value);
+    if(ship!=null) v('eo_ship').value=ship;
+  }
+  eoTotal();
+}
+function eoTotal(){
+  const o=S.orders.find(x=>x.id===S._eoId); if(!o) return;
+  const v=i=>document.getElementById(i);
+  const unit=Number(o.unitPrice)|| (Number(o.subtotal)/(Number(o.qty)||1)) || 0;
+  v('eo_total').value=Math.round(unit*(Number(v('eo_qty').value)||1)+(Number(v('eo_ship').value)||0));
+}
+async function saveOrderEdit(id){
+  const o=S.orders.find(x=>x.id===id); if(!o) return;
+  const g=i=>document.getElementById(i).value.trim();
+  if(!g('eo_name')) return toast('الاسم مطلوب');
+  if(!/^0[567]\d{8}$/.test(g('eo_phone').replace(/[\s.-]/g,''))) return toast('رقم الهاتف غير صحيح');
+  const row=DZ.find(x=>String(x[0])===String(g('eo_wilaya')));
+  const qty=Math.max(1,Number(g('eo_qty'))||1), ship=Number(g('eo_ship'))||0, total=Number(g('eo_total'))||0;
+  const patch={
+    customer:g('eo_name'), phone:g('eo_phone').replace(/[\s.-]/g,''), phone2:g('eo_phone2').replace(/[\s.-]/g,''),
+    wilayaCode:Number(g('eo_wilaya')), wilaya:row?row[2]:o.wilaya, wilayaAr:row?row[1]:o.wilayaAr,
+    commune:g('eo_commune'), address:g('eo_address'), deliveryType:g('eo_type'),
+    qty, shipping:ship, subtotal:Math.max(0,total-ship), total,
+    color:g('eo_color'), size:g('eo_size'), notes:g('eo_notes'),
+    colexError:'', colexErrorRaw:'', updatedAt:new Date().toISOString()
+  };
+  await updateOrder(id,patch); Object.assign(o,patch);
+  closeModal(); toast(t('saved')); render();
+}
 async function backToOrders(id){
   const o=S.orders.find(x=>x.id===id); if(!o) return;
   if(!confirm('إرجاع هذه الطلبية إلى قائمة الطلبات (مؤكّدة) لتتصرّف فيها من جديد؟')) return;
