@@ -314,6 +314,14 @@ header.topbar::after{content:""; position:absolute; inset-inline:0; bottom:-2px;
 .zcr .qty button{width:34px; height:34px; border-radius:50%; background:var(--brand); color:#fff; font-size:1.1rem; line-height:1; border:0; cursor:pointer}
 .zcr .qty button:disabled{opacity:.35; cursor:default}
 .zcr .qty span{min-width:34px; font-size:1rem}
+.zdisc{padding:12px 14px;border-radius:16px;background:linear-gradient(135deg,rgba(255,138,0,.12),rgba(255,61,84,.12));border:1.5px dashed var(--accent)}
+.zdt{font-weight:900;font-size:.92rem}
+.zdchips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.zdchip{padding:5px 12px;border-radius:99px;background:var(--surface);border:1.5px solid var(--line);font-size:.85rem;font-weight:800;transition:.2s}
+.zdchip[data-on="1"]{background:var(--accent);color:#fff;border-color:var(--accent);transform:scale(1.06)}
+.zdmsg{margin-top:8px;font-size:.84rem;font-weight:800;color:var(--accent)}
+.zdrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px;font-size:.85rem;font-weight:700}
+.zdrow .field{width:74px;padding:8px}
 .zctot{display:flex; justify-content:space-between; font-size:.82rem; font-weight:800; color:var(--muted); margin-top:8px}
 .ofm-grp.err{outline:2px solid #E5484D; outline-offset:6px; border-radius:14px; animation:ofmShake .35s}
 .gimg.flash{box-shadow:0 0 0 4px var(--brand); transition:box-shadow .25s}
@@ -1560,6 +1568,20 @@ function pickSize(i){
   document.querySelectorAll('#f_sizeGrp .zsz').forEach((b,k)=>{ b.dataset.on=k===i?'1':''; b.setAttribute('aria-pressed',k===i?'true':'false'); });
   document.getElementById('f_sizeGrp').classList.remove('err');
 }
+/* ===================== 🏷️ خصم بالنسبة حسب الكمية (اختياري لكل منتج) ===================== */
+const DT={
+ ar:{tog:'تخفيض حسب الكمية (اختياري)',from:'عند شراء',pcs:'قطع فأكثر',add:'+ إضافة شريحة',hint:'يظهر للزبون في الفورم ويُحسب تلقائياً. ألغِ التفعيل لإيقافه دون حذف الشرائح.',row:'خصم الكمية',title:'🏷️ وفّر أكثر عند شراء كمية أكبر',more:(n,p)=>`أضف ${n} للحصول على خصم ${p}%`,got:p=>`🎉 مبروك! خصم ${p}% مفعّل على طلبك`,needTier:'أضف شريحة خصم واحدة على الأقل (الكمية 2 فأكثر)'},
+ fr:{tog:'Remise par quantité (optionnel)',from:'À partir de',pcs:'pièces',add:'+ Ajouter un palier',hint:'Visible dans le formulaire et calculée automatiquement. Décochez pour désactiver sans supprimer les paliers.',row:'Remise quantité',title:'🏷️ Économisez plus en achetant plus',more:(n,p)=>`Ajoutez ${n} pour obtenir ${p}% de remise`,got:p=>`🎉 Bravo ! ${p}% de remise appliquée`,needTier:'Ajoutez au moins un palier (quantité ≥ 2)'},
+ en:{tog:'Quantity discount (optional)',from:'When buying',pcs:'or more',add:'+ Add tier',hint:'Shown in the order form and calculated automatically. Untick to disable without deleting tiers.',row:'Quantity discount',title:'🏷️ Save more when you buy more',more:(n,p)=>`Add ${n} more to get ${p}% off`,got:p=>`🎉 ${p}% discount applied!`,needTier:'Add at least one tier (quantity ≥ 2)'}
+};
+const dt=k=>(DT[LANG]||DT.ar)[k];
+function discTiers(p){ if(!p||!p.discOn) return []; return (p.discTiers||[]).map(x=>({min:Math.floor(Number(x.min))||0,pct:Number(x.pct)||0})).filter(x=>x.min>=2&&x.pct>0&&x.pct<100).sort((a,b)=>a.min-b.min); }
+function discPct(p,qty){ let r=0; for(const x of discTiers(p)) if(qty>=x.min) r=x.pct; return r; }
+function discAmt(p,qty){ return Math.round((Number(p.price)||0)*qty*discPct(p,qty)/100); }
+function discRowsHtml(){ return (DRAFT.discTiers||[]).map((x,i)=>`<div class="zdrow"><span>${dt('from')}</span><input class="field" type="number" min="2" value="${Number(x.min)||''}" oninput="DRAFT.discTiers[${i}].min=Number(this.value)" aria-label="qty"><span>${dt('pcs')}</span><span>→</span><input class="field" type="number" min="1" max="90" value="${Number(x.pct)||''}" oninput="DRAFT.discTiers[${i}].pct=Number(this.value)" aria-label="%"><b>%</b><button type="button" class="btn btn-ghost btn-sm" onclick="DRAFT.discTiers.splice(${i},1);renderDiscRows()">×</button></div>`).join(''); }
+function renderDiscRows(){ const e=document.getElementById('d_discRows'); if(e) e.innerHTML=discRowsHtml(); }
+function toggleDisc(){ const on=document.getElementById('d_discOn').checked; document.getElementById('d_discBox').hidden=!on; if(on&&!(DRAFT.discTiers||[]).length){ DRAFT.discTiers=[{min:2,pct:5},{min:3,pct:10}]; renderDiscRows(); } }
+function addDiscRow(){ const a=DRAFT.discTiers=DRAFT.discTiers||[]; const l=a[a.length-1]; a.push({min:l?(Number(l.min)||1)+1:2,pct:l?(Number(l.pct)||0)+5:5}); renderDiscRows(); }
 function orderFormHtml(p){
   const arrow = LANG==='ar' ? '←' : '→';
   const cs=pColors(p), ss=pSizes(p); let stepN=4;
@@ -1621,8 +1643,13 @@ function orderFormHtml(p){
         </div>
       </div>`}
 
+      ${discTiers(p).length?`<div class="zdisc" id="f_discBox"><div class="zdt">${dt('title')}</div>
+        <div class="zdchips">${discTiers(p).map((x,i)=>`<span class="zdchip" id="f_dc${i}" data-on=""><b>${x.min}+</b> −${x.pct}%</span>`).join('')}</div>
+        <div class="zdmsg" id="f_discMsg"></div></div>`:''}
+
       <div class="ofm-sum">
         <div class="row"><span class="muted">${t('subtotal')}</span><b class="price" id="s_sub">${money(p.price)}</b></div>
+        <div class="row" id="s_discRow" style="display:none"><span class="muted">${dt('row')} <b id="s_discPct"></b></span><b class="price" id="s_disc" style="color:#16a34a">—</b></div>
         <div class="row"><span class="muted">${t('shipping')}</span><b class="price" id="s_ship">—</b></div>
         <div class="row tot"><span style="font-weight:900">${t('total')}</span><b class="price" id="s_total" style="color:var(--accent)">${money(p.price)}</b></div>
       </div>
@@ -1666,8 +1693,15 @@ function recalc(){
   const pm=v=>v==null?'—':money(v);
   if(wc){ h.textContent=pm(shipFor(wc,'home')); dk.textContent=pm(shipFor(wc,'desk')); }
   else { h.textContent='—'; dk.textContent='—'; }
-  const sub=p.price*QTY, ship=wc?(shipFor(wc,type)||0):0;
-  document.getElementById('s_sub').textContent=money(sub);
+  const gross=p.price*QTY, pct=discPct(p,QTY), dsc=discAmt(p,QTY), sub=gross-dsc, ship=wc?(shipFor(wc,type)||0):0;
+  document.getElementById('s_sub').textContent=money(gross);
+  { const r=document.getElementById('s_discRow'); if(r){ r.style.display=dsc>0?'flex':'none';
+      document.getElementById('s_discPct').textContent=dsc>0?`(−${pct}%)`:'';
+      document.getElementById('s_disc').textContent=dsc>0?('−'+money(dsc)):'—'; } }
+  { const tiers=discTiers(p); if(tiers.length && document.getElementById('f_discMsg')){
+      tiers.forEach((x,i)=>{ const c=document.getElementById('f_dc'+i); if(c) c.dataset.on=(pct>0&&x.pct===pct&&QTY>=x.min)?'1':''; });
+      const nx=tiers.find(x=>x.min>QTY);
+      document.getElementById('f_discMsg').textContent = nx ? dt('more')(nx.min-QTY,nx.pct) : (pct>0?dt('got')(pct):''); } }
   document.getElementById('s_ship').textContent=(wc&&shipFor(wc,type)!=null)?money(ship):'—';
   document.getElementById('s_total').textContent=money(sub+ship);
 }
@@ -1689,7 +1723,7 @@ async function submitOrder(pid){
   if(ss.length && SEL_SIZE==null){ const e=document.getElementById('f_sizeGrp'); e.classList.add('err'); e.scrollIntoView({block:'center',behavior:'smooth'}); return toast(t('pickSizeReq')); }
   const type=document.querySelector('input[name="dtype"]:checked')?.value||'home';
   const row=DZ.find(x=>String(x[0])===String(wc));
-  const ship=shipFor(wc,type), sub=p.price*QTY;
+  const ship=shipFor(wc,type), _dp=discPct(p,QTY), _da=discAmt(p,QTY), sub=p.price*QTY-_da;
   if(ship==null) return toast(t('noPrice'));
   const _pl=cxSplit(commune, row?row[3]:[]);          // «بلدية + عنوان مفصّل» → البلدية في خانتها والعنوان تحتها
   const _commune=String(_pl.commune||commune).trim(), _addr=String(_pl.rest||'').trim();
@@ -1701,7 +1735,7 @@ async function submitOrder(pid){
     customer:g('f_name'), phone, phone2:'',
     wilayaCode:Number(wc), wilaya:row?row[2]:'', wilayaAr:row?row[1]:'',
     commune:_commune, address:_addr, notes:'',
-    deliveryType:type, carrier:(activeCarrier()||{}).name||'', shipping:ship, subtotal:sub, total:sub+ship, lang:LANG
+    deliveryType:type, carrier:(activeCarrier()||{}).name||'', shipping:ship, subtotal:sub, total:sub+ship, discountPct:_dp, discountAmt:_da, lang:LANG
   });
   S.lastOrder=order;
   trackPurchase(order);
@@ -1747,6 +1781,7 @@ function viewSuccess(){
     <div class="card" style="padding:16px; margin:18px 0; text-align:start; box-shadow:none; background:var(--surface-2)">
       <div style="display:flex; justify-content:space-between"><span class="muted">${t('product')}</span><b>${esc(o.productName||'')} ×${o.qty||1}</b></div>
       <div style="display:flex; justify-content:space-between"><span class="muted">${t('wilaya')}</span><b>${esc(o.wilaya||'')} / ${esc(o.commune||'')}</b></div>
+      ${o.discountAmt>0?`<div style="display:flex; justify-content:space-between"><span class="muted">${dt('row')} (−${o.discountPct}%)</span><b class="price" style="color:#16a34a">−${money(o.discountAmt)}</b></div>`:''}
       <div style="display:flex; justify-content:space-between"><span class="muted">${t('total')}</span><b class="price" style="color:var(--accent)">${money(o.total||0)}</b></div>
     </div>
     <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap">
@@ -1832,7 +1867,7 @@ function openProduct(id){
   const p = id ? JSON.parse(JSON.stringify(byId(id))) :
     {name:{ar:"",fr:"",en:""}, desc:{ar:"",fr:"",en:""}, price:0, oldPrice:0, images:[], stock:0, sold:0, active:true, category:"other"};
   DRAFT=p;
-  DRAFT.colors=Array.isArray(DRAFT.colors)?DRAFT.colors:[]; DRAFT.colorsOn=!!DRAFT.colorsOn; DRAFT.sizesOn=!!DRAFT.sizesOn;
+  DRAFT.colors=Array.isArray(DRAFT.colors)?DRAFT.colors:[]; DRAFT.colorsOn=!!DRAFT.colorsOn; DRAFT.sizesOn=!!DRAFT.sizesOn; DRAFT.discOn=!!DRAFT.discOn; DRAFT.discTiers=Array.isArray(DRAFT.discTiers)?DRAFT.discTiers:[];
   document.getElementById('modalHost').innerHTML = `
   <div class="modal" onclick="if(event.target===this)closeModal()"><div class="modal-panel" style="padding:24px">
     <h2 style="font-size:1.15rem; margin-bottom:16px">${id?t('edit'):t('addProduct')}</h2>
@@ -1872,6 +1907,14 @@ function openProduct(id){
         <div id="d_sizesBox" ${p.sizesOn?'':'hidden'} style="margin-top:10px">
           <input class="field" id="d_sizes" placeholder="S, M, L, XL" value="${esc((p.sizes||[]).join(', '))}">
           <div class="muted" style="font-size:.76rem; margin-top:6px">${t('sizesHint')}</div>
+        </div>
+      </div>
+      <div class="zvbox">
+        <label class="zvtog"><input type="checkbox" id="d_discOn" onchange="toggleDisc()" ${p.discOn?'checked':''}> 🏷️ ${dt('tog')}</label>
+        <div id="d_discBox" ${p.discOn?'':'hidden'}>
+          <div id="d_discRows">${discRowsHtml()}</div>
+          <button type="button" class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="addDiscRow()">${dt('add')}</button>
+          <div class="muted" style="font-size:.76rem; margin-top:6px">${dt('hint')}</div>
         </div>
       </div>
       <div><label class="lbl">${t('descHtml')} — AR</label><textarea class="field" id="d_dar" rows="5">${esc(p.desc.ar||'')}</textarea></div>
@@ -1988,6 +2031,9 @@ async function commitProduct(id){
   if(!p.name.ar) return toast(t('required'));
   p.colorsOn=document.getElementById('d_colorsOn').checked;
   p.sizesOn=document.getElementById('d_sizesOn').checked;
+  p.discOn=document.getElementById('d_discOn').checked;
+  p.discTiers=(DRAFT.discTiers||[]).map(x=>({min:Math.floor(Number(x.min))||0,pct:Number(x.pct)||0})).filter(x=>x.min>=2&&x.pct>0&&x.pct<100).sort((a,b)=>a.min-b.min);
+  if(p.discOn && !p.discTiers.length) return toast(dt('needTier'));
   p.colors=(DRAFT.colors||[]).filter(c=>c.name&&c.name.trim()).map(c=>({name:c.name.trim(), hex:safeHex(c.hex), img:c.img||''}));
   p.sizes=document.getElementById('d_sizes').value.split(/[,،\n]+/).map(x=>x.trim()).filter(Boolean);
   if(p.colorsOn && !p.colors.length) return toast(t('needColors'));
@@ -2287,7 +2333,8 @@ function eoTotal(){
   const o=S.orders.find(x=>x.id===S._eoId); if(!o) return;
   const v=i=>document.getElementById(i);
   const unit=Number(o.unitPrice)|| (Number(o.subtotal)/(Number(o.qty)||1)) || 0;
-  v('eo_total').value=Math.round(unit*(Number(v('eo_qty').value)||1)+(Number(v('eo_ship').value)||0));
+  const q=Number(v('eo_qty').value)||1, gross=unit*q, pr=byId(o.productId), pc=pr?discPct(pr,q):0;
+  v('eo_total').value=Math.round(gross-Math.round(gross*pc/100)+(Number(v('eo_ship').value)||0));
 }
 async function saveOrderEdit(id){
   const o=S.orders.find(x=>x.id===id); if(!o) return;
@@ -2301,6 +2348,8 @@ async function saveOrderEdit(id){
     wilayaCode:Number(g('eo_wilaya')), wilaya:row?row[2]:o.wilaya, wilayaAr:row?row[1]:o.wilayaAr,
     commune:g('eo_commune'), address:g('eo_address'), deliveryType:g('eo_type'),
     qty, shipping:ship, subtotal:Math.max(0,total-ship), total,
+    discountAmt:Math.max(0,Math.round((Number(o.unitPrice)||0)*qty)-Math.max(0,total-ship)),
+    discountPct:(Number(o.unitPrice)||0)*qty>0?Math.max(0,Math.round(100*(1-Math.max(0,total-ship)/((Number(o.unitPrice)||0)*qty)))):0,
     color:g('eo_color'), size:g('eo_size'), notes:g('eo_notes'),
     colexError:'', colexErrorRaw:'', updatedAt:new Date().toISOString()
   };
