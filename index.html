@@ -2520,6 +2520,7 @@ function colexPayload(x){
     montant:Math.round(Number(x.total)), produit:cut(x.product), type:1, stop_desk:x.stopDesk?1:0};
   if(x.phone2) p.telephone_2=dg(x.phone2);
   if(x.note) p.remarque=cut(x.note);
+  if(x.fromStock){ p.stock=1; p.quantite=Math.max(1,Math.round(Number(x.qty))||1); }   // الإرسال من مخزون كولكس
   return {p,bad};
 }
 /* إرسال مباشر من المتصفح إلى EcoTrack: POST /api/v1/create/order (الحقول في الرابط، Bearer) */
@@ -2714,6 +2715,19 @@ function cxAsk(title,msg,okLabel,noLabel){
     document.body.appendChild(d); d.querySelector('.ok').focus();
   });
 }
+/* نافذة اختيار: إرسال عادي / من مخزون كولكس / إلغاء — تُرجع 0 أو 1 أو -1 */
+function cxChoose(title,msg,labels){
+  return new Promise(res=>{
+    const d=document.createElement('div'); d.className='cx-modal'; d.setAttribute('role','dialog'); d.setAttribute('aria-modal','true');
+    d.innerHTML='<div class="cx-box"><h3></h3><p style="white-space:pre-line"></p><div class="acts" style="flex-direction:column"></div></div>';
+    d.querySelector('h3').textContent=title; d.querySelector('p').textContent=msg;
+    const acts=d.querySelector('.acts'), done=v=>{ d.remove(); res(v); };
+    labels.forEach((lb,i)=>{ const b=document.createElement('button'); b.type='button'; b.textContent=lb; if(i===0) b.className='ok'; b.onclick=()=>done(i); acts.appendChild(b); });
+    const c=document.createElement('button'); c.type='button'; c.textContent='إلغاء'; c.onclick=()=>done(-1); acts.appendChild(c);
+    d.addEventListener('click',e=>{ if(e.target===d) done(-1); });
+    document.body.appendChild(d); acts.querySelector('button').focus();
+  });
+}
 const COLEX_BUSY = new Set();
 async function colexSend(id){
   const o=S.orders.find(x=>x.id===id); if(!o) return;
@@ -2726,8 +2740,10 @@ async function colexSend(id){
     : o.colexSent
     ? 'هذه الطلبية أُرسلت من قبل إلى Colex. إعادة الإرسال قد تُنشئ طرداً مكرراً. متأكد؟'
     : 'إرسال الطلبية '+(o.ref||o.id)+' ('+(o.customer||'')+') إلى Colex؟';
-  if(!confirm(q)) return;
   COLEX_BUSY.add(id);
+  const _ch=await cxChoose('🚚 إرسال إلى Colex', q, ['🚚 إرسال عادي (استلام من عندك)','🏬 إرسال من مخزون Colex']);
+  if(_ch<0){ COLEX_BUSY.delete(id); return; }
+  const fromStock=(_ch===1);
   const btn=document.getElementById('cxb_'+id); if(btn){ btn.disabled=true; btn.textContent='⏳…'; }
   try{
     const prod=[o.productName+((o.qty||1)>1?' ×'+o.qty:''), o.color, o.size].filter(Boolean).join(' - ');
@@ -2737,7 +2753,7 @@ async function colexSend(id){
     /* الترتيب في Colex: الولاية ثم البلدية ثم العنوان التفصيلي تحت البلدية */
     const address=[sp.rest,(o.address||'').trim()].filter(Boolean).join(' - ') || [written,o.wilaya].filter(Boolean).join(', ');
     const ord={id:o.ref||o.id, name:o.customer, phone:o.phone, phone2:o.phone2||'', address,
-      wilayaCode:o.wilayaCode, commune:written, total:o.total, product:prod, note:o.notes||'', stopDesk:o.deliveryType==='desk'};
+      wilayaCode:o.wilayaCode, commune:written, total:o.total, product:prod, note:o.notes||'', stopDesk:o.deliveryType==='desk', fromStock, qty:o.qty||1};
     const doSend=async(od)=>{
       if(mode==='proxy'){
         const r=await fetch(url+'/api/colex/send',{
@@ -2794,13 +2810,13 @@ async function colexSend(id){
       toast('⚠︎ '+msg); return;
     }
     const tr=colexTracking(j.colex);
-    const patch={colexSent:true, colexTracking:tr, colexSentAt:now, colexError:'', colexErrorRaw:'', colexRaw:JSON.stringify(j.colex==null?'':j.colex).slice(0,600), updatedAt:now};
+    const patch={colexSent:true, colexTracking:tr, colexSentAt:now, colexStock:fromStock, colexError:'', colexErrorRaw:'', colexRaw:JSON.stringify(j.colex==null?'':j.colex).slice(0,600), updatedAt:now};
     if(o.colexTracking && tr!==o.colexTracking){ patch.colexPrev=[...(o.colexPrev||[]),{t:o.colexTracking,s:o.colexStatus||'',at:o.colexSentAt||''}]; }
     patch.colexStatus=''; patch.colexStatusAt=now;
     if(deskToHome){ patch.deliveryType='home'; patch.notes=[o.notes,'تحويل من مكتب إلى المنزل (لا يوجد مكتب)'].filter(Boolean).join(' | '); }
     await updateOrder(id,patch); Object.assign(o,patch);
     if(['pending','confirmed','cancelled'].includes(o.status)) await changeStatus(id,'shipped',true);
-    toast((tr ? '✅ أُرسل إلى Colex — رقم التتبع: '+tr : '✅ أُرسل إلى Colex (لم أجد رقم التتبع في الرد، راجع لوحة Colex)')+(deskToHome?' · ⚠︎ حُوّل إلى التوصيل للمنزل، راجع سعر التوصيل':'')+(j.ok && !communeFallback && cur.commune && cur.commune.toLowerCase()!==written.toLowerCase()?' · البلدية «'+written+'» أُرسلت باسم «'+cur.commune+'»':'')+(communeFallback?' · ⚠︎ البلدية «'+(o.commune||'')+'» لم تُطابق قائمة Colex، فأُرسلت باسم الولاية والبلدية كما كُتبت في العنوان':''));
+    toast((fromStock?'🏬 [من المخزون] ':'')+(tr ? '✅ أُرسل إلى Colex — رقم التتبع: '+tr : '✅ أُرسل إلى Colex (لم أجد رقم التتبع في الرد، راجع لوحة Colex)')+(deskToHome?' · ⚠︎ حُوّل إلى التوصيل للمنزل، راجع سعر التوصيل':'')+(j.ok && !communeFallback && cur.commune && cur.commune.toLowerCase()!==written.toLowerCase()?' · البلدية «'+written+'» أُرسلت باسم «'+cur.commune+'»':'')+(communeFallback?' · ⚠︎ البلدية «'+(o.commune||'')+'» لم تُطابق قائمة Colex، فأُرسلت باسم الولاية والبلدية كما كُتبت في العنوان':''));
   }catch(e){
     toast(mode==='direct' ? '⚠︎ المتصفح منع الإرسال المباشر إلى Colex (غالبًا CORS): '+(e&&e.message||e)+' — نحتاج السيرفر الوسيط' : '⚠︎ تعذّر الاتصال بالسيرفر الوسيط: '+(e&&e.message||e));
   }finally{
