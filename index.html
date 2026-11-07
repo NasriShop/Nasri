@@ -2747,12 +2747,12 @@ async function colexSend(id){
   const fromStock=(_ch===1);
   let stockRef='';
   if(fromStock){
-    const pr=byId(o.productId); stockRef=((pr&&pr.colexRef)||'').trim();
-    if(!stockRef){
-      stockRef=(prompt('أدخل مرجع المنتج «'+(o.productName||'')+'» كما هو في مخزون Colex (يُحفظ للمرات القادمة):')||'').trim().slice(0,100);
-      if(!stockRef){ COLEX_BUSY.delete(id); toast('⚠︎ لا يمكن الإرسال من المخزون بدون مرجع المنتج'); return; }
-      if(pr){ pr.colexRef=stockRef; try{ if(DB) await DB.doc('products/'+pr.id).update({colexRef:stockRef}); else LS.set('products',S.products); }catch(e){} }
-    }
+    const pr=byId(o.productId), last=((pr&&pr.colexRef)||'').trim();
+    /* نسأل في كل إرسال من المخزون (المرجع يختلف من طلبية لأخرى)، والمرجع الأخير يظهر كقيمة مقترحة */
+    const ans=prompt('أدخل مرجع المنتج في مخزون Colex للطلبية «'+(o.productName||'')+(o.color?' - '+o.color:'')+(o.size?' - '+o.size:'')+'»:', last);
+    stockRef=(ans||'').trim().slice(0,100);
+    if(!stockRef){ COLEX_BUSY.delete(id); toast('⚠︎ تم الإلغاء: لا يمكن الإرسال من المخزون بدون مرجع'); return; }
+    if(pr && stockRef!==last){ pr.colexRef=stockRef; try{ if(DB) await DB.doc('products/'+pr.id).update({colexRef:stockRef}); else LS.set('products',S.products); }catch(e){} }
   }
   const btn=document.getElementById('cxb_'+id); if(btn){ btn.disabled=true; btn.textContent='⏳…'; }
   try{
