@@ -2,6 +2,8 @@
 <html lang="ar" dir="rtl" data-theme="light">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://connect.facebook.net https://analytics.tiktok.com https://cdnjs.cloudflare.com; worker-src blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src https: blob:; connect-src https: wss:; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.facebook.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="ZoubirNasriShop — متجر إلكتروني جزائري: منتجات مختارة بعناية، الدفع عند الاستلام والتوصيل إلى 58 ولاية.">
 <meta name="theme-color" content="#FF6A00">
@@ -21,7 +23,7 @@ window.znCimg=function(u,w){
 };
 window.znPid=function(){
   try{
-    var q=new URLSearchParams(location.search), v=q.get('p'); if(v) return v;
+    var q=new URLSearchParams(location.search), v=q.get('p'); if(v) return /^[A-Za-z0-9_-]{1,80}$/.test(v)?v:null;
     var ks=Array.from(q.keys()), i; for(i=0;i<ks.length;i++){ if(/^p_[A-Za-z0-9_-]+$/.test(ks[i])) return ks[i]; }
     var h=/^#(p_[A-Za-z0-9_-]+)$/.exec(location.hash); return h?h[1]:null;
   }catch(e){ return null; }
@@ -900,7 +902,7 @@ const catIcon  = id => { const c=catInfo(id); return c ? c.icon : "🛍️"; };
 /* ------------------------ 3. State & cloud layer ------------------------ */
 const DEFAULT_SETTINGS = {
   storeName:"ZoubirNasriShop",
-  adminPass:"zoubir2026",
+  adminPass:"",
   whatsapp:"213542248858",
   facebook:"https://www.facebook.com/profile.php?id=61578436251516",
   fbPixel:"",                // Facebook / Meta Ads Pixel ID
@@ -979,7 +981,7 @@ function loadCache(){
   try{
     const raw=localStorage.getItem(CK), c=JSON.parse(raw||'null');
     if(!c||!c.settings||!Array.isArray(c.products)||!c.products.length) return false;
-    S.settings={...DEFAULT_SETTINGS, ...c.settings}; ensureCarriers(); S.products=c.products; S._ck=true; return true;
+    S.settings={...DEFAULT_SETTINGS, ...c.settings}; ensureCarriers(); S.products=c.products.filter(x=>okId(x.id)); S._ck=true; return true;
   }catch(e){ return false; }
 }
 function saveCache(){
@@ -1013,7 +1015,7 @@ async function fastLoad(){
       pj=await a.json(); sj=await b.json();
     }
     if(!pj || !sj) return false;                     // بدون الإعدادات (أسعار التوصيل) لا نعرض شيئاً خاطئاً
-    const products=(pj.documents||[]).map(d=>({id:d.name.split('/').pop(), ...fsObj(d.fields||{})}));
+    const products=(pj.documents||[]).map(d=>({id:d.name.split('/').pop(), ...fsObj(d.fields||{})})).filter(x=>okId(x.id));
     if(!products.length || !sj.fields) return false;
     if(S.ready) return false;
     S.settings={...DEFAULT_SETTINGS, ...fsObj(sj.fields)}; ensureCarriers(); S.products=products; S._ck=true;
@@ -1026,7 +1028,7 @@ async function refreshMissingProduct(){
     if(!window.__fsP) return;
     const [pj,sj]=await window.__fsP;
     if(!pj||!pj.documents) return;
-    const products=pj.documents.map(d=>({id:d.name.split('/').pop(), ...fsObj(d.fields||{})}));
+    const products=pj.documents.map(d=>({id:d.name.split('/').pop(), ...fsObj(d.fields||{})})).filter(x=>okId(x.id));
     if(!products.some(x=>x.id===S.productId)) return;
     S.products=products;
     if(sj&&sj.fields){ S.settings={...DEFAULT_SETTINGS, ...fsObj(sj.fields)}; ensureCarriers(); }
@@ -1042,7 +1044,7 @@ async function initCloud(){
   DB = window.FB ? fbAdapter() : null;
   S.cloud = !!DB;
   if(S.view==='admin') wireAuth();
-  const key = localStorage.getItem('zn_aikey');
+  const key = sessionStorage.getItem('zn_aikey');
   SAMPLE = key ? makeSampler(key) : null;
   const wasReady = S.ready;
   await loadAll();
@@ -1058,7 +1060,7 @@ async function initCloud(){
 async function loadOrders(){
   try{
     const os = await DB.collection("orders").orderBy("createdAt","desc").limit(300).get();
-    S.orders = os.docs.map(d=>({id:d.id, ...d.data()}));
+    S.orders = os.docs.map(d=>({id:d.id, ...d.data()})).filter(x=>okId(x.id));
   }catch(e){ console.warn("db load (orders) failed - check Firestore rules for /orders", e); }
 }
 function ensureCarriers(){
@@ -1078,7 +1080,7 @@ async function loadAll(){
     try{
       const [st, ps] = await Promise.all([DB.doc("shop/settings").get(), DB.collection("products").get()]);
       S.settings = {...DEFAULT_SETTINGS, ...(st.exists ? st.data() : {})}; ensureCarriers();
-      S.products = ps.docs.map(d=>({id:d.id, ...d.data()}));
+      S.products = ps.docs.map(d=>({id:d.id, ...d.data()})).filter(x=>okId(x.id));
       cloudWorked = true;
       if(!S.products.length && !st.exists) await seedDemo();
     }catch(e){ console.warn("db load (products/settings) failed", e); }
@@ -1135,11 +1137,11 @@ function subscribe(){
   if(S._sub) return; S._sub=true;
   try{
     DB.collection("products").onSnapshot(s=>{
-      S.products = s.docs.map(d=>({id:d.id, ...d.data()})); saveCache();
+      S.products = s.docs.map(d=>({id:d.id, ...d.data()})).filter(x=>okId(x.id)); saveCache();
       if(S.ready && (S.view!=="order")) render();
     }, e=>console.warn(e));
     DB.collection("orders").orderBy("createdAt","desc").limit(300).onSnapshot(s=>{
-      S.orders = s.docs.map(d=>({id:d.id, ...d.data()}));
+      S.orders = s.docs.map(d=>({id:d.id, ...d.data()})).filter(x=>okId(x.id));
       if(S.ready && isOrdTab() && !typing()) render();
     }, e=>console.warn(e));
   }catch(e){}
@@ -1237,6 +1239,8 @@ async function removeOrder(id){
 }
 
 /* ------------------------- 4. Helpers & UI atoms ------------------------ */
+const okId = id => /^[A-Za-z0-9_-]{1,80}$/.test(String(id||''));
+const safeUrl = u => /^https:\/\//i.test(String(u||'')) ? String(u) : '#';
 const esc = s => String(s==null?"":s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money = n => new Intl.NumberFormat(LANG==='ar'?'ar-DZ':'fr-DZ',{maximumFractionDigits:0}).format(Number(n)||0)+" "+t('da');
 const byId = id => S.products.find(p=>p.id===id);
@@ -1368,7 +1372,7 @@ function mountDescFrame(){
   const cs = getComputedStyle(document.documentElement);
   const v = name => (cs.getPropertyValue(name)||'').trim();
   const dir = document.documentElement.dir || 'rtl';
-  const doc = `<!doctype html><html dir="${dir}"><head><meta charset="utf-8">
+  const doc = `<!doctype html><html dir="${dir}"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https: data:; media-src https:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com"><base target="_blank">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&family=Outfit:wght@400;600&display=swap" rel="stylesheet">
@@ -1528,7 +1532,7 @@ function viewProduct(){
       </div>
       <section class="card" style="padding:22px; margin-top:20px">
         <h2 style="font-size:1.1rem; margin-bottom:8px">${t('desc')}</h2>
-        <div class="desc-frame-wrap"><iframe id="descFrame" class="desc-frame" title="${esc(t('desc'))}" scrolling="no"></iframe></div>
+        <div class="desc-frame-wrap"><iframe id="descFrame" class="desc-frame" title="${esc(t('desc'))}" scrolling="no" sandbox="allow-same-origin allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer"></iframe></div>
       </section>
     </div>
     <aside class="order-box">${orderFormHtml(p)}</aside>
@@ -1654,6 +1658,7 @@ function orderFormHtml(p){
         <div class="row tot"><span style="font-weight:900">${t('total')}</span><b class="price" id="s_total" style="color:var(--accent)">${money(p.price)}</b></div>
       </div>
 
+      <input type="text" id="f_hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
       <button type="button" class="btn ofm-cta" id="submitBtn" onclick="submitOrder('${p.id}')">${t('confirm')} <span>${arrow}</span></button>
       <div class="ofm-trust"><span>🔒 ${t('t1')}</span><span>✅ ${t('t3')}</span><span>💬 ${t('t4')}</span></div>
     </div>
@@ -1707,7 +1712,9 @@ function recalc(){
 }
 async function submitOrder(pid){
   const p=byId(pid); if(!p) return;
-  const g=id=>document.getElementById(id)?.value.trim()||'';
+  if(document.getElementById('f_hp')?.value) return;   // honeypot (bots)
+  try{ if(Date.now()-Number(localStorage.getItem('zn_lastord')||0)<20000) return toast('⏳ …'); }catch(e){}
+  const g=(id,m)=>(document.getElementById(id)?.value.trim()||'').slice(0,m||200);
   let commune=g('f_commune'); if(commune==='__other') commune=g('f_commune_other');
   const phone=g('f_phone').replace(/\s|-/g,'');
   const wc=g('f_wilaya');
@@ -1737,6 +1744,7 @@ async function submitOrder(pid){
     commune:_commune, address:_addr, notes:'',
     deliveryType:type, carrier:(activeCarrier()||{}).name||'', shipping:ship, subtotal:sub, total:sub+ship, discountPct:_dp, discountAmt:_da, lang:LANG
   });
+  try{ localStorage.setItem('zn_lastord', String(Date.now())); }catch(e){}
   S.lastOrder=order;
   trackPurchase(order);
   go('success');
@@ -1830,7 +1838,7 @@ async function tryLogin(){
   if(S.cloud && window.FB && FB.signIn){
     wireAuth();
     try{ await FB.signIn(em,pass); }catch(e){ console.error(e); toast(t('wrongPass')+' ['+(e.code||e.message)+']'); }   // enterAdmin() runs from onAuth below
-  } else if(pass===DEFAULT_SETTINGS.adminPass){ enterAdmin(); }       // local-only mode (no cloud)
+  } else if(DEFAULT_SETTINGS.adminPass && !cloudConfigured() && pass===DEFAULT_SETTINGS.adminPass){ enterAdmin(); }       // local-only mode (no cloud)
   else toast(t('wrongPass'));
 }
 function logout(){ S.admin=false; if(window.FB&&FB.signOut) FB.signOut().catch(()=>{}); go('home'); }
@@ -1845,14 +1853,14 @@ function tabProducts(){
       <th>${t('isFeatured')}</th><th>${t('active')}</th><th>${t('actions')}</th></tr></thead>
     <tbody>${S.products.map(p=>`<tr>
       <td><img loading="lazy" ${ia((p.images&&p.images[0])||ph('ZN',150),120)} style="width:46px;height:46px;border-radius:12px;object-fit:cover"></td>
-      <td><b>${esc(L(p.name))}</b><div class="muted" style="font-size:.74rem">${p.id}</div></td>
+      <td><b>${esc(L(p.name))}</b><div class="muted" style="font-size:.74rem">${esc(p.id)}</div></td>
       <td><span class="badge">${catIcon(p.category)} ${esc(catLabel(p.category)||catLabel('other'))}</span></td>
       <td class="price">${money(p.price)}${p.oldPrice?`<div class="muted strike" style="font-size:.72rem">${money(p.oldPrice)}</div>`:''}</td>
       <td>${p.stock??'—'}</td>
       <td><input type="radio" name="feat" ${S.settings.featuredId===p.id?'checked':''} onchange="setFeatured('${p.id}')" style="accent-color:var(--brand)"></td>
       <td><input type="checkbox" ${p.active!==false?'checked':''} onchange="toggleActive('${p.id}',this.checked)" style="accent-color:var(--brand)"></td>
       <td style="white-space:nowrap">
-        <button class="btn btn-sm btn-ghost" onclick="copyProductLink('${p.id}')" title="${productUrl(p.id)}">🔗</button>
+        <button class="btn btn-sm btn-ghost" onclick="copyProductLink('${p.id}')" title="${esc(productUrl(p.id))}">🔗</button>
         <button class="btn btn-sm btn-ghost" onclick="openProduct('${p.id}')">${t('edit')}</button>
         <button class="btn btn-sm" style="background:var(--accent-soft); color:var(--accent)" onclick="askDelete('${p.id}')">${t('del')}</button>
       </td></tr>`).join('')||`<tr><td colspan="8" class="muted" style="padding:24px">${t('noProducts')}</td></tr>`}
@@ -2100,7 +2108,7 @@ function tabOrders(){
   </div>
   <p class="muted" style="font-size:.76rem; margin:-8px 0 14px">ⓘ أرقام حيّة: قيد الانتظار + المؤكّدة + المشحونة فقط. المحذوفة لا تُحسب، والمُسلَّمة في 📊 الإحصائيات، والملغاة في ↩ الملغاة.</p>
   <div style="display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap">
-    <a class="btn btn-primary" href="${esc(S.settings.sheetUrl||'')}" target="_blank" rel="noopener">📄 ${t('openSheet')}</a>
+    <a class="btn btn-primary" href="${esc(safeUrl(S.settings.sheetUrl))}" target="_blank" rel="noopener">📄 ${t('openSheet')}</a>
   </div>
   <div class="card scroll-x" style="padding:6px 12px"><table class="tbl">
     <thead><tr><th>${t('orderNo')}</th><th>${t('date')}</th><th>${t('customer')}</th><th>${t('product')}</th>
@@ -2448,7 +2456,7 @@ async function dropOrder(id){ if(!confirm(t('confirmDel')))return; const ok=awai
 
 /* ============ Colex (EcoTrack) — الإرسال عبر السيرفر الوسيط ============
    المتصفح يكلّم السيرفر الوسيط فقط (colex-proxy على Render)؛ توكن Colex يبقى هناك. */
-function colexSecret(){ try{ return localStorage.getItem('zn_colex_secret')||''; }catch(e){ return ''; } }
+function colexSecret(){ try{ return sessionStorage.getItem('zn_colex_secret')||''; }catch(e){ return ''; } }
 function colexUrl(){ let u=S.integ&&S.integ.proxyUrl; if(!u){ try{ u=localStorage.getItem('zn_colex_proxy')||''; }catch(e){} } return String(u||'').trim().replace(/\/+$/,''); }
 function colexTracking(v,d){
   d=d||0; if(v==null||d>4) return '';
@@ -3078,7 +3086,7 @@ function tabSettings(){
       <p class="muted" style="font-size:.78rem; margin:6px 0 0">فعّله بتعديل <code>window.CLOUDINARY</code> في أعلى ملف index.html — التفاصيل في README.</p>
     </div>
     <div><label class="lbl">Anthropic API key (مولّد الإعلانات)</label>
-      <input class="field" id="st_ai" type="password" placeholder="sk-ant-…" value="${esc(localStorage.getItem('zn_aikey')||'')}">
+      <input class="field" id="st_ai" type="password" placeholder="sk-ant-…" value="${esc(sessionStorage.getItem('zn_aikey')||'')}">
       <p class="muted" style="font-size:.76rem; margin:6px 0 0">يُحفظ في هذا المتصفح فقط ولا يظهر للزبائن. لا تضعه داخل ملف الموقع أبداً.</p></div>
     <div style="display:flex; gap:10px">
       <button class="btn btn-primary" onclick="commitSettings()">${t('save')}</button>
@@ -3089,8 +3097,8 @@ function tabSettings(){
 async function commitSettings(){
   const g=i=>document.getElementById(i).value.trim();
   const aik=g('st_ai');
-  if(aik){ localStorage.setItem('zn_aikey',aik); SAMPLE=makeSampler(aik); }
-  else { localStorage.removeItem('zn_aikey'); SAMPLE=null; }
+  if(aik){ sessionStorage.setItem('zn_aikey',aik); SAMPLE=makeSampler(aik); }
+  else { sessionStorage.removeItem('zn_aikey'); SAMPLE=null; }
   Object.assign(S.settings,{storeName:g('st_name'),    whatsapp:g('st_wa'),facebook:g('st_fb'),sheetUrl:g('st_sheet'),
     fbPixel:pxList([...document.querySelectorAll('.px-fb')].map(i=>i.value).join(',')).join(','),
     ttPixel:pxList([...document.querySelectorAll('.px-tt')].map(i=>i.value).join(',')).join(',')});
@@ -3119,7 +3127,7 @@ async function integLoad(){
 }
 function integCollect(){
   const _pu=document.getElementById('cx_url'); if(_pu) S.integ.proxyUrl=_pu.value.trim().replace(/\/+$/,'');
-  const _ps=document.getElementById('cx_secret'); if(_ps){ try{ localStorage.setItem('zn_colex_secret', _ps.value.trim()); }catch(e){} }
+  const _ps=document.getElementById('cx_secret'); if(_ps){ try{ sessionStorage.setItem('zn_colex_secret', _ps.value.trim()); }catch(e){} }
   const rows=[...document.querySelectorAll('.ig-row')]; if(!rows.length) return;
   S.integ.providers = rows.map(r=>{
     const g=c=>r.querySelector('.'+c); const old=S.integ.providers.find(p=>p.id===r.dataset.id)||{};
@@ -3245,7 +3253,7 @@ if(_hadCache && S.view==='product' && !byId(S.productId)){
 }
 S._cloudP = initCloud();
 /* شريط تشخيص: يظهر فقط عند إضافة debug=1 إلى الرابط */
-if(/[?&]debug=1/.test(location.search)){
+if(false){
   const dbg=document.createElement('div');
   dbg.style.cssText='position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#000;color:#0f0;font:12px/1.5 monospace;padding:8px;direction:ltr;text-align:left;white-space:pre-wrap;word-break:break-all';
   document.body.appendChild(dbg);
