@@ -1892,6 +1892,7 @@ function openProduct(id){
         <div><label class="lbl">${t('stock')}</label><input class="field" id="d_stock" type="number" min="0" value="${p.stock||0}"></div>
         <div><label class="lbl">${t('sold')}</label><input class="field" id="d_sold" type="number" min="0" value="${p.sold||0}"></div>
       </div>
+      <div><label class="lbl">🏬 مرجع المنتج في مخزون Colex (للإرسال من المخزون)</label><input class="field" id="d_colexRef" dir="ltr" maxlength="100" placeholder="REF / SKU" value="${esc(p.colexRef||'')}"></div>
       <div><label class="lbl">${t('category')}</label>
         <select class="field" id="d_cat">
           ${CATS.map(c=>`<option value="${c.id}" ${p.category===c.id?'selected':''}>${c.icon} ${esc(L(c.label))}</option>`).join('')}
@@ -2033,7 +2034,7 @@ async function commitProduct(id){
     name:{ar:g('d_nar'),fr:g('d_nfr')||g('d_nar'),en:g('d_nen')||g('d_nar')},
     desc:{ar:g('d_dar'),fr:g('d_dfr')||g('d_dar'),en:g('d_den')||g('d_dar')},
     price:Number(g('d_price'))||0, oldPrice:Number(g('d_old'))||0,
-    stock:Number(g('d_stock'))||0, sold:Number(g('d_sold'))||0,
+    stock:Number(g('d_stock'))||0, sold:Number(g('d_sold'))||0, colexRef:(g('d_colexRef')||'').trim().slice(0,100),
     category:g('d_cat')||'other',
     active:document.getElementById('d_active').checked};
   if(!p.name.ar) return toast(t('required'));
@@ -2744,6 +2745,15 @@ async function colexSend(id){
   const _ch=await cxChoose('🚚 إرسال إلى Colex', q, ['🚚 إرسال عادي (استلام من عندك)','🏬 إرسال من مخزون Colex']);
   if(_ch<0){ COLEX_BUSY.delete(id); return; }
   const fromStock=(_ch===1);
+  let stockRef='';
+  if(fromStock){
+    const pr=byId(o.productId); stockRef=((pr&&pr.colexRef)||'').trim();
+    if(!stockRef){
+      stockRef=(prompt('أدخل مرجع المنتج «'+(o.productName||'')+'» كما هو في مخزون Colex (يُحفظ للمرات القادمة):')||'').trim().slice(0,100);
+      if(!stockRef){ COLEX_BUSY.delete(id); toast('⚠︎ لا يمكن الإرسال من المخزون بدون مرجع المنتج'); return; }
+      if(pr){ pr.colexRef=stockRef; try{ if(DB) await DB.doc('products/'+pr.id).update({colexRef:stockRef}); else LS.set('products',S.products); }catch(e){} }
+    }
+  }
   const btn=document.getElementById('cxb_'+id); if(btn){ btn.disabled=true; btn.textContent='⏳…'; }
   try{
     const prod=[o.productName+((o.qty||1)>1?' ×'+o.qty:''), o.color, o.size].filter(Boolean).join(' - ');
@@ -2753,7 +2763,7 @@ async function colexSend(id){
     /* الترتيب في Colex: الولاية ثم البلدية ثم العنوان التفصيلي تحت البلدية */
     const address=[sp.rest,(o.address||'').trim()].filter(Boolean).join(' - ') || [written,o.wilaya].filter(Boolean).join(', ');
     const ord={id:o.ref||o.id, name:o.customer, phone:o.phone, phone2:o.phone2||'', address,
-      wilayaCode:o.wilayaCode, commune:written, total:o.total, product:prod, note:o.notes||'', stopDesk:o.deliveryType==='desk', fromStock, qty:o.qty||1};
+      wilayaCode:o.wilayaCode, commune:written, total:o.total, product:(fromStock?stockRef:prod), note:(fromStock?[o.notes,o.color,o.size].filter(Boolean).join(' | '):(o.notes||'')), stopDesk:o.deliveryType==='desk', fromStock, qty:o.qty||1};
     const doSend=async(od)=>{
       if(mode==='proxy'){
         const r=await fetch(url+'/api/colex/send',{
