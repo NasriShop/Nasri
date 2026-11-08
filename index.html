@@ -220,6 +220,8 @@ header.topbar::after{content:""; position:absolute; inset-inline:0; bottom:-2px;
 .cat-pill .ic{font-size:1.05rem; line-height:1}
 .cat-pill[data-on="1"]{background:var(--grad); color:#fff; border-color:transparent; box-shadow:0 8px 18px -8px var(--brand)}
 .order-box{position:relative}
+.ofm{position:relative}
+html{overflow-x:hidden}
 .gimg{min-height:220px}
 @media(max-width:959px){
   .pdp{display:flex; flex-direction:column}
@@ -1668,7 +1670,7 @@ function orderFormHtml(p){
         <div class="row tot"><span style="font-weight:900">${t('total')}</span><b class="price" id="s_total" style="color:var(--accent)">${money(p.price)}</b></div>
       </div>
 
-      <input type="text" id="f_hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;opacity:0">
+      <input type="text" id="f_hp" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;top:0;inset-inline-start:0;width:1px;height:1px;opacity:0;pointer-events:none;overflow:hidden">
       <button type="button" class="btn ofm-cta" id="submitBtn" onclick="submitOrder('${p.id}')">${t('confirm')} <span>${arrow}</span></button>
       <div class="ofm-trust"><span>🔒 ${t('t1')}</span><span>✅ ${t('t3')}</span><span>💬 ${t('t4')}</span></div>
     </div>
