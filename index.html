@@ -448,6 +448,7 @@ header.topbar::after{display:none}
 .badge{border-radius:6px; padding:3px 10px; font-size:.74rem}
 .badge-accent{background:var(--accent-soft); color:var(--accent)}
 .ribbon.badge{background:#D92D20; color:#fff}
+.rbadge{display:inline-flex; align-items:center; gap:4px; background:#D92D20; color:#fff; border-radius:999px; padding:2px 9px; font-size:.7rem; font-weight:800; margin-inline-start:6px; cursor:pointer; white-space:nowrap}
 .hero{border-radius:16px}
 .hero-title{font-weight:900; line-height:1.3}
 .trust>div{border-radius:12px; box-shadow:none; font-size:.84rem}
@@ -931,7 +932,7 @@ const DEFAULT_SETTINGS = {
   stats:{count:0, pending:0, confirmed:0, shipped:0, done:0, cancelled:0, revenue:0}
 };
 const S = {
-  products:[], orders:[], settings:{...DEFAULT_SETTINGS},
+  products:[], orders:[], leads:[], red:{}, settings:{...DEFAULT_SETTINGS},
   view:"home", productId:null, lastOrder:null,
   admin:false, tab:"products", ready:false, cloud:false, search:"", cat:"all"
 };
@@ -1154,8 +1155,13 @@ function subscribe(){
     }, e=>console.warn(e));
     DB.collection("orders").orderBy("createdAt","desc").limit(300).onSnapshot(s=>{
       S.orders = s.docs.map(d=>({id:d.id, ...d.data()})).filter(x=>okId(x.id));
+      redSync();
       if(S.ready && isOrdTab() && !typing()) render();
     }, e=>console.warn(e));
+    DB.collection("leads").orderBy("updatedAt","desc").limit(200).onSnapshot(s=>{
+      S.leads = s.docs.map(d=>({id:d.id, ...d.data()})).filter(x=>/^\d{9}$/.test(x.id));
+      if(S.ready && S.view==='admin' && (S.tab==='leads'||S.tab==='orders') && !typing()) render();
+    }, e=>console.warn("leads: check Firestore rules for /leads", e));
   }catch(e){}
 }
 function pubSettings(){ const r={...S.settings}; delete r.adminPass; return r; }
@@ -1248,6 +1254,103 @@ async function removeOrder(id){
   }
   S.orders = S.orders.filter(o=>o.id!==id); LS.set('orders', S.orders);
   return true;
+}
+
+
+/* ============ 🔴 أرقام ألغت طلبات سابقاً + 📵 الطلبات غير المكتملة ============ */
+const ph9 = p => String(p||'').replace(/\D/g,'').slice(-9);
+function redLive(){ const m={}; S.orders.forEach(o=>{ if(o.status==='cancelled'){ const k=ph9(o.phone); if(k) m[k]=(m[k]||0)+1; } }); return m; }
+function redCount(phone){
+  const k=ph9(phone); if(!k) return 0;
+  const e=(S.red||{})[k]||{n:0,c:0};
+  return Math.max(0, Math.max(redLive()[k]||0, e.n||0) - (e.c||0));
+}
+function redBadge(o){
+  const n=redCount(o.phone); if(!n) return '';
+  return `<span class="rbadge" title="هذا الرقم ألغى ${n} طلب سابقاً — اضغط لإزالة العلامة" onclick="redClear('${ph9(o.phone)}')">🔴 ألغى ${n}</span>`;
+}
+async function redLoad(){
+  if(!DB) return;
+  try{ const d=await DB.doc('private/redphones').get(); S.red=(d.exists&&d.data().m)||{}; S._redOk=true; }
+  catch(e){ console.warn('redphones load failed - check rules for /private', e); }
+}
+function redSync(){          // يحفظ الأرقام التي ألغت حتى لو حُذفت طلباتها لاحقاً (مستند خاص بالأدمن)
+  if(!DB || !S.admin || !S._redOk) return;
+  const live=redLive(); let ch=false; S.red=S.red||{};
+  for(const k in live){ const e=S.red[k]||(S.red[k]={n:0,c:0}); if(live[k]>(e.n||0)){ e.n=live[k]; ch=true; } }
+  if(ch){ clearTimeout(S._redT); S._redT=setTimeout(()=>{ try{ DB.doc('private/redphones').set({m:S.red}).catch(()=>{}); }catch(e){} },1200); }
+}
+async function redClear(k){
+  if(!confirm('إزالة العلامة الحمراء عن هذا الرقم؟\n(تعود تلقائياً إذا ألغى طلباً جديداً)')) return;
+  S.red=S.red||{}; const e=S.red[k]||(S.red[k]={n:0,c:0});
+  e.n=Math.max(e.n||0, redLive()[k]||0); e.c=e.n;
+  if(DB){ try{ await DB.doc('private/redphones').set({m:S.red}); }catch(er){ toast('⚠︎ '+(er.code||er.message)); } }
+  render();
+}
+
+/* ---- الزبون يبدأ الطلب ولا يُكمله: نحفظ رقمه (مستند واحد لكل رقم) ليتصل به الأدمن ---- */
+let LEAD_T=null, LEAD_LAST='', LEAD_START=null, LEAD_DONE=false, LEAD_BOUND=false;
+function leadData(err){
+  const v=id=>(document.getElementById(id)?.value||'').trim();
+  const raw=v('f_phone').replace(/\s|-/g,'');
+  if(!/^0?[5-7]\d{8}$/.test(raw) || v('f_hp')) return null;
+  const p=byId(S.productId); if(!p) return null;
+  const wc=v('f_wilaya'), row=DZ.find(x=>String(x[0])===String(wc));
+  let com=v('f_commune'); if(com==='__other') com=v('f_commune_other');
+  const now=new Date().toISOString();
+  return {phone:raw.slice(-9), customer:v('f_name').slice(0,80), productId:String(p.id).slice(0,80), productName:String(L(p.name)||'').slice(0,120),
+    wilayaCode:Number(wc)||0, wilaya:row?String(row[2]).slice(0,60):'', commune:com.slice(0,120), err:String(err||'').slice(0,40), done:false,
+    startedAt:LEAD_START||(LEAD_START=now), updatedAt:now};
+}
+async function leadSave(err,done){
+  clearTimeout(LEAD_T);
+  if(!DB || S.admin || LEAD_DONE) return;
+  const d=leadData(err); if(!d) return;
+  if(done){ d.done=true; LEAD_DONE=true; }
+  const sig=JSON.stringify([d.phone,d.customer,d.productId,d.wilayaCode,d.commune,d.err,d.done]);
+  if(sig===LEAD_LAST) return; LEAD_LAST=sig;
+  try{ await DB.doc('leads/'+d.phone).set(d); }catch(e){}
+}
+function leadSchedule(){ clearTimeout(LEAD_T); LEAD_T=setTimeout(()=>leadSave(),3500); }
+function leadBind(){
+  if(LEAD_BOUND) return; LEAD_BOUND=true;
+  document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='hidden') leadSave(); });
+  window.addEventListener('pagehide',()=>leadSave());
+}
+const LEAD_ERR={f_name:'لم يكتب الاسم', f_phone:'لم يكتب الهاتف', f_wilaya:'لم يختر الولاية', f_commune:'لم يختر البلدية', f_commune_other:'لم يكتب البلدية', color:'لم يختر اللون', size:'لم يختر المقاس', noPrice:'لا يوجد سعر توصيل لولايته'};
+function leadIsDone(l){ return !!l.done || S.orders.some(o=>ph9(o.phone)===l.id && String(o.createdAt||'')>=String(l.startedAt||'')); }
+function leadList(){ return (S.leads||[]).filter(l=>!leadIsDone(l)).sort((a,b)=>(a.hand?1:0)-(b.hand?1:0) || String(b.updatedAt||'').localeCompare(String(a.updatedAt||''))); }
+function agoTxt(iso){ const m=Math.max(0,Math.floor((Date.now()-Date.parse(iso||''))/6e4)); if(!isFinite(m)) return ''; return m<60?('منذ '+m+' د'):m<1440?('منذ '+Math.floor(m/60)+' س'):('منذ '+Math.floor(m/1440)+' يوم'); }
+async function leadHand(id){
+  try{ if(DB) await DB.doc('leads/'+id).update({hand:true}); }catch(e){ return toast('⚠︎ '+(e.code||e.message)); }
+  const l=S.leads.find(x=>x.id===id); if(l) l.hand=true; render();
+}
+async function leadDel(id){
+  if(!confirm('حذف هذه القائمة نهائياً؟')) return;
+  try{ if(DB) await DB.doc('leads/'+id).delete(); }catch(e){ return toast('⚠︎ '+(e.code||e.message)); }
+  S.leads=S.leads.filter(x=>x.id!==id); render();
+}
+function tabLeads(){
+  const list=leadList(), open=list.filter(l=>!l.hand).length, store=S.settings.storeName||'';
+  const rows=list.map(l=>{
+    const msg=encodeURIComponent(`السلام عليكم ${l.customer||''}، لاحظنا أنك بدأت طلب «${l.productName||''}»${store?' من '+store:''} ولم يكتمل. هل واجهتك أي صعوبة؟ يسعدنا مساعدتك لإتمام الطلب 🌷`);
+    return `<tr style="${l.hand?'opacity:.55':''}">
+      <td class="muted" style="font-size:.78rem">${fmtDT(l.updatedAt)}<div>${agoTxt(l.updatedAt)}</div></td>
+      <td><b>${esc(l.customer||'—')}</b>${redBadge({phone:l.id})}<div><a href="tel:0${l.id}" style="font-size:.8rem;color:var(--brand)">0${l.id}</a></div>
+        <a class="muted" style="font-size:.74rem" target="_blank" rel="noopener" href="https://wa.me/213${l.id}">WhatsApp</a></td>
+      <td>${esc(l.productName||'')}</td>
+      <td>${l.wilaya?`<b>${String(l.wilayaCode).padStart(2,'0')} ${esc(l.wilaya)}</b><div class="muted" style="font-size:.8rem">${esc(l.commune||'')}</div>`:'<span class="muted">—</span>'}</td>
+      <td><span class="cx-chip st">${esc(LEAD_ERR[l.err]||'غادر الصفحة قبل الإرسال')}</span>${l.hand?'<div class="muted" style="font-size:.72rem">✔ تم التواصل</div>':''}</td>
+      <td><div style="display:flex; flex-direction:column; gap:6px; min-width:110px">
+        <a class="btn btn-primary btn-sm" target="_blank" rel="noopener" href="https://wa.me/213${l.id}?text=${msg}">💬 ساعده على الإتمام</a>
+        ${l.hand?'':`<button class="btn btn-ghost btn-sm" onclick="leadHand('${l.id}')">✔ تم التواصل</button>`}
+        <button class="btn btn-sm" style="background:var(--accent-soft); color:var(--accent)" onclick="leadDel('${l.id}')">${t('del')}</button></div></td>
+    </tr>`; }).join('')||`<tr><td colspan="6" class="muted" style="padding:24px">لا توجد طلبات غير مكتملة.</td></tr>`;
+  return statCards([["📵","غير مكتملة (لم يُتصل بها)",open,STAT_COLOR.pending],["✔","تم التواصل معها",list.length-open,STAT_COLOR.confirmed]])
+   + `<p class="muted" style="font-size:.76rem; margin:-8px 0 14px">ⓘ زبائن كتبوا رقم هاتفهم وبدأوا الطلب ثم غادروا أو لم يعرفوا كيف يكملون. تختفي القائمة تلقائياً عند اكتمال طلب بنفس الرقم.</p>
+   <div class="card scroll-x" style="padding:6px 12px"><table class="tbl">
+     <thead><tr><th>آخر نشاط</th><th>${t('customer')}</th><th>${t('product')}</th><th>${t('wilaya')}</th><th>أين توقّف؟</th><th></th></tr></thead>
+     <tbody>${rows}</tbody></table></div>`;
 }
 
 /* ------------------------- 4. Helpers & UI atoms ------------------------ */
@@ -1682,6 +1785,7 @@ function wireOrderForm(){
   { const _p=byId(S.productId), _n=pColors(_p).length; CQ=[]; QTY=_n?0:1; } SEL_COLOR=null; SEL_SIZE=null; COLOR_IMG=-1;
   const w=document.getElementById('f_wilaya'); if(!w) return;
   const _f=document.getElementById('orderForm');
+  LEAD_DONE=false; LEAD_LAST=''; LEAD_START=null; ['change','focusout'].forEach(ev=>_f.addEventListener(ev,leadSchedule)); leadBind();
   ['input','change'].forEach(ev=>_f.addEventListener(ev,e=>e.target.classList&&e.target.classList.remove('err')));
   w.addEventListener('change',()=>{
     const wc=w.value, sel=document.getElementById('f_commune');
@@ -1735,15 +1839,15 @@ async function submitOrder(pid){
   if(!phone) bad.push('f_phone');
   if(!wc) bad.push('f_wilaya');
   if(!commune) bad.push(g('f_commune')==='__other'?'f_commune_other':'f_commune');
-  if(bad.length){ bad.forEach(id=>document.getElementById(id)?.classList.add('err')); document.getElementById(bad[0])?.focus(); return toast(t('required')); }
+  if(bad.length){ leadSave(bad[0]); bad.forEach(id=>document.getElementById(id)?.classList.add('err')); document.getElementById(bad[0])?.focus(); return toast(t('required')); }
   if(!/^0?[5-7]\d{8}$/.test(phone)){ const el=document.getElementById('f_phone'); el.classList.add('err'); el.focus(); return toast(t('badPhone')); }
   const cs=pColors(p), ss=pSizes(p);
-  if(cs.length && QTY<1){ const e=document.getElementById('f_colorGrp'); e.classList.add('err'); e.scrollIntoView({block:'center',behavior:'smooth'}); return toast(t('pickColorReq')); }
-  if(ss.length && SEL_SIZE==null){ const e=document.getElementById('f_sizeGrp'); e.classList.add('err'); e.scrollIntoView({block:'center',behavior:'smooth'}); return toast(t('pickSizeReq')); }
+  if(cs.length && QTY<1){ leadSave('color'); const e=document.getElementById('f_colorGrp'); e.classList.add('err'); e.scrollIntoView({block:'center',behavior:'smooth'}); return toast(t('pickColorReq')); }
+  if(ss.length && SEL_SIZE==null){ leadSave('size'); const e=document.getElementById('f_sizeGrp'); e.classList.add('err'); e.scrollIntoView({block:'center',behavior:'smooth'}); return toast(t('pickSizeReq')); }
   const type=document.querySelector('input[name="dtype"]:checked')?.value||'home';
   const row=DZ.find(x=>String(x[0])===String(wc));
   const ship=shipFor(wc,type), _dp=discPct(p,QTY), _da=discAmt(p,QTY), sub=p.price*QTY-_da;
-  if(ship==null) return toast(t('noPrice'));
+  if(ship==null){ leadSave('noPrice'); return toast(t('noPrice')); }
   const _pl=cxSplit(commune, row?row[3]:[]);          // «بلدية + عنوان مفصّل» → البلدية في خانتها والعنوان تحتها
   const _commune=String(_pl.commune||commune).trim(), _addr=String(_pl.rest||'').trim();
   const btn=document.getElementById('submitBtn');
@@ -1757,6 +1861,7 @@ async function submitOrder(pid){
     deliveryType:type, carrier:(activeCarrier()||{}).name||'', shipping:ship, subtotal:sub, total:sub+ship, discountPct:_dp, discountAmt:_da, lang:LANG
   });
   try{ localStorage.setItem('zn_lastord', String(Date.now())); }catch(e){}
+  leadSave('',true);
   S.lastOrder=order;
   trackPurchase(order);
   go('success');
@@ -1765,14 +1870,14 @@ const POLICY = {
  privacy:{
   ar:`<h1>سياسة الخصوصية</h1>
   <p>نجمع فقط المعلومات الضرورية لتنفيذ طلبك: الاسم، رقم الهاتف، الولاية، البلدية والعنوان.</p>
-  <h3>كيف نستعملها</h3><ul><li>الاتصال بك لتأكيد الطلب.</li><li>تسليم الطرد عبر شركة التوصيل.</li>
+  <h3>كيف نستعملها</h3><ul><li>الاتصال بك لتأكيد الطلب.</li><li>إذا بدأت تعبئة الطلب ولم تُكمله، قد نحتفظ برقم هاتفك وبيانات الطلب الجزئية لنتصل بك ونساعدك على إتمامه.</li><li>تسليم الطرد عبر شركة التوصيل.</li>
   <li>إحصائيات داخلية لتحسين الخدمة.</li></ul>
   <h3>ما لا نفعله</h3><ul><li>لا نبيع بياناتك ولا نشاركها مع أي طرف خارج شركة التوصيل.</li>
   <li>لا نطلب أي معلومات بنكية — الدفع نقداً عند الاستلام فقط.</li></ul>
   <h3>ملفات تعريف الارتباط</h3><p>نستعمل أدوات قياس (Facebook Pixel، TikTok Pixel) لمعرفة فعالية إعلاناتنا. يمكنك تعطيلها من إعدادات متصفحك.</p>
   <h3>حقوقك</h3><p>يمكنك طلب حذف بياناتك في أي وقت عبر واتساب 0542248858.</p>`,
-  fr:`<h1>Politique de confidentialité</h1><p>Nous collectons uniquement les informations nécessaires à la livraison : nom, téléphone, wilaya, commune et adresse. Elles ne sont jamais vendues ni partagées en dehors du transporteur. Aucune donnée bancaire n'est demandée — paiement à la livraison uniquement. Suppression de vos données sur demande : WhatsApp 0542248858.</p>`,
-  en:`<h1>Privacy policy</h1><p>We collect only what delivery requires: name, phone, wilaya, commune and address. Your data is never sold or shared outside the courier. No banking details are requested — cash on delivery only. To have your data deleted, message WhatsApp 0542248858.</p>`},
+  fr:`<h1>Politique de confidentialité</h1><p>Nous collectons uniquement les informations nécessaires à la livraison : nom, téléphone, wilaya, commune et adresse. Elles ne sont jamais vendues ni partagées en dehors du transporteur. Si vous commencez une commande sans la terminer, votre numéro et les données saisies peuvent être conservés pour vous aider à la finaliser. Aucune donnée bancaire n'est demandée — paiement à la livraison uniquement. Suppression de vos données sur demande : WhatsApp 0542248858.</p>`,
+  en:`<h1>Privacy policy</h1><p>We collect only what delivery requires: name, phone, wilaya, commune and address. Your data is never sold or shared outside the courier. If you start an order without finishing it, your number and the partial data may be kept so we can help you complete it. No banking details are requested — cash on delivery only. To have your data deleted, message WhatsApp 0542248858.</p>`},
  returns:{
   ar:`<h1>سياسة الاستبدال والإرجاع</h1>
   <h3>المعاينة عند الاستلام</h3><p>لك الحق في فتح الطرد ومعاينة المنتج أمام عامل التوصيل قبل الدفع. إذا لم يطابق المنتج الوصف، يمكنك رفضه دون دفع ثمنه.</p>
@@ -1822,7 +1927,7 @@ function viewAdmin(){
       <button class="btn btn-primary" style="width:100%; margin-top:12px" onclick="tryLogin()">${t('login')}</button>
       <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="go('home')">${t('back')}</button>
     </div>`;
-  const tabs=[["products",t('tabProducts')],["orders",t('tabOrders')+' ('+S.orders.filter(o=>o.status==='pending'||o.status==='confirmed').length+')'],["shipped",'🚚 المشحونة ('+S.orders.filter(o=>o.status==='shipped').length+')'],["dash",'📊 الإحصائيات'],["returns",'↩ الملغاة ('+S.orders.filter(o=>o.status==='cancelled').length+')'],["shipping",t('tabShipping')],["integ","🔌 ربط التوصيل (API)"],["ai",t('tabAI')],["settings",t('tabSettings')]];
+  const tabs=[["products",t('tabProducts')],["orders",t('tabOrders')+' ('+S.orders.filter(o=>o.status==='pending'||o.status==='confirmed').length+')'],["leads",'📵 غير المكتملة ('+leadList().filter(l=>!l.hand).length+')'],["shipped",'🚚 المشحونة ('+S.orders.filter(o=>o.status==='shipped').length+')'],["dash",'📊 الإحصائيات'],["returns",'↩ الملغاة ('+S.orders.filter(o=>o.status==='cancelled').length+')'],["shipping",t('tabShipping')],["integ","🔌 ربط التوصيل (API)"],["ai",t('tabAI')],["settings",t('tabSettings')]];
   return `
   <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px">
     <h1 style="font-size:1.35rem">${t('admin')}</h1>
@@ -1835,14 +1940,14 @@ function viewAdmin(){
   <div class="tabs" style="margin-bottom:18px">
     ${tabs.map(([k,lbl])=>`<button aria-selected="${S.tab===k}" onclick="S.tab='${k}';render();colexSync(false,true)">${lbl}</button>`).join('')}
   </div>
-  ${S.tab==='products'?tabProducts():S.tab==='orders'?tabOrders():S.tab==='shipped'?tabShipped():S.tab==='dash'?tabDash():S.tab==='returns'?tabReturns():S.tab==='shipping'?tabShipping():S.tab==='integ'?tabInteg():S.tab==='ai'?tabAI():tabSettings()}`;
+  ${S.tab==='products'?tabProducts():S.tab==='orders'?tabOrders():S.tab==='leads'?tabLeads():S.tab==='shipped'?tabShipped():S.tab==='dash'?tabDash():S.tab==='returns'?tabReturns():S.tab==='shipping'?tabShipping():S.tab==='integ'?tabInteg():S.tab==='ai'?tabAI():tabSettings()}`;
 }
 let _tap=0,_tt;
 function logoTap(){ _tap++; clearTimeout(_tt); _tt=setTimeout(()=>{_tap=0;},1500); if(_tap>=5){ _tap=0; go('admin'); } else go('home'); }
 function enterAdmin(){
   if(S.admin) return;
   S.admin=true; integLoad(); if(S.view==='admin') render();
-  if(DB){ loadOrders().then(()=>{ if(S.view==='admin') render(); colexSync(true,true); }); subscribe(); }
+  if(DB){ loadOrders().then(()=>{ if(S.view==='admin') render(); colexSync(true,true); redLoad().then(()=>{ redSync(); if(S.view==='admin') render(); }); }); subscribe(); }
 }
 async function tryLogin(){
   const pass=document.getElementById('a_pass').value;
@@ -2129,7 +2234,7 @@ function tabOrders(){
     <tbody>${filtered.map(o=>`<tr>
       <td><b>${esc(o.ref||o.id)}</b></td>
       <td class="muted" style="font-size:.78rem">${new Date(o.createdAt).toLocaleString(LANG==='ar'?'ar-DZ':'fr-FR')}</td>
-      <td><b>${esc(o.customer)}</b><div><a href="tel:${esc(o.phone)}" style="font-size:.8rem;color:var(--brand)">${esc(o.phone)}</a></div>
+      <td><b>${esc(o.customer)}</b>${redBadge(o)}<div><a href="tel:${esc(o.phone)}" style="font-size:.8rem;color:var(--brand)">${esc(o.phone)}</a></div>
         <a class="muted" style="font-size:.74rem" target="_blank" rel="noopener" href="https://wa.me/213${esc(String(o.phone).replace(/^0/,''))}">WhatsApp</a></td>
       <td>${esc(o.productName)} ×${o.qty}${(o.color||o.size)?`<div style="font-size:.76rem; font-weight:800; color:var(--brand-ink)">${o.color?'🎨 '+esc(o.color):''}${o.color&&o.size?' · ':''}${o.size?'📏 '+esc(o.size):''}</div>`:''}</td>
       <td>${placeCell(o)}</td>
@@ -2162,7 +2267,7 @@ function statusSel(o){
     ${ST.map(x=>`<option value="${x}" ${o.status===x?'selected':''}>${stLabel(x)}</option>`).join('')}</select>`;
 }
 /* ===================== التتبع المباشر من المتجر ===================== */
-const ORD_TABS=['orders','shipped','dash','returns'];
+const ORD_TABS=['orders','leads','shipped','dash','returns'];
 function isOrdTab(){ return S.view==='admin' && ORD_TABS.includes(S.tab); }
 function typing(){ const a=document.activeElement; return !!(a && /INPUT|SELECT|TEXTAREA/.test(a.tagName)); }
 function sinceDays(iso){ const t0=Date.parse(iso||''); return t0?Math.floor((Date.now()-t0)/864e5):0; }
@@ -2183,7 +2288,7 @@ function searchMatch(o,q){
   return [o.ref,o.id,o.customer,o.phone,o.colexTracking,o.wilaya,o.commune,o.productName].join(' ').toLowerCase().includes(q);
 }
 function cust(o){
-  return `<b>${esc(o.customer)}</b><div><a href="tel:${esc(o.phone)}" style="font-size:.8rem;color:var(--brand)">${esc(o.phone)}</a></div>
+  return `<b>${esc(o.customer)}</b>${redBadge(o)}<div><a href="tel:${esc(o.phone)}" style="font-size:.8rem;color:var(--brand)">${esc(o.phone)}</a></div>
     <a class="muted" style="font-size:.74rem" target="_blank" rel="noopener" href="https://wa.me/213${esc(String(o.phone).replace(/^0/,''))}">WhatsApp</a>`;
 }
 function prodCell(o){
