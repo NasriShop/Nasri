@@ -41,6 +41,28 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/products/$(request.resource.data.productId)).data.price == request.resource.data.unitPrice;
     }
 
+    // الطلبات غير المكتملة: الزبون يكتب مستنداً واحداً لكل رقم هاتف (بشروط صارمة)، والأدمن وحده يقرأ/يعدّل/يحذف
+    function validLead(id, d) {
+      return id.matches('^[5-7][0-9]{8}$')
+        && d.keys().hasOnly(['phone','customer','productId','productName','wilayaCode','wilaya','commune','err','done','startedAt','updatedAt'])
+        && d.keys().hasAll(['phone','customer','productId','productName','wilayaCode','wilaya','commune','err','done','startedAt','updatedAt'])
+        && d.phone == id
+        && d.customer is string && d.customer.size() <= 80
+        && d.productId is string && d.productId.size() > 0 && d.productId.size() <= 80
+        && d.productName is string && d.productName.size() <= 120
+        && d.wilayaCode is int && d.wilayaCode >= 0 && d.wilayaCode <= 99
+        && d.wilaya is string && d.wilaya.size() <= 60
+        && d.commune is string && d.commune.size() <= 120
+        && d.err is string && d.err.size() <= 40
+        && d.done is bool
+        && d.startedAt is string && d.startedAt.size() <= 40
+        && d.updatedAt is string && d.updatedAt.size() <= 40;
+    }
+    match /leads/{id} {
+      allow read, update, delete: if isAdmin();
+      allow create, update: if validLead(id, request.resource.data);
+    }
+
     // بيانات حساسة (توكنات شركات التوصيل…): الأدمن فقط
     match /private/{document=**} {
       allow read, write: if isAdmin();
