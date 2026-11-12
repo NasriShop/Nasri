@@ -5,7 +5,7 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://connect.facebook.net https://analytics.tiktok.com https://cdnjs.cloudflare.com; worker-src blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; media-src https: blob:; connect-src https: wss:; frame-src https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://www.facebook.com; object-src 'none'; base-uri 'self'; form-action 'self'">
 <meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="ZoubirNasriShop — متجر إلكتروني جزائري: منتجات مختارة بعناية، الدفع عند الاستلام والتوصيل إلى 58 ولاية.">
+<meta name="description" content="ZoubirNasriShop — متجر إلكتروني جزائري: منتجات مختارة بعناية، الدفع عند الاستلام والتوصيل إلى 69 ولاية.">
 <meta name="theme-color" content="#FF6A00">
 <title>ZoubirNasriShop — متجر إلكتروني</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -448,6 +448,7 @@ header.topbar::after{display:none}
 .badge{border-radius:6px; padding:3px 10px; font-size:.74rem}
 .badge-accent{background:var(--accent-soft); color:var(--accent)}
 .ribbon.badge{background:#D92D20; color:#fff}
+#f_deskHint a{color:var(--brand-ink,#C74E00); font-weight:800; text-decoration:underline; cursor:pointer}
 .rbadge{display:inline-flex; align-items:center; gap:4px; background:#D92D20; color:#fff; border-radius:999px; padding:2px 9px; font-size:.7rem; font-weight:800; margin-inline-start:6px; cursor:pointer; white-space:nowrap}
 .hero{border-radius:16px}
 .hero-title{font-weight:900; line-height:1.3}
@@ -633,7 +634,7 @@ ttq.load('TIKTOK_PIXEL_ID'); ttq.page();
       <div class="logo-mark">ZN</div>
       <div>
         <div class="logo-txt">Zoubir<span>Nasri</span>Shop</div>
-        <div class="muted" style="font-size:.68rem; margin-top:-4px" id="tagline">الدفع عند الاستلام · 58 ولاية</div>
+        <div class="muted" style="font-size:.68rem; margin-top:-4px" id="tagline">الدفع عند الاستلام · 69 ولاية</div>
       </div>
     </div>
     <div style="flex:1"></div>
@@ -754,13 +755,27 @@ const DZ = [
 [55,"تقرت","Touggourt",["Touggourt","Témacine","Megarine","Nezla","Zaouia El Abidia","El Hadjira","Taibet","Blidet Amor"]],
 [56,"جانت","Djanet",["Djanet","Bordj El Haouas"]],
 [57,"المغير","El M'Ghair",["El M'Ghair","Djamaa","Sidi Khelil","Still","Oum Touyour","Sidi Amrane"]],
-[58,"المنيعة","El Meniaa",["El Meniaa","Hassi Gara","Hassi Fehal"]]
+[58,"المنيعة","El Meniaa",["El Meniaa","Hassi Gara","Hassi Fehal"]],
+/* ===== الولايات الجديدة 59-69 (القانون 26-06 + المرسوم الرئاسي 26-206): بلدياتها حسب نص القانون ===== */
+[59,"أفلو","Aflou",["Aflou","Gueltat Sidi Saad","Aïn Sidi Ali","El Beïdha","Brida","El Ghicha","Hadj Mechri","Sebgag","Taouiala","Oued Morra","Oued M'Zi","Sidi Bouzid"]],
+[60,"بريكة","Barika",["Barika","Bitam","Abdelkader Azil","Tilatou","Seggana","Djezzar","M'Doukal","Ouled Ammar"]],
+[61,"القنطرة","El Kantara",["El Kantara","Aïn Zaatout","Branis","El Outaya","Djemourah"]],
+[62,"بئر العاتر","Bir El Ater",["Bir El Ater","Negrine","El Ogla El Melha","Ferkane"]],
+[63,"العريشة","El Aricha",["El Aricha","El Gor","Sidi Djillali","El Bouihi"]],
+[64,"قصر الشلالة","Ksar Chellala",["Ksar Chellala","Zmalet El Emir Abdelkader","Rechaiga","Hamadia","Serguine","Bougara"]],
+[65,"عين وسارة","Aïn Oussara",["Aïn Ouessara","Birine","Bouira Lahdab","El Khemis","Sidi Ladjel","Had Sahary","Guernini","Benhar","Hassi Fedoul","Aïn Fekka"]],
+[66,"مسعد","Messaad",["Messaad","Sed Rahal","Faïdh El Botma","Guettara","Selmana","Oum Laadham","Deldoul","Amourah"]],
+[67,"قصر البخاري","Ksar El Boukhari",["Ksar El Boukhari","Ouled Maaref","Aïn Boucif","Derrag","Bouaiche","Kef Lakhdar","Chelalet El Adhaoura","Ouled Hellal","Tafraout","Boghar","Sidi Damed","Aziz","Chahbounia","Cheniguel","Aïn Ouksir","Oum El Djallil","M'Fatha","Boughezoul","El Ouinet","Ouled Antar","Saneg"]],
+[68,"بوسعادة","Bou Saâda",["Bou Saâda","Khoubana","M'Cif","Ouled Sidi Brahim","Sidi Ameur","Tamsa","Ben Srour","Ouled Slimane","El Houamed","El Hamel","Zarzour","Mohamed Boudiaf","Benzouh","Bir Foda","Aïn Farès","Sidi M'Hamed","Menaâ","Aïn El Melh","Medjedel","Slim","Aïn Errich","Oultem","Djebel Messaad"]],
+[69,"الأبيض سيدي الشيخ","El Abiodh Sidi Cheikh",["El Abiodh Sidi Cheikh","Aïn El Orak","Arbaouat","Boussemghoun","Chellala","El Bnoud","El Meharra"]]
 ];
+/* الولاية الأم لكل ولاية جديدة: منها يُؤخذ سعر التوصيل (ما لم يُحدَّد سعر خاص) ومنها يُرسَل الطرد إلى Colex إلى حين تحديث قوائمها */
+const MOTHER = {59:3,60:5,61:7,62:12,63:13,64:14,65:17,66:17,67:26,68:28,69:32};
 
 /* ------------------------------ 2. i18n ------------------------------- */
 const I18N = {
 ar:{
-  dir:"rtl", admin:"لوحة التحكم", tagline:"الدفع عند الاستلام · 58 ولاية",
+  dir:"rtl", admin:"لوحة التحكم", tagline:"الدفع عند الاستلام · 69 ولاية",
   shopNow:"اطلب الآن", buyNow:"اشتري الآن — الدفع عند الاستلام", products:"منتجاتنا",
   allProducts:"كل المنتجات", featured:"منتج مميّز", off:"تخفيض", da:"دج",
   searchPh:"ابحث عن منتج…", noProducts:"لا توجد منتجات حالياً. أضف منتجاتك من لوحة التحكم.",
@@ -776,15 +791,15 @@ ar:{
   required:"يرجى ملء جميع الحقول الإجبارية", badPhone:"رقم الهاتف غير صحيح (9 أو 10 أرقام)",
   contactUs:"تواصل معنا", payDelivery:"الدفع والتوصيل", rights:"جميع الحقوق محفوظة",
   footerAbout:"متجر إلكتروني جزائري — منتجات مختارة بعناية، دفع عند الاستلام وتوصيل إلى كل الولايات.",
-  footerShip:"الدفع نقداً عند الاستلام. التوصيل إلى المنزل أو مكتب التوصيل عبر 58 ولاية.",
-  t1:"الدفع عند الاستلام", t2:"توصيل 58 ولاية", t3:"منتجات أصلية", t4:"دعم فوري عبر واتساب",
+  footerShip:"الدفع نقداً عند الاستلام. التوصيل إلى المنزل أو مكتب التوصيل عبر 69 ولاية.",
+  t1:"الدفع عند الاستلام", t2:"توصيل 69 ولاية", t3:"منتجات أصلية", t4:"دعم فوري عبر واتساب",
   adminLogin:"دخول لوحة التحكم", password:"رمز المرور", login:"دخول", wrongPass:"رمز المرور غير صحيح",
   tabProducts:"المنتجات", tabOrders:"الطلبات", tabShipping:"أسعار التوصيل", carriers:"شركات التوصيل", addCarrier:"+ إضافة شركة", carrierName:"اسم شركة التوصيل", renameCarrier:"✏️ الاسم", deleteCarrier:"🗑 حذف", activeNow:"مفعّلة للزبائن", makeActive:"تفعيلها للزبائن", noPrice:"سعر التوصيل غير محدد لهذه الولاية — تواصل معنا عبر واتساب", missingN:"ولاية بدون سعر لهذه الشركة", copyFrom:"نسخ الأسعار من الشركة الحالية؟ (موافق = نسخ، إلغاء = جدول فارغ)", lastCarrier:"لا يمكن حذف آخر شركة", editingHint:"الأسعار أدناه تخص الشركة المحدّدة فقط — لا شيء يتغيّر على بقية الشركات.", impTitle:"رفع الأسعار من ملف PDF", impNote:"اختر ملف PDF فيه جدول أسعار (نصّي وليس صورة). تشوف النتيجة قبل التسجيل ولا شيء يتغيّر حتى تضغط «تطبيق». تُسجّل في الشركة المحدّدة فقط، ويمكنك تعدّل أي سعر يدوياً بعدها.", impLoading:"جاري قراءة الملف…", impFail:"تعذّرت قراءة الملف (تأكد من الاتصال بالإنترنت وأن الملف PDF نصّي)", impNone:"ما لقيتش أسعار في الملف. إذا كان صورة مصوّرة (scan) أدخل الأسعار يدوياً", impPreview:"معاينة قبل التطبيق", impAuto:"الأعمدة محدّدة من عناوين الجدول ✓", impOrder:"ما لقيتش عناوين الأعمدة: الأول = منزل، الثاني = مكتب — بدّلهم إذا كانوا معكوسين", impMissing:"ولايات غير موجودة في الملف (تبقى أسعارها الحالية)", impSwap:"⇄ تبديل منزل/مكتب", impApply:"✔ تطبيق على", impCancel:"إلغاء", impDone:"تم تحديث الولايات:", tabAI:"مولّد الإعلانات",
   tabSettings:"الإعدادات", addProduct:"إضافة منتج", edit:"تعديل", del:"حذف", save:"حفظ",
   cancel:"إلغاء", name:"اسم المنتج", priceL:"السعر (دج)", oldPrice:"السعر قبل التخفيض (اختياري)",
   images:"صور المنتج", descHtml:"الوصف (يدعم HTML)", isFeatured:"عرضه في البانر الرئيسي",
   active:"معروض في المتجر", saved:"تم الحفظ", deleted:"تم الحذف", confirmDel:"هل تريد الحذف نهائياً؟",
-  globalRates:"سعر موحّد لكل الولايات", customRates:"أسعار مخصّصة لكل ولاية", apply:"تطبيق على 58 ولاية",
+  globalRates:"سعر موحّد لكل الولايات", customRates:"أسعار مخصّصة لكل ولاية", apply:"تطبيق على 69 ولاية",
   exportCsv:"تصدير Excel (CSV)", archiveSheets:"أرشفة إلى Google Sheets", openSheet:"فتح Google Sheet",
   statsNote:"إحصائيات إجمالية دائمة — لا تتأثر بحذف أو أرشفة الطلبات", resetStats:"↺ تصفير العداد", status:"الحالة",
   stPending:"قيد الانتظار", stConfirmed:"مؤكّد", stShipped:"تم الشحن", stDone:"تم التسليم", stCancel:"ملغى",
@@ -802,7 +817,7 @@ ar:{
   addPixel:"إضافة بيكسل آخر",  ttPixel:"معرّف TikTok Pixel", ttPixelHelp:"يُستعمل لتتبّع زوار موقعك من إعلانات تيك توك وقياس نتائج الحملات. يمكنك نسخه من TikTok Ads Manager."
 },
 fr:{
-  dir:"ltr", admin:"Admin", tagline:"Paiement à la livraison · 58 wilayas",
+  dir:"ltr", admin:"Admin", tagline:"Paiement à la livraison · 69 wilayas",
   shopNow:"Commander", buyNow:"Commander — paiement à la livraison", products:"Nos produits",
   allProducts:"Tous les produits", featured:"Produit vedette", off:"Remise", da:"DA",
   searchPh:"Rechercher un produit…", noProducts:"Aucun produit. Ajoutez-en depuis l'admin.",
@@ -818,15 +833,15 @@ fr:{
   required:"Merci de remplir les champs obligatoires", badPhone:"Numéro invalide (9 ou 10 chiffres)",
   contactUs:"Contact", payDelivery:"Paiement & livraison", rights:"Tous droits réservés",
   footerAbout:"Boutique en ligne algérienne — produits sélectionnés, paiement à la livraison partout.",
-  footerShip:"Paiement en espèces à la réception. Livraison à domicile ou au bureau, 58 wilayas.",
-  t1:"Paiement à la livraison", t2:"58 wilayas", t3:"Produits authentiques", t4:"Support WhatsApp",
+  footerShip:"Paiement en espèces à la réception. Livraison à domicile ou au bureau, 69 wilayas.",
+  t1:"Paiement à la livraison", t2:"69 wilayas", t3:"Produits authentiques", t4:"Support WhatsApp",
   adminLogin:"Accès administration", password:"Mot de passe", login:"Entrer", wrongPass:"Mot de passe incorrect",
   tabProducts:"Produits", tabOrders:"Commandes", tabShipping:"Tarifs livraison", carriers:"Sociétés de livraison", addCarrier:"+ Ajouter une société", carrierName:"Nom de la société", renameCarrier:"✏️ Nom", deleteCarrier:"🗑 Supprimer", activeNow:"Active pour les clients", makeActive:"Activer pour les clients", noPrice:"Tarif de livraison non défini pour cette wilaya — contactez-nous sur WhatsApp", missingN:"wilaya(s) sans tarif pour cette société", copyFrom:"Copier les tarifs de la société actuelle ? (OK = copier, Annuler = tableau vide)", lastCarrier:"Impossible de supprimer la dernière société", editingHint:"Les tarifs ci-dessous concernent uniquement la société sélectionnée — les autres ne changent pas.", impTitle:"Importer les tarifs depuis un PDF", impNote:"Choisissez un PDF contenant un tableau de tarifs (texte, pas une image). Vous voyez le résultat avant d'enregistrer ; rien ne change tant que vous n'appliquez pas. Seule la société sélectionnée est modifiée, et vous pouvez ensuite corriger à la main.", impLoading:"Lecture du fichier…", impFail:"Lecture impossible (vérifiez la connexion et que le PDF contient du texte)", impNone:"Aucun tarif trouvé. Si le PDF est une image (scan), saisissez les tarifs à la main", impPreview:"Aperçu avant application", impAuto:"Colonnes détectées depuis les en-têtes ✓", impOrder:"En-têtes non trouvés : 1re colonne = domicile, 2e = bureau — inversez si besoin", impMissing:"Wilayas absentes du fichier (tarifs actuels conservés)", impSwap:"⇄ Inverser domicile/bureau", impApply:"✔ Appliquer à", impCancel:"Annuler", impDone:"Wilayas mises à jour :", tabAI:"Générateur d'annonces",
   tabSettings:"Réglages", addProduct:"Ajouter un produit", edit:"Modifier", del:"Supprimer", save:"Enregistrer",
   cancel:"Annuler", name:"Nom du produit", priceL:"Prix (DA)", oldPrice:"Ancien prix (optionnel)",
   images:"Images", descHtml:"Description (HTML accepté)", isFeatured:"Afficher dans la bannière",
   active:"Visible en boutique", saved:"Enregistré", deleted:"Supprimé", confirmDel:"Supprimer définitivement ?",
-  globalRates:"Tarif unique pour toutes les wilayas", customRates:"Tarifs par wilaya", apply:"Appliquer aux 58",
+  globalRates:"Tarif unique pour toutes les wilayas", customRates:"Tarifs par wilaya", apply:"Appliquer aux 69",
   exportCsv:"Exporter Excel (CSV)", archiveSheets:"Archiver vers Google Sheets", openSheet:"Ouvrir Google Sheet",
   statsNote:"Statistiques cumulées permanentes — non affectées par la suppression ou l'archivage", resetStats:"↺ Réinitialiser le compteur", status:"Statut",
   stPending:"En attente", stConfirmed:"Confirmée", stShipped:"Expédiée", stDone:"Livrée", stCancel:"Annulée",
@@ -844,7 +859,7 @@ fr:{
   addPixel:"Ajouter un autre pixel",  ttPixel:"ID TikTok Pixel", ttPixelHelp:"Utilisé pour suivre les visiteurs venant des pubs TikTok et mesurer vos campagnes. Copiez-le depuis TikTok Ads Manager."
 },
 en:{
-  dir:"ltr", admin:"Admin", tagline:"Cash on delivery · 58 wilayas",
+  dir:"ltr", admin:"Admin", tagline:"Cash on delivery · 69 wilayas",
   shopNow:"Order now", buyNow:"Order now — cash on delivery", products:"Our products",
   allProducts:"All products", featured:"Featured", off:"OFF", da:"DA",
   searchPh:"Search a product…", noProducts:"No products yet. Add them from the admin panel.",
@@ -860,15 +875,15 @@ en:{
   required:"Please fill in the required fields", badPhone:"Invalid phone number (9 or 10 digits)",
   contactUs:"Contact us", payDelivery:"Payment & delivery", rights:"All rights reserved",
   footerAbout:"Algerian online store — curated products, cash on delivery nationwide.",
-  footerShip:"Pay cash on delivery. Home or office delivery across all 58 wilayas.",
-  t1:"Cash on delivery", t2:"58 wilayas covered", t3:"Authentic products", t4:"Instant WhatsApp support",
+  footerShip:"Pay cash on delivery. Home or office delivery across all 69 wilayas.",
+  t1:"Cash on delivery", t2:"69 wilayas covered", t3:"Authentic products", t4:"Instant WhatsApp support",
   adminLogin:"Admin access", password:"Password", login:"Sign in", wrongPass:"Wrong password",
   tabProducts:"Products", tabOrders:"Orders", tabShipping:"Shipping rates", carriers:"Delivery companies", addCarrier:"+ Add company", carrierName:"Delivery company name", renameCarrier:"✏️ Name", deleteCarrier:"🗑 Delete", activeNow:"Active for customers", makeActive:"Make active for customers", noPrice:"Shipping price not set for this wilaya — contact us on WhatsApp", missingN:"wilaya(s) without a price for this company", copyFrom:"Copy prices from the current company? (OK = copy, Cancel = empty table)", lastCarrier:"Cannot delete the last company", editingHint:"The prices below belong only to the selected company — others are not changed.", impTitle:"Import prices from a PDF", impNote:"Pick a PDF with a price table (text, not a scanned image). You preview the result first; nothing changes until you apply. Only the selected company is updated, and you can fix any price by hand afterwards.", impLoading:"Reading file…", impFail:"Could not read the file (check your connection and that the PDF contains text)", impNone:"No prices found. If the PDF is a scanned image, enter prices by hand", impPreview:"Preview before applying", impAuto:"Columns detected from table headers ✓", impOrder:"No headers found: 1st column = home, 2nd = desk — swap if reversed", impMissing:"Wilayas missing from the file (current prices kept)", impSwap:"⇄ Swap home/desk", impApply:"✔ Apply to", impCancel:"Cancel", impDone:"Wilayas updated:", tabAI:"Ad generator",
   tabSettings:"Settings", addProduct:"Add product", edit:"Edit", del:"Delete", save:"Save",
   cancel:"Cancel", name:"Product name", priceL:"Price (DA)", oldPrice:"Compare-at price (optional)",
   images:"Product images", descHtml:"Description (HTML supported)", isFeatured:"Show in main banner",
   active:"Visible in store", saved:"Saved", deleted:"Deleted", confirmDel:"Delete permanently?",
-  globalRates:"One rate for all wilayas", customRates:"Per-wilaya rates", apply:"Apply to all 58",
+  globalRates:"One rate for all wilayas", customRates:"Per-wilaya rates", apply:"Apply to all 69",
   exportCsv:"Export Excel (CSV)", archiveSheets:"Archive to Google Sheets", openSheet:"Open Google Sheet",
   statsNote:"Permanent cumulative stats — unaffected by deleting or archiving orders", resetStats:"↺ Reset counter", status:"Status",
   stPending:"Pending", stConfirmed:"Confirmed", stShipped:"Shipped", stDone:"Delivered", stCancel:"Cancelled",
@@ -932,7 +947,7 @@ const DEFAULT_SETTINGS = {
   stats:{count:0, pending:0, confirmed:0, shipped:0, done:0, cancelled:0, revenue:0}
 };
 const S = {
-  products:[], orders:[], leads:[], red:{}, settings:{...DEFAULT_SETTINGS},
+  products:[], orders:[], leads:[], red:{}, geo:null, settings:{...DEFAULT_SETTINGS},
   view:"home", productId:null, lastOrder:null,
   admin:false, tab:"products", ready:false, cloud:false, search:"", cat:"all"
 };
@@ -1091,7 +1106,8 @@ async function loadAll(){
   if(DB){
     let cloudWorked=false;
     try{
-      const [st, ps] = await Promise.all([DB.doc("shop/settings").get(), DB.collection("products").get()]);
+      const [st, ps, gd] = await Promise.all([DB.doc("shop/settings").get(), DB.collection("products").get(), DB.doc("shop/geo").get().catch(()=>null)]);
+      if(gd && gd.exists && gd.data() && gd.data().w) S.geo = gd.data();
       S.settings = {...DEFAULT_SETTINGS, ...(st.exists ? st.data() : {})}; ensureCarriers();
       S.products = ps.docs.map(d=>({id:d.id, ...d.data()})).filter(x=>okId(x.id));
       cloudWorked = true;
@@ -1330,6 +1346,112 @@ async function leadDel(id){
   try{ if(DB) await DB.doc('leads/'+id).delete(); }catch(e){ return toast('⚠︎ '+(e.code||e.message)); }
   S.leads=S.leads.filter(x=>x.id!==id); render();
 }
+
+/* ---- تعديل طلب غير مكتمل وإضافته إلى الطلبات العادية ---- */
+function leadEdit(id){
+  const l=S.leads.find(x=>x.id===id); if(!l) return;
+  const prods=S.products.filter(p=>p.active!==false || p.id===l.productId);
+  const cur=byId(l.productId)||prods[0]; if(!cur) return toast('⚠︎ لا توجد منتجات');
+  const wopts=`<option value="">— اختر الولاية —</option>`+DZ.map(w=>`<option value="${w[0]}" ${Number(l.wilayaCode)===Number(w[0])?'selected':''}>${String(w[0]).padStart(2,'0')} ${esc(w[1])}</option>`).join('');
+  document.getElementById('modalHost').innerHTML=`
+  <div class="modal" onclick="if(event.target===this)closeModal()"><div class="modal-panel" style="padding:24px">
+    <h2 style="font-size:1.15rem; margin-bottom:4px">✏️ إتمام طلب غير مكتمل</h2>
+    <div class="muted" style="font-size:.82rem; margin-bottom:14px">توقّف هنا: ${esc(LEAD_ERR[l.err]||'غادر الصفحة قبل الإرسال')} · أكمل البيانات ثم أضفه إلى الطلبات العادية.</div>
+    <div style="display:grid; gap:12px">
+      <div><label class="lbl">المنتج</label><select class="field" id="le_prod" onchange="leProd()">${prods.map(p=>`<option value="${esc(p.id)}" ${p.id===cur.id?'selected':''}>${esc(L(p.name))} — ${money(p.price)}</option>`).join('')}</select></div>
+      <div><label class="lbl">الاسم واللقب</label><input class="field" id="le_name" value="${esc(l.customer||'')}"></div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+        <div><label class="lbl">رقم الهاتف</label><input class="field" id="le_phone" type="tel" dir="ltr" value="0${esc(l.id)}"></div>
+        <div><label class="lbl">هاتف ثانٍ</label><input class="field" id="le_phone2" type="tel" dir="ltr" value=""></div>
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+        <div><label class="lbl">الولاية</label><select class="field" id="le_wilaya" onchange="leFillCom(); leCalc()">${wopts}</select></div>
+        <div><label class="lbl">طريقة التوصيل</label><select class="field" id="le_type" onchange="leFillCom(); leCalc()">
+          <option value="home">${t('home')}</option><option value="desk">${t('desk')}</option></select></div>
+      </div>
+      <div><label class="lbl">البلدية</label><select class="field" id="le_commune" onchange="leComChg()"></select>
+        <input class="field hidden" id="le_commune_other" placeholder="اكتب البلدية" style="margin-top:8px">
+        <div class="muted" id="le_hint" style="font-size:.78rem; margin-top:6px"></div></div>
+      <div><label class="lbl">العنوان بالتفصيل</label><input class="field" id="le_address" value=""></div>
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px">
+        <div><label class="lbl">الكمية</label><input class="field" id="le_qty" type="number" min="1" value="1" oninput="leCalc()"></div>
+        <div><label class="lbl">اللون</label><input class="field" id="le_color" list="le_cl"></div>
+        <div><label class="lbl">المقاس</label><input class="field" id="le_size" list="le_sl"></div>
+      </div>
+      <datalist id="le_cl"></datalist><datalist id="le_sl"></datalist>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
+        <div><label class="lbl">سعر التوصيل</label><input class="field" id="le_ship" type="number" min="0" value="0" oninput="leCalc('total')"></div>
+        <div><label class="lbl">المجموع</label><input class="field" id="le_total" type="number" min="0" value="0"></div>
+      </div>
+      <div class="muted" id="le_noPrice" style="font-size:.78rem; color:var(--accent)" hidden>لا يوجد سعر توصيل لهذه الولاية: اكتبه يدوياً.</div>
+      <div><label class="lbl">ملاحظة</label><textarea class="field" id="le_notes" rows="2"></textarea></div>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:20px">
+      <button class="btn btn-primary" style="flex:1" id="le_btn" onclick="leadSaveOrder('${l.id}')">✅ أضف إلى الطلبات</button>
+      <button class="btn btn-ghost" onclick="closeModal()">${t('cancel')}</button>
+    </div>
+  </div></div>`;
+  S._leId=id; leProd(); leFillCom(l.commune||''); leCalc();
+}
+function leProd(){
+  const v=i=>document.getElementById(i), p=byId(v('le_prod').value); if(!p) return;
+  v('le_cl').innerHTML=pColors(p).map(c=>`<option value="${esc(c.name)}">`).join('');
+  v('le_sl').innerHTML=pSizes(p).map(x=>`<option value="${esc(x)}">`).join('');
+  leCalc();
+}
+function leFillCom(pref){
+  const v=i=>document.getElementById(i), wc=v('le_wilaya').value, type=v('le_type').value, sel=v('le_commune'), oth=v('le_commune_other'), hint=v('le_hint');
+  const cur=(pref!=null)?pref:(sel.value==='__other'?oth.value.trim():sel.value);
+  const all=wc?geoList(wc).sort((a,b)=>a.n.localeCompare(b.n,'fr')):[]; let list=all, filt=false;
+  if(type==='desk' && all.some(x=>x.d!=null)){ filt=true; list=all.filter(x=>x.d!==0); }
+  sel.innerHTML=`<option value="">${wc?'— اختر البلدية —':'اختر الولاية أولاً'}</option>`+list.map(x=>`<option value="${esc(x.n)}">${esc(x.n)}</option>`).join('')+(wc?`<option value="__other">أخرى (كتابة يدوية)</option>`:'');
+  hint.textContent=''; oth.value='';
+  if(cur){
+    const hit=list.find(x=>normName(x.n)===normName(cur));
+    if(hit) sel.value=hit.n;
+    else if(filt && all.some(x=>normName(x.n)===normName(cur))){ sel.value=''; hint.textContent='⚠︎ «'+cur+'» ليس فيها مكتب توصيل: اختر أقرب بلدية فيها مكتب أو بدّل إلى التوصيل للمنزل.'; }
+    else { sel.value='__other'; oth.value=cur; }
+  }
+  if(filt && !hint.textContent) hint.textContent='تظهر فقط البلديات التي فيها مكتب توصيل.';
+  oth.classList.toggle('hidden', sel.value!=='__other');
+}
+function leComChg(){ const sel=document.getElementById('le_commune'); document.getElementById('le_commune_other').classList.toggle('hidden', sel.value!=='__other'); }
+function leCalc(mode){
+  const v=i=>document.getElementById(i), p=byId(v('le_prod').value); if(!p) return;
+  if(mode!=='total'){
+    const wc=v('le_wilaya').value, s=wc?shipFor(wc,v('le_type').value):null;
+    if(s!=null) v('le_ship').value=s;
+    v('le_noPrice').hidden=!(wc && s==null);
+  }
+  const q=Math.max(1,Number(v('le_qty').value)||1);
+  v('le_total').value=Math.round(p.price*q-discAmt(p,q)+(Number(v('le_ship').value)||0));
+}
+async function leadSaveOrder(id){
+  const l=S.leads.find(x=>x.id===id); if(!l) return;
+  const g=i=>document.getElementById(i).value.trim();
+  const p=byId(g('le_prod')); if(!p) return toast('اختر المنتج');
+  const phone=g('le_phone').replace(/[\s.-]/g,''), phone2=g('le_phone2').replace(/[\s.-]/g,'');
+  if(!g('le_name')) return toast('الاسم مطلوب');
+  if(!/^0[567]\d{8}$/.test(phone)) return toast('رقم الهاتف غير صحيح');
+  if(!g('le_wilaya')) return toast('اختر الولاية');
+  let commune=g('le_commune'); if(commune==='__other') commune=g('le_commune_other');
+  if(!commune) return toast('اختر البلدية');
+  const row=DZ.find(x=>String(x[0])===String(g('le_wilaya')));
+  const _pl=cxSplit(commune,row?row[3]:[]), _commune=String(_pl.commune||commune).trim(), _addr=g('le_address')||String(_pl.rest||'').trim();
+  const qty=Math.max(1,Number(g('le_qty'))||1), ship=Number(g('le_ship'))||0, total=Number(g('le_total'))||0, sub=Math.max(0,total-ship);
+  const gross=(Number(p.price)||0)*qty, dAmt=Math.max(0,gross-sub), dPct=gross>0?Math.round(100*dAmt/gross):0;
+  const btn=document.getElementById('le_btn'); btn.disabled=true; btn.textContent='⏳ …';
+  const order=await addOrder({
+    productId:p.id, productName:L(p.name), unitPrice:p.price, qty, color:g('le_color'), size:g('le_size'),
+    customer:g('le_name'), phone, phone2, wilayaCode:Number(g('le_wilaya')), wilaya:row?row[2]:'', wilayaAr:row?row[1]:'',
+    commune:_commune, address:_addr, notes:g('le_notes'), deliveryType:g('le_type'), carrier:(activeCarrier()||{}).name||'',
+    shipping:ship, subtotal:sub, total, discountPct:dPct, discountAmt:dAmt, lang:'ar', fromLead:true
+  });
+  if(!order){ btn.disabled=false; btn.textContent='✅ أضف إلى الطلبات'; return; }
+  try{ if(DB) await DB.doc('leads/'+id).update({done:true,hand:true}); }catch(e){}
+  l.done=true; l.hand=true;
+  closeModal(); toast('✅ أُضيفت إلى الطلبات ('+(order.ref||order.id)+')'); render();
+}
 function tabLeads(){
   const list=leadList(), open=list.filter(l=>!l.hand).length, store=S.settings.storeName||'';
   const rows=list.map(l=>{
@@ -1342,7 +1464,8 @@ function tabLeads(){
       <td>${l.wilaya?`<b>${String(l.wilayaCode).padStart(2,'0')} ${esc(l.wilaya)}</b><div class="muted" style="font-size:.8rem">${esc(l.commune||'')}</div>`:'<span class="muted">—</span>'}</td>
       <td><span class="cx-chip st">${esc(LEAD_ERR[l.err]||'غادر الصفحة قبل الإرسال')}</span>${l.hand?'<div class="muted" style="font-size:.72rem">✔ تم التواصل</div>':''}</td>
       <td><div style="display:flex; flex-direction:column; gap:6px; min-width:110px">
-        <a class="btn btn-primary btn-sm" target="_blank" rel="noopener" href="https://wa.me/213${l.id}?text=${msg}">💬 ساعده على الإتمام</a>
+        <button class="btn btn-primary btn-sm" onclick="leadEdit('${l.id}')">✏️ تعديل وإضافة للطلبات</button>
+        <a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="https://wa.me/213${l.id}?text=${msg}">💬 ساعده على الإتمام</a>
         ${l.hand?'':`<button class="btn btn-ghost btn-sm" onclick="leadHand('${l.id}')">✔ تم التواصل</button>`}
         <button class="btn btn-sm" style="background:var(--accent-soft); color:var(--accent)" onclick="leadDel('${l.id}')">${t('del')}</button></div></td>
     </tr>`; }).join('')||`<tr><td colspan="6" class="muted" style="padding:24px">لا توجد طلبات غير مكتملة.</td></tr>`;
@@ -1351,6 +1474,133 @@ function tabLeads(){
    <div class="card scroll-x" style="padding:6px 12px"><table class="tbl">
      <thead><tr><th>آخر نشاط</th><th>${t('customer')}</th><th>${t('product')}</th><th>${t('wilaya')}</th><th>أين توقّف؟</th><th></th></tr></thead>
      <tbody>${rows}</tbody></table></div>`;
+}
+
+
+/* ============ 🗺️ كل البلديات (69 ولاية) + مكاتب التوصيل ============
+   - S.geo (مستند shop/geo) يُملأ بزر «مزامنة» في لوحة الأسعار: كل البلديات + أي بلدية فيها مكتب Colex.
+   - قبل أول مزامنة: تُعرض القائمة المدمجة في الملف (ناقصة للولايات القديمة، كاملة للجديدة).
+   - الولاية الأم تحتفظ أيضاً ببلديات الولاية المنبثقة منها (الزبائن وColex ما زالوا يستعملون التقسيم القديم). */
+const GEO_T={
+  ar:{pickW:'اختر الولاية أولاً', deskHint:'مكتب التوصيل غير متوفر في كل البلديات. اختر أقرب بلدية فيها مكتب، أو', toHome:'بدّل إلى التوصيل للمنزل', noDesk:'لا يوجد مكتب توصيل في هذه الولاية. اختر', toHome2:'التوصيل للمنزل'},
+  fr:{pickW:"Choisissez d'abord la wilaya", deskHint:"Le bureau n'existe pas dans toutes les communes. Choisissez la commune la plus proche qui en a un, ou", toHome:'passez à la livraison à domicile', noDesk:"Aucun bureau dans cette wilaya. Choisissez", toHome2:'la livraison à domicile'},
+  en:{pickW:'Choose the wilaya first', deskHint:'Office pickup is not available in every commune. Pick the nearest commune that has one, or', toHome:'switch to home delivery', noDesk:'No pickup office in this wilaya. Choose', toHome2:'home delivery'}
+};
+const gt=k=>(GEO_T[LANG]||GEO_T.ar)[k];
+const geoSk=s=>normName(s).replace(/[aeiouy]/g,'');
+function geoDec(s){ const i=s.lastIndexOf('|'); const f=s.slice(i+1); return {n:s.slice(0,i), d:f==='1'?1:(f==='0'?0:null)}; }
+function geoList(wc){
+  const code=Number(wc), g=S.geo&&S.geo.w&&S.geo.w[String(code)];
+  if(g&&g.length) return g.map(geoDec);
+  const row=DZ.find(x=>Number(x[0])===code);
+  return row?row[3].map(n=>({n,d:null})):[];
+}
+function geoNames(wc){ return geoList(wc).map(x=>x.n); }
+function fillCommunes(){
+  const w=document.getElementById('f_wilaya'), sel=document.getElementById('f_commune'); if(!w||!sel) return;
+  const type=document.querySelector('input[name="dtype"]:checked')?.value||'home', wc=w.value;
+  const hint=document.getElementById('f_deskHint'), oth=document.getElementById('f_commune_other'), prev=sel.value;
+  if(!wc){ sel.innerHTML=`<option value="">${esc(gt('pickW'))}</option>`; if(hint) hint.hidden=true; oth.classList.add('hidden'); return; }
+  let list=geoList(wc).sort((a,b)=>a.n.localeCompare(b.n,'fr')), filt=false;
+  if(type==='desk' && list.some(x=>x.d!=null)){ filt=true; list=list.filter(x=>x.d!==0); }   // المجهول (null) يبقى ظاهراً
+  sel.innerHTML=`<option value="">${t('pickCommune')}</option>`+list.map(x=>`<option value="${esc(x.n)}">${esc(x.n)}</option>`).join('')+(filt?'':`<option value="__other">${t('other')}</option>`);
+  if(prev && [...sel.options].some(o=>o.value===prev)) sel.value=prev;
+  oth.classList.toggle('hidden', sel.value!=='__other');
+  if(hint){
+    hint.hidden = type!=='desk';
+    if(type==='desk') hint.innerHTML = (filt&&!list.length) ? `${esc(gt('noDesk'))} <a onclick="switchToHome()">${esc(gt('toHome2'))}</a>`
+                                                             : `${esc(gt('deskHint'))} <a onclick="switchToHome()">${esc(gt('toHome'))}</a>`;
+  }
+}
+function switchToHome(){
+  const r=document.querySelector('input[name="dtype"][value="home"]'); if(!r) return;
+  r.checked=true; r.dispatchEvent(new Event('change',{bubbles:true}));
+  const sel=document.getElementById('f_commune'); if(sel) sel.focus();
+}
+/* اسم البلدية كما تعرفه Colex (للإرسال) */
+function colexResolve(wcode, commune){
+  const m=MOTHER[Number(wcode)]||Number(wcode), g=S.geo&&S.geo.w&&S.geo.w[String(m)]; const c=String(commune||'').trim();
+  if(!g||!c) return c;
+  const names=g.map(x=>geoDec(x).n), k=normName(c), sk=geoSk(c);
+  return names.find(n=>normName(n)===k) || names.find(n=>geoSk(n)===sk) || c;
+}
+/* ---- مزامنة (لوحة الأدمن) ---- */
+const GEO_OPEN='https://cdn.jsdelivr.net/npm/geoalgeria/data/ecommerce/communes.json';
+const GEO_NEWCNT={59:12,60:8,61:5,62:4,63:4,64:6,65:10,66:8,67:21,68:23,69:7};
+async function geoFetchOpen(){
+  try{
+    const r=await fetch(GEO_OPEN,{signal:(window.AbortSignal&&AbortSignal.timeout)?AbortSignal.timeout(30000):undefined}); if(!r.ok) return null;
+    const j=await r.json(), arr=Array.isArray(j)?j:((j&&(j.communes||j.data))||[]), by={};
+    arr.forEach(x=>{ const c=Number(x.wilaya_code), n=String(x.commune_name_fr||x.name_fr||x.name||'').trim(); if(c>=1&&c<=69&&n) (by[c]=by[c]||[]).push(n); });
+    return Object.keys(by).length>=58 ? by : null;
+  }catch(e){ return null; }
+}
+async function geoFetchColex(dp,w){
+  const base=colexBaseUrl(dp); if(!base) return null;
+  try{
+    const r=await fetch(base+'/api/v1/get/communes?wilaya_id='+w,{headers:{'Authorization':'Bearer '+dp.token,'Accept':'application/json'},
+      signal:(window.AbortSignal&&AbortSignal.timeout)?AbortSignal.timeout(15000):undefined});
+    if(!r.ok) return null;
+    const d=await r.json(), out=[];
+    const flag=v=>{ const x=[v.has_stop_desk,v.stop_desk,v.stopdesk,v.hasStopDesk,v.is_stop_desk].find(y=>y!=null); return x==null?null:((x===true||x===1||x==='1'||x==='true')?1:0); };
+    const walk=v=>{ if(Array.isArray(v)) v.forEach(walk);
+      else if(v&&typeof v==='object'){ const n=v.nom||v.name||v.commune||v.nom_commune||v.commune_name||v.libelle; if(typeof n==='string') out.push({n:n.trim(), d:flag(v)}); else Object.values(v).forEach(walk); } };
+    walk(d); return out;
+  }catch(e){ return null; }
+}
+async function geoSync(){
+  if(!DB) return toast('⚠︎ المزامنة تتطلب الاتصال بالسحابة (Firebase)');
+  if(S._geoBusy) return; S._geoBusy=true;
+  try{
+    toast('⏳ جاري جلب البلديات…');
+    const open=await geoFetchOpen(), dp=colexDirectProvider(), cx={}; let cxOk=0, cxDesk=0;
+    if(dp){
+      for(let w=1; w<=58; w++){
+        const l=await geoFetchColex(dp,w);
+        if(l&&l.length){ cx[w]=l; cxOk++; if(l.some(x=>x.d!=null)) cxDesk++; }
+        if(w%10===0) toast('⏳ Colex '+w+'/58 …');
+      }
+    }
+    const uniq=a=>{ const seen=new Set(); return a.filter(n=>{ const k=normName(n); if(seen.has(k)) return false; seen.add(k); return true; }); };
+    const stat=w=>{ const row=DZ.find(x=>Number(x[0])===w); return row?row[3].slice():[]; };
+    const base={};
+    for(let w=1; w<=69; w++){
+      let names;
+      if(w>=59) names=(open&&open[w]&&open[w].length===GEO_NEWCNT[w])?open[w]:stat(w);   // الولايات الجديدة: نتأكد من العدد الرسمي وإلا نستعمل قائمة القانون
+      else names=(open&&open[w])?open[w]:(cx[w]?cx[w].map(x=>x.n):stat(w));
+      base[w]=uniq(names);
+    }
+    Object.keys(MOTHER).forEach(c=>{ const m=MOTHER[c]; base[m]=uniq([...(base[m]||[]),...(base[c]||[])]); });   // الأم تحتفظ ببلديات المنبثقة
+    const final={}, addedApi=[]; let total=0, desk=0;
+    for(let w=1; w<=69; w++){
+      const cl=cx[MOTHER[w]||w]||[], used=new Set(), out=[];
+      base[w].forEach(n=>{
+        const k=normName(n), sk=geoSk(n);
+        const hit=cl.find(x=>normName(x.n)===k) || cl.find(x=>geoSk(x.n)===sk);
+        if(hit){ used.add(hit.n); out.push({n:hit.n, d:hit.d}); } else out.push({n, d:null});
+      });
+      if(w<=58) cl.forEach(x=>{ if(!used.has(x.n) && !out.some(o=>normName(o.n)===normName(x.n))){ out.push({n:x.n, d:x.d}); const r=DZ.find(y=>Number(y[0])===w); addedApi.push((r?r[1]:w)+': '+x.n); } });   // أي بلدية عند Colex ناقصة عندنا
+      final[String(w)]=out.map(x=>x.n.replace(/\|/g,' ')+'|'+(x.d===1?'1':(x.d===0?'0':'?')));
+      total+=out.length; desk+=out.filter(x=>x.d===1).length;
+    }
+    const doc={w:final, at:new Date().toISOString(), src:{open:!!open, colex:cxOk, deskInfo:cxDesk}, addedN:addedApi.length, added:addedApi.slice(0,300)};
+    await DB.doc('shop/geo').set(doc); S.geo=doc;
+    toast('✅ '+total+' بلدية · '+desk+' فيها مكتب'+(dp?(' · Colex '+cxOk+'/58 · أُضيف '+addedApi.length+' ناقصة من Colex'):' · بدون Colex'));
+    if(!open) setTimeout(()=>toast('⚠︎ تعذّر جلب المصدر المفتوح: استُعملت قوائم Colex/المتجر'),2500);
+    else if(dp&&!cxDesk) setTimeout(()=>toast('⚠︎ Colex لم تُرجع معلومات المكاتب: لن تُفلتر البلديات حسب المكتب'),2500);
+    else if(!dp) setTimeout(()=>toast('ℹ︎ أضف شركة Colex مع التوكن في تبويب 🔌 لتحديد البلديات التي فيها مكتب'),2500);
+  }catch(e){ toast('⚠︎ فشلت المزامنة: '+(e.code||e.message||e)); }
+  finally{ S._geoBusy=false; render(); }
+}
+function geoCard(){
+  const g=S.geo, ls=g?Object.values(g.w):[], total=ls.reduce((a,l)=>a+l.length,0), desk=ls.reduce((a,l)=>a+l.filter(x=>x.endsWith('|1')).length,0);
+  return `<div class="card" style="padding:18px; margin-bottom:16px">
+    <h2 style="font-size:1.05rem; margin-bottom:8px">🗺️ البلديات ومكاتب التوصيل (69 ولاية)</h2>
+    <p class="muted" style="font-size:.84rem; margin:0 0 10px">${g?`آخر مزامنة: ${fmtDT(g.at)} · ${total} بلدية · ${desk} منها فيها مكتب توصيل${g.addedN?` · ${g.addedN} بلدية ناقصة أُضيفت من Colex`:''}`:'لم تتم المزامنة بعد: المتجر يعرض القوائم المدمجة في الملف (ناقصة للولايات القديمة).'}</p>
+    <button class="btn btn-primary" onclick="geoSync()">🔄 مزامنة كل البلديات والمكاتب</button>
+    ${g&&g.added&&g.added.length?`<details style="margin-top:10px"><summary class="muted" style="font-size:.8rem; cursor:pointer">البلديات الناقصة التي أضافتها المزامنة (${g.addedN})</summary><div class="muted" style="font-size:.78rem; line-height:1.9; margin-top:6px">${g.added.map(esc).join(' · ')}</div></details>`:''}
+    <p class="muted" style="font-size:.76rem; margin:10px 0 0">تجلب كل بلديات الجزائر من مصدر مفتوح، ثم تسأل Colex أي بلدية فيها مكتب (Stop desk) فتظهر للزبون عند اختيار «المكتب». تحتاج شركة Colex مع التوكن في تبويب 🔌. أعد المزامنة كلما تغيّرت المكاتب.</p>
+  </div>`;
 }
 
 /* ------------------------- 4. Helpers & UI atoms ------------------------ */
@@ -1427,8 +1677,11 @@ function ia(u,w){ return `src="${esc(cimg(u,w))}" data-o="${esc(u)}" onerror="th
 function ias(u,w,ws,sizes){ const s=cset(u,ws); return ia(u,w)+(s?` srcset="${esc(s)}" sizes="${sizes}"`:''); }
 function activeCarrier(){ const cs=S.settings.carriers||[]; return cs.find(c=>c.id===S.settings.activeCarrier)||cs[0]; }
 function shipFor(wcode, type, carrier){
-  const c=carrier||activeCarrier(); const r=c&&c.rates&&c.rates[String(wcode)];
-  return (r && r[type]!=null && r[type]!=="") ? Number(r[type]) : null;   // null = prix non defini
+  const c=carrier||activeCarrier(); if(!c||!c.rates) return null;
+  const get=k=>{ const r=c.rates[String(k)]; return (r && r[type]!=null && r[type]!=="") ? Number(r[type]) : null; };
+  let v=get(wcode);
+  if(v==null && MOTHER[Number(wcode)]) v=get(MOTHER[Number(wcode)]);   // ولاية جديدة بلا سعر خاص ← سعر ولايتها الأم
+  return v;   // null = prix non defini
 }
 function setLang(l){
   LANG=l; localStorage.setItem('zn_lang', l);
@@ -1703,7 +1956,7 @@ function toggleDisc(){ const on=document.getElementById('d_discOn').checked; doc
 function addDiscRow(){ const a=DRAFT.discTiers=DRAFT.discTiers||[]; const l=a[a.length-1]; a.push({min:l?(Number(l.min)||1)+1:2,pct:l?(Number(l.pct)||0)+5:5}); renderDiscRows(); }
 function orderFormHtml(p){
   const arrow = LANG==='ar' ? '←' : '→';
-  const cs=pColors(p), ss=pSizes(p); let stepN=4;
+  const cs=pColors(p), ss=pSizes(p); let stepN=5;
   const variantsHtml =
     (cs.length ? `<div class="ofm-grp" id="f_colorGrp">
         <div class="ofm-step"><b>${stepN++}</b>${t('color')} · ${t('qty')}</div>
@@ -1730,15 +1983,11 @@ function orderFormHtml(p){
       </div>
 
       <div class="ofm-grp">
-        <div class="ofm-step"><b>2</b>${t('wilaya')} · ${t('commune')}</div>
-        <div class="ofm-two">
-          <div class="sel"><select class="field" id="f_wilaya" aria-label="${t('wilaya')}">
-            <option value="">${t('pickWilaya')}</option>
-            ${DZ.map(w=>`<option value="${w[0]}">${String(w[0]).padStart(2,'0')} — ${LANG==='ar'?esc(w[1]):esc(w[2])}</option>`).join('')}
-          </select></div>
-          <div class="sel"><select class="field" id="f_commune" aria-label="${t('commune')}"><option value="">${t('pickCommune')}</option></select></div>
-        </div>
-        <input class="field hidden" id="f_commune_other" placeholder="${t('commune')}">
+        <div class="ofm-step"><b>2</b>${t('wilaya')}</div>
+        <div class="sel"><select class="field" id="f_wilaya" aria-label="${t('wilaya')}">
+          <option value="">${t('pickWilaya')}</option>
+          ${DZ.map(w=>`<option value="${w[0]}">${String(w[0]).padStart(2,'0')} — ${LANG==='ar'?esc(w[1]):esc(w[2])}</option>`).join('')}
+        </select></div>
       </div>
 
       <div class="ofm-grp">
@@ -1751,6 +2000,13 @@ function orderFormHtml(p){
             <input type="radio" name="dtype" value="desk">
             <span class="di">🏢</span><span class="dl">${t('desk')}</span><b class="price" id="p_desk">—</b></label>
         </div>
+      </div>
+
+      <div class="ofm-grp">
+        <div class="ofm-step"><b>4</b>${t('commune')}</div>
+        <div class="sel"><select class="field" id="f_commune" aria-label="${t('commune')}"><option value="">${gt('pickW')}</option></select></div>
+        <div class="muted" id="f_deskHint" hidden style="font-size:.8rem; margin-top:8px; line-height:1.8"></div>
+        <input class="field hidden" id="f_commune_other" placeholder="${t('commune')}">
       </div>
 
       ${variantsHtml}
@@ -1787,24 +2043,16 @@ function wireOrderForm(){
   const _f=document.getElementById('orderForm');
   LEAD_DONE=false; LEAD_LAST=''; LEAD_START=null; ['change','focusout'].forEach(ev=>_f.addEventListener(ev,leadSchedule)); leadBind();
   ['input','change'].forEach(ev=>_f.addEventListener(ev,e=>e.target.classList&&e.target.classList.remove('err')));
-  w.addEventListener('change',()=>{
-    const wc=w.value, sel=document.getElementById('f_commune');
-    const row=DZ.find(x=>String(x[0])===String(wc));
-    sel.innerHTML=`<option value="">${t('pickCommune')}</option>`+
-      (row?row[3].map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join(''):'')+
-      `<option value="__other">${t('other')}</option>`;
-    document.getElementById('f_commune_other').classList.add('hidden');
-    recalc();
-  });
+  w.addEventListener('change',()=>{ fillCommunes(); recalc(); });
   document.getElementById('f_commune').addEventListener('change',e=>{
     document.getElementById('f_commune_other').classList.toggle('hidden', e.target.value!=='__other');
   });
   document.querySelectorAll('input[name="dtype"]').forEach(r=>r.addEventListener('change',()=>{
     document.getElementById('rc_home').dataset.on = r.form.dtype.value==='home'?'1':'';
     document.getElementById('rc_desk').dataset.on = r.form.dtype.value==='desk'?'1':'';
-    recalc();
+    fillCommunes(); recalc();
   }));
-  recalc();
+  fillCommunes(); recalc();
 }
 function recalc(){
   const p=byId(S.productId); if(!p) return;
@@ -2419,7 +2667,7 @@ function editOrder(id){
       </div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
         <div><label class="lbl">الولاية</label><select class="field" id="eo_wilaya" onchange="eoRecalc()">${wopts}</select></div>
-        <div><label class="lbl">البلدية</label><input class="field" id="eo_commune" value="${esc(o.commune||'')}"></div>
+        <div><label class="lbl">البلدية</label><input class="field" id="eo_commune" list="eo_cl" value="${esc(o.commune||'')}"><datalist id="eo_cl">${geoNames(o.wilayaCode).map(n=>`<option value="${esc(n)}">`).join('')}</datalist></div>
       </div>
       <div><label class="lbl">العنوان بالتفصيل</label><input class="field" id="eo_address" value="${esc(o.address||'')}"></div>
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px">
@@ -2452,6 +2700,7 @@ function eoRecalc(qtyOnly){
   if(!qtyOnly){
     const ship=shipFor(v('eo_wilaya').value, v('eo_type').value);
     if(ship!=null) v('eo_ship').value=ship;
+    const dl=v('eo_cl'); if(dl) dl.innerHTML=geoNames(v('eo_wilaya').value).map(n=>`<option value="${esc(n)}">`).join('');
   }
   eoTotal();
 }
@@ -2629,7 +2878,7 @@ function colexPayload(x){
   const dg=v=>String(v==null?'':v).replace(/\D+/g,''), cut=v=>String(v==null?'':v).trim().slice(0,255);
   const bad=[], ph=dg(x.phone), w=Number(x.wilayaCode);
   if(ph.length<9||ph.length>10) bad.push('الهاتف');
-  if(!Number.isInteger(w)||w<1||w>58) bad.push('الولاية');
+  if(!Number.isInteger(w)||w<1||w>69) bad.push('الولاية');
   if(!cut(x.name)) bad.push('الاسم');
   if(!cut(x.commune)) bad.push('البلدية');
   if(!cut(x.address)) bad.push('العنوان');
@@ -2875,12 +3124,12 @@ async function colexSend(id){
   try{
     const prod=[o.productName+((o.qty||1)>1?' ×'+o.qty:''), o.color, o.size].filter(Boolean).join(' - ');
     const wrow=(typeof DZ!=='undefined')?DZ.find(x=>Number(x[0])===Number(o.wilayaCode)):null;
-    const sp=cxSplit(o.commune, wrow?wrow[3]:[]);
+    const sp=cxSplit(o.commune, geoNames(o.wilayaCode));
     const written=sp.commune||String(o.commune||'').trim();
     /* الترتيب في Colex: الولاية ثم البلدية ثم العنوان التفصيلي تحت البلدية */
     const address=[sp.rest,(o.address||'').trim()].filter(Boolean).join(' - ') || [written,o.wilaya].filter(Boolean).join(', ');
     const ord={id:o.ref||o.id, name:o.customer, phone:o.phone, phone2:o.phone2||'', address,
-      wilayaCode:o.wilayaCode, commune:written, total:o.total, product:(fromStock?stockRef:prod), note:(fromStock?[o.notes,o.color,o.size].filter(Boolean).join(' | '):(o.notes||'')), stopDesk:o.deliveryType==='desk', fromStock, qty:o.qty||1};
+      wilayaCode:(MOTHER[Number(o.wilayaCode)]||o.wilayaCode), commune:colexResolve(o.wilayaCode,written), total:o.total, product:(fromStock?stockRef:prod), note:(fromStock?[o.notes,o.color,o.size].filter(Boolean).join(' | '):(o.notes||'')), stopDesk:o.deliveryType==='desk', fromStock, qty:o.qty||1};
     const doSend=async(od)=>{
       if(mode==='proxy'){
         const r=await fetch(url+'/api/colex/send',{
@@ -2894,7 +3143,7 @@ async function colexSend(id){
       return await colexDirect(dp, od);
     };
     /* مطابقة ذكية: عربية ↔ لاتينية وتقريبية (عكاشة ≈ Akacha) مع قائمة المتجر قبل الإرسال */
-    const cands=cxCommuneCands(written, wrow?wrow[3]:[]); let ci=0, colexListTried=false;
+    const cands=cxCommuneCands(written, geoNames(o.wilayaCode)); let ci=0, colexListTried=false;
     const first=cands.length?Object.assign({},ord,{commune:cands[0]}):ord;
     let j=await doSend(first), cur=first, communeFallback=false, deskToHome=false, usedCom=false, usedDesk=false, cancelled=false;
     for(let k=0; k<10 && !j.ok && !j.dryRun; k++){
@@ -2909,7 +3158,7 @@ async function colexSend(id){
         let next=cands[++ci];
         if(!next && !colexListTried && dp && mode==='direct'){
           colexListTried=true;
-          const m=cxBest(written, await cxColexCommunes(dp,o.wilayaCode));
+          const m=cxBest(written, await cxColexCommunes(dp,MOTHER[Number(o.wilayaCode)]||o.wilayaCode));
           if(m && !cands.some(c=>c.toLowerCase()===m.toLowerCase())){ cands.push(m); next=m; }
         }
         if(next){ cur=Object.assign({},cur,{commune:next}); }
@@ -2990,7 +3239,9 @@ function pushSheet(orders){
 
 /* ---- shipping tab (plusieurs societes de livraison) ---- */
 function editCarrier(){ const cs=S.settings.carriers; return cs.find(c=>c.id===S.editCarrier)||cs.find(c=>c.id===S.settings.activeCarrier)||cs[0]; }
-function missingCount(c){ let n=0; DZ.forEach(w=>{ const r=c.rates[String(w[0])]||{}; if(r.home==null||r.home===""||r.desk==null||r.desk==="") n++; }); return n; }
+function missingCount(c){ let n=0; DZ.forEach(w=>{ const r=c.rates[String(w[0])]||{}, m=MOTHER[w[0]]?(c.rates[String(MOTHER[w[0]])]||{}):{};
+  const h=(r.home!=null&&r.home!=="")?r.home:m.home, d=(r.desk!=null&&r.desk!=="")?r.desk:m.desk;
+  if(h==null||h===""||d==null||d==="") n++; }); return n; }
 function tabShipping(){
   const cs=S.settings.carriers, cur=editCarrier(), miss=missingCount(cur), isActive=cur.id===S.settings.activeCarrier;
   return `<div class="card" style="padding:18px; margin-bottom:16px">
@@ -3007,15 +3258,18 @@ function tabShipping(){
     <p class="muted" style="font-size:.8rem; margin:10px 0 0">${t('editingHint')}</p>
     ${miss?`<p style="color:#C81E3A; font-size:.85rem; margin:6px 0 0">⚠ ${miss} ${t('missingN')}</p>`:''}
   </div>
+  ${geoCard()}
   ${impCard(cur)}
   <div class="card scroll-x" style="padding:6px 12px"><table class="tbl">
     <thead><tr><th>#</th><th>${t('wilaya')}</th><th>🏠 ${t('home')}</th><th>🏢 ${t('desk')}</th></tr></thead>
     <tbody>${DZ.map(w=>{ const r=cur.rates[String(w[0])]||{};
+      const mw=MOTHER[w[0]]?DZ.find(x=>x[0]===MOTHER[w[0]]):null, mo=mw?(cur.rates[String(mw[0])]||{}):null;
+      const ph=k=>(mo&&mo[k]!=null&&mo[k]!=='')?String(mo[k]):'—';
       return `<tr><td class="muted">${String(w[0]).padStart(2,'0')}</td>
-        <td><b>${esc(w[1])}</b> <span class="muted">${esc(w[2])}</span></td>
-        <td><input class="field" style="padding:6px 10px; max-width:120px" type="number" placeholder="—"
+        <td><b>${esc(w[1])}</b> <span class="muted">${esc(w[2])}</span>${mw?` <span class="cx-chip st" title="تأخذ سعر الولاية الأم ما لم تُحدّد سعراً خاصاً">🆕 ← ${esc(mw[1])}</span>`:''}</td>
+        <td><input class="field" style="padding:6px 10px; max-width:120px" type="number" placeholder="${ph('home')}"
           value="${r.home??''}" onchange="setRate(${w[0]},'home',this.value)"></td>
-        <td><input class="field" style="padding:6px 10px; max-width:120px" type="number" placeholder="—"
+        <td><input class="field" style="padding:6px 10px; max-width:120px" type="number" placeholder="${ph('desk')}"
           value="${r.desk??''}" onchange="setRate(${w[0]},'desk',this.value)"></td></tr>`;}).join('')}
     </tbody></table></div>`;
 }
@@ -3074,7 +3328,7 @@ function parsePriceItems(pages){
       r.items.forEach((it,i)=>{
         const raw=it.s.trim(), p=raw.replace(/\s*(da|dzd|دج|د\.ج)\.?$/i,'').replace(/[\s,.]/g,'');
         if(/^\d{3,5}$/.test(p) && Number(p)>=100) prices.push({v:Number(p), x:it.x+it.w/2});
-        else{ const m=raw.match(/^(\d{1,2})(?:\s*[-–.)]|\s|$)/); if(m && code==null && Number(m[1])>=1 && Number(m[1])<=58) code=Number(m[1]); }
+        else{ const m=raw.match(/^(\d{1,2})(?:\s*[-–.)]|\s|$)/); if(m && code==null && Number(m[1])>=1 && Number(m[1])<=69) code=Number(m[1]); }
         text+=(i&&it.x-(r.items[i-1].x+r.items[i-1].w)>1.5?' ':'')+raw;
       });
       if(!prices.length) return;
@@ -3128,7 +3382,7 @@ function impCard(cur){
   const miss=DZ.filter(w=>!im.rows.some(r=>r.code===w[0]));
   return `<div class="card" style="padding:18px; margin-bottom:16px; border:2px solid var(--brand)">
     <h2 style="font-size:1.05rem; margin-bottom:6px">${t('impPreview')} — ${esc(cur.name)}</h2>
-    <p style="font-size:.88rem; margin:0 0 4px"><b>${im.rows.length}/58</b> · ${im.auto?t('impAuto'):t('impOrder')}</p>
+    <p style="font-size:.88rem; margin:0 0 4px"><b>${im.rows.length}/${DZ.length}</b> · ${im.auto?t('impAuto'):t('impOrder')}</p>
     ${miss.length?`<p class="muted" style="font-size:.8rem; margin:0 0 8px">${t('impMissing')}: ${miss.map(w=>esc(w[1])).join('، ')}</p>`:''}
     <div class="scroll-x" style="max-height:320px; overflow:auto; margin-bottom:12px"><table class="tbl">
       <thead><tr><th>#</th><th>${t('wilaya')}</th><th>🏠 ${t('home')}</th><th>🏢 ${t('desk')}</th></tr></thead>
@@ -3178,7 +3432,7 @@ async function genAd(){
 Product: ${L(p.name)}
 Price: ${p.price} DA${p.oldPrice?` (was ${p.oldPrice} DA)`:''}
 Details: ${stripTags(L(p.desc)).slice(0,700)}
-Store: ZoubirNasriShop — WhatsApp 0542248858, delivery to all 58 wilayas, payment on delivery.
+Store: ZoubirNasriShop — WhatsApp 0542248858, delivery to all 69 wilayas, payment on delivery.
 
 Write the ad in ${langName}, in a ${toneName} tone. Return exactly this structure, nothing else:
 1) three scroll-stopping headlines (max 8 words each)
