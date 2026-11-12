@@ -1250,7 +1250,7 @@ async function addOrder(o){
   if(sheetUrl){ pushSheet([{id, ...o}]); o.sheetSynced = true; } // remembers it's already in the sheet, so archiving never re-sends it
   if(DB){
     try{ await DB.doc("orders/"+id).set(o); return {id, ...o}; }
-    catch(e){ toast("⚠︎ "+(e.code||e.message)); }
+    catch(e){ S._addErr=String(e.code||e.message||e); toast("⚠︎ "+S._addErr); }
   }
   const rec = {id, ...o};
   S.orders.unshift(rec); LS.set('orders', S.orders); return rec;
@@ -1440,14 +1440,19 @@ async function leadSaveOrder(id){
   const _pl=cxSplit(commune,row?row[3]:[]), _commune=String(_pl.commune||commune).trim(), _addr=g('le_address')||String(_pl.rest||'').trim();
   const qty=Math.max(1,Number(g('le_qty'))||1), ship=Number(g('le_ship'))||0, total=Number(g('le_total'))||0, sub=Math.max(0,total-ship);
   const gross=(Number(p.price)||0)*qty, dAmt=Math.max(0,gross-sub), dPct=gross>0?Math.round(100*dAmt/gross):0;
-  const btn=document.getElementById('le_btn'); btn.disabled=true; btn.textContent='⏳ …';
+  S._addErr=''; const btn=document.getElementById('le_btn'); btn.disabled=true; btn.textContent='⏳ …';
   const order=await addOrder({
     productId:p.id, productName:L(p.name), unitPrice:p.price, qty, color:g('le_color'), size:g('le_size'),
     customer:g('le_name'), phone, phone2, wilayaCode:Number(g('le_wilaya')), wilaya:row?row[2]:'', wilayaAr:row?row[1]:'',
     commune:_commune, address:_addr, notes:g('le_notes'), deliveryType:g('le_type'), carrier:(activeCarrier()||{}).name||'',
-    shipping:ship, subtotal:sub, total, discountPct:dPct, discountAmt:dAmt, lang:'ar', fromLead:true
+    shipping:ship, subtotal:sub, total, discountPct:dPct, discountAmt:dAmt, lang:'ar'
   });
-  if(!order){ btn.disabled=false; btn.textContent='✅ أضف إلى الطلبات'; return; }
+  if(!order || S._addErr){
+    const er=S._addErr||'غير معروف';
+    if(order){ S.orders=S.orders.filter(x=>x.id!==order.id); try{ LS.set('orders',S.orders); }catch(e){} }
+    btn.disabled=false; btn.textContent='✅ أضف إلى الطلبات';
+    return alert('⚠︎ لم تُحفظ الطلبية في قاعدة البيانات: '+er+'\nقد تكون قواعد Firestore تمنع إنشاء الطلبات من لوحة الأدمن. أرسل لي هذه الرسالة.');
+  }
   try{ if(DB) await DB.doc('leads/'+id).update({done:true,hand:true}); }catch(e){}
   l.done=true; l.hand=true;
   closeModal(); toast('✅ أُضيفت إلى الطلبات ('+(order.ref||order.id)+')'); render();
