@@ -1538,21 +1538,24 @@ async function geoFetchOpen(){
 async function geoFetchColex(dp,w){
   const base=colexBaseUrl(dp); if(!base) return null;
   try{
-    const r=await fetch(base+'/api/v1/get/communes?wilaya_id='+w,{headers:{'Authorization':'Bearer '+dp.token,'Accept':'application/json'},
+    const r=await fetch(base+'/api/v1/get/communes?wilaya_id='+w+'&api_token='+encodeURIComponent(dp.token),{headers:{'Authorization':'Bearer '+dp.token,'Accept':'application/json'},
       signal:(window.AbortSignal&&AbortSignal.timeout)?AbortSignal.timeout(15000):undefined});
-    if(!r.ok) return null;
+    if(!r.ok){ S._geoErr='HTTP '+r.status; return null; }
     const d=await r.json(), out=[];
-    const flag=v=>{ const x=[v.has_stop_desk,v.stop_desk,v.stopdesk,v.hasStopDesk,v.is_stop_desk].find(y=>y!=null); return x==null?null:((x===true||x===1||x==='1'||x==='true')?1:0); };
+    const flag=v=>{
+      let x=[v.has_stop_desk,v.stop_desk,v.stopdesk,v.hasStopDesk,v.is_stop_desk,v.has_stopdesk,v.stopDesk].find(y=>y!=null);
+      if(x==null){ const k=Object.keys(v).find(k=>/desk|bureau|office|agence/i.test(k)); if(k) x=v[k]; }
+      return x==null?null:((x===true||x===1||x==='1'||x==='true'||x==='oui'||x==='yes')?1:0); };
     const walk=v=>{ if(Array.isArray(v)) v.forEach(walk);
-      else if(v&&typeof v==='object'){ const n=v.nom||v.name||v.commune||v.nom_commune||v.commune_name||v.libelle; if(typeof n==='string') out.push({n:n.trim(), d:flag(v)}); else Object.values(v).forEach(walk); } };
-    walk(d); return out;
-  }catch(e){ return null; }
+      else if(v&&typeof v==='object'){ const n=v.nom||v.name||v.commune||v.nom_commune||v.commune_name||v.libelle; if(typeof n==='string'){ if(!S._geoSample) S._geoSample=JSON.stringify(v).slice(0,300); out.push({n:n.trim(), d:flag(v)}); } else Object.values(v).forEach(walk); } };
+    walk(d); if(!out.length) S._geoErr='الرد فارغ'; return out;
+  }catch(e){ S._geoErr=String(e&&e.message||e); return null; }
 }
-async function geoSync(){
-  if(!DB) return toast('⚠︎ المزامنة تتطلب الاتصال بالسحابة (Firebase)');
-  if(S._geoBusy) return; S._geoBusy=true;
+async function geoSync(silent){
+  if(!DB) return silent===true?null:toast('⚠︎ المزامنة تتطلب الاتصال بالسحابة (Firebase)');
+  if(S._geoBusy) return; S._geoBusy=true; S._geoErr=''; S._geoSample='';
   try{
-    toast('⏳ جاري جلب البلديات…');
+    if(silent!==true) toast('⏳ جاري جلب البلديات…');
     const open=await geoFetchOpen(), dp=colexDirectProvider(), cx={}; let cxOk=0, cxDesk=0;
     if(dp){
       for(let w=1; w<=58; w++){
@@ -1583,14 +1586,23 @@ async function geoSync(){
       final[String(w)]=out.map(x=>x.n.replace(/\|/g,' ')+'|'+(x.d===1?'1':(x.d===0?'0':'?')));
       total+=out.length; desk+=out.filter(x=>x.d===1).length;
     }
-    const doc={w:final, at:new Date().toISOString(), src:{open:!!open, colex:cxOk, deskInfo:cxDesk}, addedN:addedApi.length, added:addedApi.slice(0,300)};
+    const doc={w:final, at:new Date().toISOString(), src:{open:!!open, colex:cxOk, deskInfo:cxDesk, err:cxOk?'':(S._geoErr||''), sample:S._geoSample||''}, addedN:addedApi.length, added:addedApi.slice(0,300)};
     await DB.doc('shop/geo').set(doc); S.geo=doc;
     toast('✅ '+total+' بلدية · '+desk+' فيها مكتب'+(dp?(' · Colex '+cxOk+'/58 · أُضيف '+addedApi.length+' ناقصة من Colex'):' · بدون Colex'));
     if(!open) setTimeout(()=>toast('⚠︎ تعذّر جلب المصدر المفتوح: استُعملت قوائم Colex/المتجر'),2500);
+    else if(dp&&!cxOk) setTimeout(()=>toast('⚠︎ تعذّر الاتصال بـ Colex ('+(S._geoErr||'؟')+'): لن تُفلتر البلديات حسب المكتب'),2500);
     else if(dp&&!cxDesk) setTimeout(()=>toast('⚠︎ Colex لم تُرجع معلومات المكاتب: لن تُفلتر البلديات حسب المكتب'),2500);
     else if(!dp) setTimeout(()=>toast('ℹ︎ أضف شركة Colex مع التوكن في تبويب 🔌 لتحديد البلديات التي فيها مكتب'),2500);
   }catch(e){ toast('⚠︎ فشلت المزامنة: '+(e.code||e.message||e)); }
   finally{ S._geoBusy=false; render(); }
+}
+/* مزامنة تلقائية صامتة عند فتح لوحة الأدمن: لا قائمة بعد، أو بلا معلومات مكاتب، أو أقدم من 7 أيام */
+function geoAuto(){
+  if(S._geoAutoDone || !DB || !S.admin) return;
+  if(!S.ready || !S.integ || !S.integ.loaded){ return setTimeout(geoAuto,2500); }
+  S._geoAutoDone=true;
+  const g=S.geo, old=!g || !g.at || (Date.now()-Date.parse(g.at))>7*864e5 || !(g.src&&g.src.deskInfo);
+  if(old && colexDirectProvider()) geoSync(true);
 }
 function geoCard(){
   const g=S.geo, ls=g?Object.values(g.w):[], total=ls.reduce((a,l)=>a+l.length,0), desk=ls.reduce((a,l)=>a+l.filter(x=>x.endsWith('|1')).length,0);
@@ -1598,6 +1610,7 @@ function geoCard(){
     <h2 style="font-size:1.05rem; margin-bottom:8px">🗺️ البلديات ومكاتب التوصيل (69 ولاية)</h2>
     <p class="muted" style="font-size:.84rem; margin:0 0 10px">${g?`آخر مزامنة: ${fmtDT(g.at)} · ${total} بلدية · ${desk} منها فيها مكتب توصيل${g.addedN?` · ${g.addedN} بلدية ناقصة أُضيفت من Colex`:''}`:'لم تتم المزامنة بعد: المتجر يعرض القوائم المدمجة في الملف (ناقصة للولايات القديمة).'}</p>
     <button class="btn btn-primary" onclick="geoSync()">🔄 مزامنة كل البلديات والمكاتب</button>
+    ${g&&g.src&&(g.src.err||!g.src.deskInfo)?`<div style="background:var(--accent-soft); color:var(--accent); padding:10px 12px; border-radius:12px; font-size:.8rem; margin-top:10px; line-height:1.8">⚠︎ ${g.src.colex?'Colex ردّت لكن بلا معلومات المكاتب':'تعذّر جلب بلديات Colex'}${g.src.err?' ('+esc(g.src.err)+')':''}. لذلك لا تُفلتر البلديات حسب المكتب.${g.src.sample?`<div dir="ltr" style="font-size:.72rem; margin-top:4px; word-break:break-all">${esc(g.src.sample)}</div>`:''}</div>`:''}
     ${g&&g.added&&g.added.length?`<details style="margin-top:10px"><summary class="muted" style="font-size:.8rem; cursor:pointer">البلديات الناقصة التي أضافتها المزامنة (${g.addedN})</summary><div class="muted" style="font-size:.78rem; line-height:1.9; margin-top:6px">${g.added.map(esc).join(' · ')}</div></details>`:''}
     <p class="muted" style="font-size:.76rem; margin:10px 0 0">تجلب كل بلديات الجزائر من مصدر مفتوح، ثم تسأل Colex أي بلدية فيها مكتب (Stop desk) فتظهر للزبون عند اختيار «المكتب». تحتاج شركة Colex مع التوكن في تبويب 🔌. أعد المزامنة كلما تغيّرت المكاتب.</p>
   </div>`;
@@ -3520,7 +3533,7 @@ async function integLoad(){
     else { S.integ.providers = JSON.parse(localStorage.getItem('zn_integ')||'[]'); }
   }catch(e){ console.warn('integ load failed (check Firestore rules for /private)', e); S.integ.providers = JSON.parse(localStorage.getItem('zn_integ')||'[]'); }
   try{ if(!S.integ.proxyUrl) S.integ.proxyUrl = localStorage.getItem('zn_colex_proxy')||''; }catch(e){}
-  S.integ.loaded=true; if(S.view==='admin' && S.tab==='integ') render();
+  S.integ.loaded=true; if(S.view==='admin' && S.tab==='integ') render(); if(S.admin) setTimeout(geoAuto,3000);
 }
 function integCollect(){
   const _pu=document.getElementById('cx_url'); if(_pu) S.integ.proxyUrl=_pu.value.trim().replace(/\/+$/,'');
