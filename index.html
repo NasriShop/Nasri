@@ -2193,7 +2193,7 @@ function viewAdmin(){
       <button class="btn btn-primary" style="width:100%; margin-top:12px" onclick="tryLogin()">${t('login')}</button>
       <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="go('home')">${t('back')}</button>
     </div>`;
-  const tabs=[["products",t('tabProducts')],["orders",t('tabOrders')+' ('+S.orders.filter(o=>o.status==='pending'||o.status==='confirmed').length+')'],["leads",'📵 غير المكتملة ('+leadList().filter(l=>!l.hand).length+')'],["shipped",'🚚 المشحونة ('+S.orders.filter(o=>o.status==='shipped').length+')'],["dash",'📊 الإحصائيات'],["returns",'↩ الملغاة ('+S.orders.filter(o=>o.status==='cancelled').length+')'],["shipping",t('tabShipping')],["integ","🔌 ربط التوصيل (API)"],["ai",t('tabAI')],["settings",t('tabSettings')]];
+  const tabs=[["products",t('tabProducts')],["orders",t('tabOrders')+' ('+S.orders.filter(o=>o.status==='pending'||o.status==='confirmed').length+')'],["leads",'📵 غير المكتملة ('+leadList().filter(l=>!l.hand).length+')'],["shipped",'🚚 المشحونة ('+S.orders.filter(o=>o.status==='shipped').length+')'],["dash",'📊 الإحصائيات'],["acc",'📈 إحصائيات دقيقة'],["returns",'↩ الملغاة ('+S.orders.filter(o=>o.status==='cancelled').length+')'],["shipping",t('tabShipping')],["integ","🔌 ربط التوصيل (API)"],["ai",t('tabAI')],["settings",t('tabSettings')]];
   return `
   <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px">
     <h1 style="font-size:1.35rem">${t('admin')}</h1>
@@ -2206,7 +2206,7 @@ function viewAdmin(){
   <div class="tabs" style="margin-bottom:18px">
     ${tabs.map(([k,lbl])=>`<button aria-selected="${S.tab===k}" onclick="S.tab='${k}';render();colexSync(false,true)">${lbl}</button>`).join('')}
   </div>
-  ${S.tab==='products'?tabProducts():S.tab==='orders'?tabOrders():S.tab==='leads'?tabLeads():S.tab==='shipped'?tabShipped():S.tab==='dash'?tabDash():S.tab==='returns'?tabReturns():S.tab==='shipping'?tabShipping():S.tab==='integ'?tabInteg():S.tab==='ai'?tabAI():tabSettings()}`;
+  ${S.tab==='products'?tabProducts():S.tab==='orders'?tabOrders():S.tab==='leads'?tabLeads():S.tab==='shipped'?tabShipped():S.tab==='dash'?tabDash():S.tab==='acc'?tabAcc():S.tab==='returns'?tabReturns():S.tab==='shipping'?tabShipping():S.tab==='integ'?tabInteg():S.tab==='ai'?tabAI():tabSettings()}`;
 }
 let _tap=0,_tt;
 function logoTap(){ _tap++; clearTimeout(_tt); _tt=setTimeout(()=>{_tap=0;},1500); if(_tap>=5){ _tap=0; go('admin'); } else go('home'); }
@@ -2533,7 +2533,7 @@ function statusSel(o){
     ${ST.map(x=>`<option value="${x}" ${o.status===x?'selected':''}>${stLabel(x)}</option>`).join('')}</select>`;
 }
 /* ===================== التتبع المباشر من المتجر ===================== */
-const ORD_TABS=['orders','leads','shipped','dash','returns'];
+const ORD_TABS=['orders','leads','shipped','dash','acc','returns'];
 function isOrdTab(){ return S.view==='admin' && ORD_TABS.includes(S.tab); }
 function typing(){ const a=document.activeElement; return !!(a && /INPUT|SELECT|TEXTAREA/.test(a.tagName)); }
 function sinceDays(iso){ const t0=Date.parse(iso||''); return t0?Math.floor((Date.now()-t0)/864e5):0; }
@@ -2795,6 +2795,83 @@ function rankHtml(map,unit){
   const arr=Object.entries(map).sort((a,b)=>b[1]-a[1]).slice(0,5), mx=arr.length?arr[0][1]:1;
   return arr.length?`<div class="rank">${arr.map(([k,v])=>`<div><span>${esc(k)}</span><b class="price">${v}${unit||''}</b><span class="rb"><i style="width:${Math.max(6,Math.round(v/mx*100))}%"></i></span></div>`).join('')}</div>`:'<span class="muted" style="font-size:.84rem">لا بيانات</span>';
 }
+
+/* ===================== 📈 إحصائيات دقيقة (حسب يوم إنشاء الطلبية + الكمية + حالة التوصيل من Colex) ===================== */
+function accRange(){
+  const d=S.acc||{mode:'7d',from:'',to:''}, now=new Date(); let s=dayStart(now), e=dayEnd(now);
+  if(d.mode==='yesterday'){ const y=new Date(now); y.setDate(y.getDate()-1); s=dayStart(y); e=dayEnd(y); }
+  else if(d.mode==='7d'){ const y=new Date(now); y.setDate(y.getDate()-6); s=dayStart(y); }
+  else if(d.mode==='30d'){ const y=new Date(now); y.setDate(y.getDate()-29); s=dayStart(y); }
+  else if(d.mode==='month'){ s=dayStart(new Date(now.getFullYear(),now.getMonth(),1)); }
+  else if(d.mode==='range' && d.from && d.to){ s=dayStart(d.from); e=dayEnd(d.to); }
+  return {s,e};
+}
+function setAcc(mode){ S.acc={...(S.acc||{}),mode}; render(); }
+function applyAcc(){
+  const from=document.getElementById('ac_from')?.value, to=document.getElementById('ac_to')?.value;
+  if(!from||!to) return toast(t('filterPickDates'));
+  S.acc={mode:'range',from,to}; render();
+}
+function accDayKey(x){ const p=n=>String(n).padStart(2,'0'); return x.getFullYear()+'-'+p(x.getMonth()+1)+'-'+p(x.getDate()); }
+function accGroup(o){
+  if(o.status==='done') return 'done';
+  if(o.status==='cancelled') return 'ret';
+  if(o.status==='shipped') return 'way';
+  return 'wait';
+}
+function tabAcc(){
+  const d=S.acc||{mode:'7d',from:'',to:''}, {s,e}=accRange();
+  const list=S.orders.filter(o=>{ const x=new Date(o.createdAt); return !isNaN(x) && x>=s && x<=e; });
+  const q=o=>Math.max(1,Math.round(Number(o.qty)||1));
+  const blank=()=>({n:0,p:0,q1:0,q2:0,q3:0,q4:0,done:0,way:0,ret:0,wait:0,donep:0});
+  const tot=blank(), by={}, st={};
+  list.forEach(o=>{
+    const k=accDayKey(new Date(o.createdAt)), r=(by[k]=by[k]||blank()), qq=q(o), g=accGroup(o);
+    [r,tot].forEach(x=>{ x.n++; x.p+=qq; x['q'+Math.min(qq,4)]++; x[g]++; if(g==='done') x.donep+=qq; });
+    const sk=o.colexStatus||(o.colexSent?'_none':'_unsent'); const z=(st[sk]=st[sk]||{n:0,p:0}); z.n++; z.p+=qq;
+  });
+
+  /* المشحونة (أُرسلت إلى Colex) حسب يوم الإرسال: من مخزون Colex أو من خارجه */
+  const sentOf=o=>String(o.colexSentAt||o.updatedAt||o.createdAt||'');
+  const sent=S.orders.filter(o=>{ if(!o.colexSent) return false; const x=new Date(sentOf(o)); return !isNaN(x) && x>=s && x<=e; });
+  const sb=()=>({sn:0,sp:0,on:0,op:0});
+  const stot=sb(), sby={};
+  sent.forEach(o=>{
+    const k=accDayKey(new Date(sentOf(o))), r=(sby[k]=sby[k]||sb()), qq=q(o), f=o.colexStock?'s':'o';
+    [r,stot].forEach(x=>{ x[f+'n']++; x[f+'p']+=qq; });
+  });
+  const sdays=Object.keys(sby).sort().reverse();
+  const srow=(lbl,r,b)=>`<tr${b?' style="font-weight:800"':''}><td>${lbl}</td><td>${r.sn}</td><td>${r.sp}</td><td>${r.on}</td><td>${r.op}</td><td>${r.sn+r.on}</td><td>${r.sp+r.op}</td></tr>`;
+  const days=Object.keys(by).sort().reverse();
+  const closed=tot.done+tot.ret, rate=closed?Math.round(tot.done/closed*100):0;
+  const modes=[['today','اليوم'],['yesterday','أمس'],['7d','٧ أيام'],['30d','٣٠ يوماً'],['month','هذا الشهر']];
+  const fmtD=x=>x.toLocaleDateString(LANG==='ar'?'ar-DZ':'fr-FR',{day:'2-digit',month:'2-digit'});
+  const stLbl=k=>k==='_unsent'?'لم تُرسل إلى Colex':k==='_none'?'أُرسلت (بدون حالة بعد)':colexStatusLabel(k);
+  const th='<th>اليوم</th><th>طلبات</th><th>قطع</th><th>كمية ١</th><th>كمية ٢</th><th>كمية ٣</th><th>كمية ٤+</th><th>✅ مُسلَّمة</th><th>🚚 في الطريق</th><th>↩ ملغاة/مرتجعة</th><th>⏳ لم تُشحن</th>';
+  const row=(lbl,r,b)=>`<tr${b?' style="font-weight:800"':''}><td>${lbl}</td><td>${r.n}</td><td>${r.p}</td><td>${r.q1}</td><td>${r.q2}</td><td>${r.q3}</td><td>${r.q4}</td><td>${r.done}</td><td>${r.way}</td><td>${r.ret}</td><td>${r.wait}</td></tr>`;
+  return `<div class="filter-bar">
+      <div class="seg">${modes.map(([k,l])=>`<button class="${d.mode===k?'on':''}" onclick="setAcc('${k}')">${l}</button>`).join('')}</div>
+      <span class="muted" style="font-size:.82rem">${t('filterFrom')}</span><input type="date" id="ac_from" value="${esc(d.from||'')}">
+      <span class="muted" style="font-size:.82rem">${t('filterTo')}</span><input type="date" id="ac_to" value="${esc(d.to||'')}">
+      <button class="btn btn-ghost btn-sm ${d.mode==='range'?'on':''}" onclick="applyAcc()">${t('filterApply')}</button>
+      <div style="flex:1"></div>
+      <button class="btn btn-primary btn-sm" onclick="colexRefreshAll()">🔄 تحديث الحالات من Colex</button>
+    </div>
+    <p class="muted" style="font-size:.76rem; margin:-6px 0 12px">ⓘ الطلبات محسوبة حسب <b>يوم إنشاء الطلبية</b> من ${fmtD(s)} إلى ${fmtD(e)}، والقطع من كمية كل طلبية، وحالة التوصيل من آخر مزامنة مع Colex.</p>`
+  + statCards([["🧾","كل الطلبات",tot.n,"var(--brand)"],["📦","مجموع القطع",tot.p,STAT_COLOR.confirmed],
+      ["✅","مُسلَّمة",tot.done+' ('+tot.donep+' قطعة)',"#0B7A3B"],["🚚","في الطريق",tot.way,STAT_COLOR.shipped],
+      ["↩","ملغاة/مرتجعة",tot.ret,STAT_COLOR.cancelled],["📈","نسبة التسليم (من المنتهية)",closed?rate+'%':'—',"var(--gold)"]])
+  + `<h3 style="font-size:1rem; margin:6px 0 8px">🏬 المشحونة: من المخزون / من خارج المخزون <span class="muted" style="font-size:.74rem; font-weight:600">(حسب يوم الإرسال إلى Colex)</span></h3>`
+  + statCards([["🏬","من مخزون Colex",stot.sn+' طرد · '+stot.sp+' قطعة',"#0B7A3B"],["🚚","من خارج المخزون (استلام منك)",stot.on+' طرد · '+stot.op+' قطعة',STAT_COLOR.shipped],
+      ["📦","مجموع المشحونة",(stot.sn+stot.on)+' طرد · '+(stot.sp+stot.op)+' قطعة',"var(--brand)"]])
+  + `<div class="card scroll-x" style="padding:6px 12px; margin-bottom:14px"><table class="tbl"><thead><tr><th>يوم الإرسال</th><th>🏬 طرود من المخزون</th><th>قطع</th><th>🚚 طرود من الخارج</th><th>قطع</th><th>مجموع الطرود</th><th>مجموع القطع</th></tr></thead>
+      <tbody>${srow('المجموع',stot,true)}${sdays.map(k=>srow(k,sby[k])).join('')||'<tr><td colspan="7" class="muted" style="padding:24px">لا توجد طرود مرسلة في هذه الفترة.</td></tr>'}</tbody></table></div>`
+  + `<div class="card scroll-x" style="padding:6px 12px; margin-bottom:14px"><table class="tbl"><thead><tr>${th}</tr></thead>
+      <tbody>${row('المجموع',tot,true)}${days.map(k=>row(k,by[k])).join('')||'<tr><td colspan="11" class="muted" style="padding:24px">لا توجد طلبات في هذه الفترة.</td></tr>'}</tbody></table></div>`
+  + `<div class="card scroll-x" style="padding:6px 12px"><table class="tbl"><thead><tr><th>حالة التوصيل (Colex)</th><th>طلبات</th><th>قطع</th></tr></thead>
+      <tbody>${Object.keys(st).sort((a,b)=>st[b].n-st[a].n).map(k=>`<tr><td>${esc(stLbl(k))}</td><td>${st[k].n}</td><td>${st[k].p}</td></tr>`).join('')||'<tr><td colspan="3" class="muted" style="padding:24px">لا بيانات</td></tr>'}</tbody></table></div>`;
+}
+
 function tabDash(){
   const d=S.dash||{mode:'today',from:'',to:''}, {s,e}=dashRange();
   const list=S.orders.filter(o=>{ if(o.status!=='done') return false; const x=new Date(deliveredAtOf(o)); return x>=s && x<=e; })
