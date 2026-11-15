@@ -2092,89 +2092,6 @@ function recalc(){
   document.getElementById('s_ship').textContent=(wc&&shipFor(wc,type)!=null)?money(ship):'—';
   document.getElementById('s_total').textContent=money(sub+ship);
 }
-/* ===================== 🚫 حظر الزبائن المسيئين (يُدار من الإعدادات، يُحفظ في shop/settings) =====================
-   الأرقام المحظورة تُخزَّن كبصمة SHA-256 (hash) فقط، فلا تظهر أرقام الزبائن للعموم. */
-const BAD_WORDS_DEFAULT=['zebi','zebbi','zabi','zeb','nik','nike','nikmok','niknek','nikomok','nik omek','9ahba','qahba','kahba','9a7ba','ta7an','tahan','قحبة','قحبه','نيك','زبي','زب','كس','عاهرة','ابن الحرام'];
-function badWordsAll(){
-  const c=String((S.settings&&S.settings.badWords)||'').toLowerCase().split(/[,\n،]+/).map(x=>x.trim()).filter(Boolean);
-  return [...BAD_WORDS_DEFAULT,...c];
-}
-function nameBad(n){   // مقارنة كلمة كلمة، فلا يتحظر اسم عادي مثل زبير/Zoubir
-  const norm=String(n).toLowerCase().replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();
-  if(!norm || !/\p{L}/u.test(norm)) return true;
-  const toks=norm.split(' '), joined=' '+norm+' ';
-  return badWordsAll().some(w=>w.includes(' ')?joined.includes(' '+w+' '):toks.includes(w));
-}
-function normPhone(p){ let d=String(p||'').replace(/\D/g,''); if(d.startsWith('213')) d=d.slice(3); return d.replace(/^0/,''); }
-function phoneFake(ph){   // أرقام وهمية: متكررة / متسلسلة
-  const d=normPhone(ph);
-  if(new Set(d.split('')).size<=2) return true;
-  if('01234567890123456789'.includes(d)||'98765432109876543210'.includes(d)) return true;
-  return false;
-}
-async function sha(str){
-  try{ const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
-  catch(e){ let h=5381; for(const c of str) h=((h<<5)+h+c.charCodeAt(0))>>>0; return 'x'+h.toString(16); }
-}
-const hashPhone = p => sha('zn|'+normPhone(p));
-/* هوية الجهاز: معرّف عشوائي دائم (localStorage + كوكي) + بصمة المتصفح/الجهاز + عنوان IP */
-function devId(){
-  try{
-    let v=localStorage.getItem('zn_dev');
-    if(!v){ const m=document.cookie.match(/(?:^|; )zn_dev=([^;]+)/); v=m?m[1]:((crypto.randomUUID&&crypto.randomUUID())||(String(Math.random()).slice(2)+Date.now())); }
-    localStorage.setItem('zn_dev',v);
-    document.cookie='zn_dev='+v+'; max-age=63072000; path=/; SameSite=Lax';
-    return v;
-  }catch(e){ return ''; }
-}
-async function devFp(){
-  try{
-    const c=document.createElement('canvas'); c.width=220; c.height=40; const x=c.getContext('2d'); x.textBaseline='top'; x.font='14px Arial'; x.fillText('zn-fp-Ωض✓ 12345',2,2);
-    let gl=''; try{ const g=document.createElement('canvas').getContext('webgl'), e=g.getExtension('WEBGL_debug_renderer_info'); gl=e?g.getParameter(e.UNMASKED_RENDERER_WEBGL):''; }catch(e){}
-    const raw=[navigator.userAgent,navigator.language,screen.width+'x'+screen.height+'x'+screen.colorDepth,window.devicePixelRatio,Intl.DateTimeFormat().resolvedOptions().timeZone,navigator.hardwareConcurrency,navigator.deviceMemory,navigator.maxTouchPoints,gl,c.toDataURL()].join('|');
-    return await sha('zn-fp|'+raw);
-  }catch(e){ return ''; }
-}
-async function getIp(){
-  try{
-    const ctl=new AbortController(), tm=setTimeout(()=>ctl.abort(),2500);
-    const r=await fetch('https://api.ipify.org?format=json',{signal:ctl.signal}); clearTimeout(tm);
-    return String((await r.json()).ip||'');
-  }catch(e){ return ''; }
-}
-async function getCtx(){ return {dev:devId(), fp:await devFp(), ip:await getIp()}; }
-/* محظور إذا: رقمه محظور، أو معرّف جهازه محظور، أو (بصمة جهازه + نفس الـIP). الوضع الصارم: بصمة الجهاز وحدها تكفي */
-async function isBlockedPerson(phone,ctx){
-  const L=(S.settings&&S.settings.blocked)||[]; if(!L.length) return false;
-  const hp=await hashPhone(phone), hd=ctx.dev?await sha('zn-dev|'+ctx.dev):'', hi=ctx.ip?await sha('zn-ip|'+ctx.ip):'';
-  const strict=!!S.settings.blockStrict;
-  return L.some(x=> x.h===hp || (x.d&&hd&&x.d===hd) || (x.f&&ctx.fp&&x.f===ctx.fp&&(strict||(x.i&&hi&&x.i===hi))) );
-}
-function maskPhone(p){ const d=normPhone(p); return '0'+d.slice(0,2)+'•••••'+d.slice(-2); }
-async function blockAdd(phone,note,x){
-  const d=normPhone(phone); if(!/^[5-7]\d{8}$/.test(d)) return toast('⚠︎ رقم غير صالح');
-  x=x||{};
-  const L=(S.settings.blocked=S.settings.blocked||[]), h=await hashPhone(d);
-  const e={h, m:maskPhone(d), n:String(note||'').slice(0,40), at:new Date().toISOString()};
-  if(x.dev) e.d=await sha('zn-dev|'+x.dev);
-  if(x.fp) e.f=x.fp;
-  if(x.ip) e.i=await sha('zn-ip|'+x.ip);
-  const k=L.findIndex(y=>y.h===h);
-  if(k>=0){ L[k]={...L[k],...e}; toast('تم تحديث الحظر'); } else { L.push(e); toast('🚫 تم حظر الشخص'); }
-  await saveSettings(); render();
-}
-function blockFromForm(){ return blockAdd(document.getElementById('st_bphone')?.value, document.getElementById('st_bnote')?.value); }
-async function blockRemove(i){
-  const L=S.settings.blocked||[]; if(!L[i]) return;
-  if(!confirm('رفع الحظر عن '+L[i].m+' ؟')) return;
-  L.splice(i,1); await saveSettings(); toast('تم رفع الحظر'); render();
-}
-function blockOrder(id){
-  const o=S.orders.find(x=>x.id===id); if(!o) return;
-  const has=(o.dev||o.fp||o.ip);
-  if(confirm('حظر '+o.customer+' ('+o.phone+')؟\n'+(has?'سيتم حظر رقمه وجهازه (حتى لو غيّر الرقم).':'هذه الطلبية قديمة ولا تحمل بيانات الجهاز، فسيُحظر الرقم فقط.')))
-    blockAdd(o.phone,o.customer,{dev:o.dev,fp:o.fp,ip:o.ip});
-}
 async function submitOrder(pid){
   const p=byId(pid); if(!p) return;
   if(document.getElementById('f_hp')?.value) return;   // honeypot (bots)
@@ -2190,10 +2107,6 @@ async function submitOrder(pid){
   if(!commune) bad.push(g('f_commune')==='__other'?'f_commune_other':'f_commune');
   if(bad.length){ leadSave(bad[0]); bad.forEach(id=>document.getElementById(id)?.classList.add('err')); document.getElementById(bad[0])?.focus(); return toast(t('required')); }
   if(!/^0?[5-7]\d{8}$/.test(phone)){ const el=document.getElementById('f_phone'); el.classList.add('err'); el.focus(); return toast(t('badPhone')); }
-  if(phoneFake(phone)){ const el=document.getElementById('f_phone'); el.classList.add('err'); el.focus(); return toast(t('badPhone')); }   // رقم وهمي
-  if(nameBad(g('f_name'))){ const el=document.getElementById('f_name'); el.classList.add('err'); el.focus(); return toast('الاسم غير صالح / Nom invalide'); }   // اسم مسيء
-  const ctx=await getCtx();
-  if(await isBlockedPerson(phone,ctx)){ const el=document.getElementById('f_phone'); el.classList.add('err'); return toast(t('badPhone')); }   // شخص محظور (رقم/جهاز)
   const cs=pColors(p), ss=pSizes(p);
   if(cs.length && QTY<1){ leadSave('color'); const e=document.getElementById('f_colorGrp'); e.classList.add('err'); e.scrollIntoView({block:'center',behavior:'smooth'}); return toast(t('pickColorReq')); }
   if(ss.length && SEL_SIZE==null){ leadSave('size'); const e=document.getElementById('f_sizeGrp'); e.classList.add('err'); e.scrollIntoView({block:'center',behavior:'smooth'}); return toast(t('pickSizeReq')); }
@@ -2210,7 +2123,7 @@ async function submitOrder(pid){
     color:cs.length?cs.map((c,k)=>(CQ[k]>0)?(c.name+' ×'+CQ[k]):'').filter(Boolean).join('، '):'', size:ss.length?ss[SEL_SIZE]:'',
     customer:g('f_name'), phone, phone2:'',
     wilayaCode:Number(wc), wilaya:row?row[2]:'', wilayaAr:row?row[1]:'',
-    commune:_commune, address:_addr, notes:'', dev:ctx.dev, fp:ctx.fp, ip:ctx.ip,
+    commune:_commune, address:_addr, notes:'',
     deliveryType:type, carrier:(activeCarrier()||{}).name||'', shipping:ship, subtotal:sub, total:sub+ship, discountPct:_dp, discountAmt:_da, lang:LANG
   });
   try{ localStorage.setItem('zn_lastord', String(Date.now())); }catch(e){}
@@ -2597,7 +2510,6 @@ function tabOrders(){
       <td>${colexCell(o)}</td>
       <td><div style="display:flex; flex-direction:column; gap:6px; min-width:96px">
         <button class="btn btn-ghost btn-sm" onclick="editOrder('${o.id}')">✏️ تعديل</button>
-        <button class="btn btn-ghost btn-sm" onclick="blockOrder('${o.id}')">🚫 حظر الشخص</button>
         <button class="btn btn-sm" style="background:var(--accent-soft); color:var(--accent)" onclick="dropOrder('${o.id}')">${t('del')}</button></div></td>
     </tr>`).join('')||`<tr><td colspan="9" class="muted" style="padding:24px">${t('noOrders')}</td></tr>`}
     </tbody></table></div>`;
@@ -3661,22 +3573,6 @@ function tabSettings(){
     </div>
     <div><label class="lbl">${t('sheetUrl')}</label><input class="field" id="st_sheet" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(S.settings.sheetUrl||'')}">
       <p class="muted" style="font-size:.76rem; margin:6px 0 0">Google Apps Script — يعمل مباشرة في النسخة المستضافة على خادمك (Node/Express). داخل هذه المعاينة يتم نسخ الجدول إلى الحافظة بدل الإرسال.</p></div>
-    <div class="card" style="padding:14px; box-shadow:none; background:var(--surface-2); display:grid; gap:10px">
-      <b style="font-size:.85rem">🚫 حظر الزبائن المسيئين</b>
-      <div style="display:flex; gap:8px; flex-wrap:wrap">
-        <input class="field" id="st_bphone" inputmode="numeric" placeholder="رقم الهاتف 05/06/07…" style="flex:1; min-width:150px">
-        <input class="field" id="st_bnote" placeholder="ملاحظة (اختياري)" style="flex:1; min-width:120px">
-        <button class="btn btn-primary btn-sm" type="button" onclick="blockFromForm()">حظر</button>
-      </div>
-      ${(S.settings.blocked||[]).map((x,i)=>`<div style="display:flex; align-items:center; gap:8px; justify-content:space-between; padding:6px 10px; background:var(--surface); border-radius:10px">
-        <span><b dir="ltr">${esc(x.m)}</b> <span class="muted" style="font-size:.78rem">${esc(x.n||'')}</span> <span title="ما يشمله الحظر" style="font-size:.8rem">📱${x.d?' 💻':''}${x.f?' 🔎':''}${x.i?' 🌐':''}</span></span>
-        <button class="btn btn-ghost btn-sm" type="button" onclick="blockRemove(${i})">رفع الحظر</button></div>`).join('')||'<p class="muted" style="font-size:.78rem; margin:0">لا توجد أرقام محظورة.</p>'}
-      <label style="display:flex; gap:8px; align-items:flex-start; font-size:.8rem"><input type="checkbox" id="st_strict" ${S.settings.blockStrict?'checked':''} style="margin-top:3px"><span>الوضع الصارم: حظر بصمة الجهاز وحدها حتى لو تغيّر الـIP (أقوى، لكن قد يحظر شخصاً آخر عنده نفس نوع الهاتف تماماً)</span></label>
-      <p class="muted" style="font-size:.74rem; margin:0">📱 رقم الهاتف · 💻 معرّف الجهاز · 🔎 بصمة الجهاز · 🌐 عنوان IP. يمكنك أيضاً حظر الشخص مباشرة بزر «🚫 حظر» في تبويب الطلبات. الأرقام تُحفظ مشفّرة (hash) فلا تظهر للعموم، ولذلك يُعرض منها جزء فقط.</p>
-      <div><label class="lbl">كلمات مسيئة إضافية في خانة الاسم (مفصولة بفاصلة)</label>
-        <textarea class="field" id="st_badwords" rows="2" placeholder="كلمة1, كلمة2">${esc(S.settings.badWords||'')}</textarea>
-        <p class="muted" style="font-size:.74rem; margin:6px 0 0">تُقارن كلمة كلمة. اضغط «حفظ» أسفل الصفحة بعد التعديل.</p></div>
-    </div>
     <div class="card" style="padding:14px; box-shadow:none; background:${cloudinaryReady()?'var(--brand-soft)':'var(--accent-soft)'}">
       <b style="font-size:.85rem">${cloudinaryReady()?'☁︎ Cloudinary متصل — الصور تُخزَّن خارجياً':'⚠︎ Cloudinary غير مُفعّل — الصور تُخزَّن حالياً داخل قاعدة البيانات (أثقل)'}</b>
       <p class="muted" style="font-size:.78rem; margin:6px 0 0">فعّله بتعديل <code>window.CLOUDINARY</code> في أعلى ملف index.html — التفاصيل في README.</p>
@@ -3696,7 +3592,6 @@ async function commitSettings(){
   if(aik){ sessionStorage.setItem('zn_aikey',aik); SAMPLE=makeSampler(aik); }
   else { sessionStorage.removeItem('zn_aikey'); SAMPLE=null; }
   Object.assign(S.settings,{storeName:g('st_name'),    whatsapp:g('st_wa'),facebook:g('st_fb'),sheetUrl:g('st_sheet'),
-    badWords:g('st_badwords'), blockStrict:!!document.getElementById('st_strict')?.checked,
     fbPixel:pxList([...document.querySelectorAll('.px-fb')].map(i=>i.value).join(',')).join(','),
     ttPixel:pxList([...document.querySelectorAll('.px-tt')].map(i=>i.value).join(',')).join(',')});
   await saveSettings(); loadPixels(); toast(t('saved')); render();
