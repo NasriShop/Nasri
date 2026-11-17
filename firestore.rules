@@ -2,12 +2,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // ⚠️ استبدل ADMIN_UID بمعرّف حساب الأدمن (Firebase Console → Authentication → Users → User UID)
+    // معرّف حساب الأدمن (Firebase Console → Authentication → Users → User UID)
     function isAdmin() {
       return request.auth != null && request.auth.uid == 'A2Qj42zR5YeD1s6ASH247KeDRh52';
     }
 
-    // المنتجات والإعدادات: قراءة للجميع، كتابة للأدمن فقط
+    // ───────────── المنتجات والإعدادات: قراءة للجميع، كتابة للأدمن فقط ─────────────
     match /products/{id} {
       allow read: if true;
       allow write: if isAdmin();
@@ -17,37 +17,95 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // الطلبات: الزبون ينشئ فقط (بشروط صارمة)، والأدمن وحده يقرأ/يعدّل/يحذف
-    match /orders/{id} {
-      allow read, update, delete: if isAdmin();
+    // ───────────── الطلبات ─────────────
+    // الزبون: إنشاء فقط (بشروط). الأدمن: كل شيء (بما فيها الإنشاء من لوحة التحكم).
 
-      allow create: if id.matches('^ZN[A-Z0-9]{1,6}$')
-        && request.resource.data.keys().hasOnly([
+    // حقل نصي اختياري بحد أقصى للطول
+    function optStr(d, k, max) {
+      return !(k in d) || (d[k] is string && d[k].size() <= max);
+    }
+
+    // الأسعار: نقرأ المنتج مرة واحدة ونطابق السعر والخصم والمجموع
+    function priceOk(d) {
+      let p = get(/databases/$(database)/documents/products/$(d.productId)).data;
+      let gross = d.unitPrice * d.qty;
+      return p.price == d.unitPrice
+        // المجموع الفرعي + الخصم = السعر × الكمية (بهامش 1 دج للتقريب)
+        && math.abs(d.subtotal + d.discountAmt - gross) <= 1
+        && d.discountAmt >= 0 && d.discountAmt <= gross
+        && d.discountPct >= 0 && d.discountPct <= 99
+        // نسبة الخصم المعلنة تطابق المبلغ (هامش التقريب)
+        && d.discountAmt * 100 <= gross * d.discountPct + 100
+        // منتج بلا خصم بالكمية ⇒ لا يُقبل أي خصم
+        && (p.get('discOn', false) == true || (d.discountAmt == 0 && d.discountPct == 0));
+    }
+
+    // أرقام مختلقة: 5 أرقام متطابقة متتالية أو 6 أرقام متسلسلة (نفس منطق المتجر)
+    function fakePhone(p) {
+      return p.matches('.*(00000|11111|22222|33333|44444|55555|66666|77777|88888|99999).*')
+          || p.matches('.*(012345|123456|234567|345678|456789|987654|876543|765432|654321|543210).*');
+    }
+    // اسم حقيقي: 3 أحرف على الأقل وبلا أرقام
+    function realName(n) { return n.size() >= 3 && !n.matches('.*[0-9٠-٩].*'); }
+
+    function validOrder(id, d) {
+      return id.matches('^ZN[A-Z0-9]{1,6}$')
+        && d.keys().hasOnly([
             'productId','productName','unitPrice','qty','color','size','customer','phone','phone2',
             'wilayaCode','wilaya','wilayaAr','commune','address','notes','deliveryType','carrier',
             'shipping','subtotal','total','discountPct','discountAmt','lang','createdAt','status','ref','sheetSynced'])
-        && request.resource.data.status == 'pending'
-        && request.resource.data.customer is string && request.resource.data.customer.size() > 0 && request.resource.data.customer.size() <= 80
-        && request.resource.data.phone is string && request.resource.data.phone.matches('^0?[5-7][0-9]{8}$')
-        && request.resource.data.commune is string && request.resource.data.commune.size() <= 120
-        && request.resource.data.address is string && request.resource.data.address.size() <= 250
-        && request.resource.data.qty is int && request.resource.data.qty >= 1 && request.resource.data.qty <= 50
-        && request.resource.data.deliveryType in ['home','desk']
-        && request.resource.data.shipping is number && request.resource.data.shipping >= 0 && request.resource.data.shipping <= 5000
-        && request.resource.data.subtotal is number && request.resource.data.subtotal >= 0
-        && request.resource.data.total == request.resource.data.subtotal + request.resource.data.shipping
-        // السعر يجب أن يطابق سعر المنتج الحقيقي في قاعدة البيانات
-        && exists(/databases/$(database)/documents/products/$(request.resource.data.productId))
-        && get(/databases/$(database)/documents/products/$(request.resource.data.productId)).data.price == request.resource.data.unitPrice;
+        && d.keys().hasAll([
+            'productId','unitPrice','qty','customer','phone','commune','deliveryType',
+            'shipping','subtotal','total','discountPct','discountAmt','status'])
+        && d.status == 'pending'
+        && (!('ref' in d) || d.ref == id)
+        && (!('sheetSynced' in d) || d.sheetSynced is bool)
+        // الزبون والتواصل
+        && d.customer is string && d.customer.size() > 0 && d.customer.size() <= 80 && realName(d.customer)
+        && d.phone is string && d.phone.matches('^0?[5-7][0-9]{8}$') && !fakePhone(d.phone)
+        && (!('phone2' in d) || (d.phone2 is string && d.phone2.size() <= 20))
+        && d.commune is string && d.commune.size() > 0 && d.commune.size() <= 200
+        && optStr(d, 'address', 300)
+        && optStr(d, 'notes', 500)
+        && optStr(d, 'wilaya', 80)
+        && optStr(d, 'wilayaAr', 80)
+        && (!('wilayaCode' in d) || (d.wilayaCode is int && d.wilayaCode >= 0 && d.wilayaCode <= 99))
+        // المنتج
+        && d.productId is string && d.productId.size() > 0 && d.productId.size() <= 80
+        && optStr(d, 'productName', 300)
+        && optStr(d, 'color', 400)
+        && optStr(d, 'size', 100)
+        && optStr(d, 'carrier', 100)
+        && optStr(d, 'ref', 20)
+        && optStr(d, 'createdAt', 40)
+        && (!('lang' in d) || d.lang in ['ar','fr','en'])
+        // الكمية والتوصيل
+        && d.qty is int && d.qty >= 1 && d.qty <= 500
+        && d.deliveryType in ['home','desk']
+        // الأرقام
+        && d.unitPrice is number && d.unitPrice > 0
+        && d.shipping is number && d.shipping >= 0 && d.shipping <= 20000
+        && d.subtotal is number && d.subtotal >= 0
+        && d.total is number && d.total >= 0
+        && math.abs(d.total - (d.subtotal + d.shipping)) <= 1
+        && d.discountPct is number && d.discountAmt is number
+        // السعر الحقيقي من قاعدة البيانات
+        && priceOk(d);
     }
 
-    // الطلبات غير المكتملة: الزبون يكتب مستنداً واحداً لكل رقم هاتف (بشروط صارمة)، والأدمن وحده يقرأ/يعدّل/يحذف
+    match /orders/{id} {
+      allow read, update, delete: if isAdmin();
+      allow create: if isAdmin() || validOrder(id, request.resource.data);
+    }
+
+    // ───────────── الطلبات غير المكتملة (Leads) ─────────────
+    // مستند واحد لكل رقم هاتف. الزبون يكتب/يحدّث (بشروط)، والأدمن وحده يقرأ ويحذف.
     function validLead(id, d) {
-      return id.matches('^[5-7][0-9]{8}$')
+      return id.matches('^[5-7][0-9]{8}$') && !fakePhone(id)
         && d.keys().hasOnly(['phone','customer','productId','productName','wilayaCode','wilaya','commune','err','done','startedAt','updatedAt'])
         && d.keys().hasAll(['phone','customer','productId','productName','wilayaCode','wilaya','commune','err','done','startedAt','updatedAt'])
         && d.phone == id
-        && d.customer is string && d.customer.size() <= 80
+        && d.customer is string && d.customer.size() <= 80 && !d.customer.matches('.*[0-9٠-٩].*')
         && d.productId is string && d.productId.size() > 0 && d.productId.size() <= 80
         && d.productName is string && d.productName.size() <= 120
         && d.wilayaCode is int && d.wilayaCode >= 0 && d.wilayaCode <= 99
@@ -59,11 +117,13 @@ service cloud.firestore {
         && d.updatedAt is string && d.updatedAt.size() <= 40;
     }
     match /leads/{id} {
-      allow read, update, delete: if isAdmin();
-      allow create, update: if validLead(id, request.resource.data);
+      allow read, delete: if isAdmin();
+      // الأدمن يضيف حقولاً مثل hand (تم التواصل) فلا نقيّده، والزبون مقيَّد بالشكل الصارم
+      allow create: if validLead(id, request.resource.data);
+      allow update: if isAdmin() || validLead(id, request.resource.data);
     }
 
-    // بيانات حساسة (توكنات شركات التوصيل…): الأدمن فقط
+    // ───────────── بيانات حساسة (توكنات شركات التوصيل…): الأدمن فقط ─────────────
     match /private/{document=**} {
       allow read, write: if isAdmin();
     }
