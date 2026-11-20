@@ -47,6 +47,16 @@ img,svg,video{display:block;max-width:100%}img,video{height:auto}
 button,input,select,textarea{font:inherit;color:inherit;margin:0}
 button{background:transparent;cursor:pointer}table{border-collapse:collapse}
 textarea{resize:vertical}[hidden],.hidden{display:none}
+
+/* رسالة التوعية بعد اكتمال التسجيل */
+.ofm-warn{display:flex; gap:12px; align-items:flex-start; text-align:start; margin:18px 0 6px; padding:14px 16px; border-radius:16px;
+  background:linear-gradient(135deg,#E11D48,#F97316); color:#fff; box-shadow:0 10px 26px -10px rgba(225,29,72,.65);
+  border:2px solid #FFD166; animation:ofmWarnPulse 1.8s ease-in-out infinite}
+.ofm-warn b{display:block; font-size:1.02rem; margin-bottom:3px; color:#FFF3BF}
+.ofm-warn p{margin:0; font-size:.95rem; line-height:1.9; font-weight:700; color:#fff}
+.ofm-warn-ic{font-size:1.7rem; line-height:1; flex:none}
+@keyframes ofmWarnPulse{0%,100%{transform:scale(1); box-shadow:0 10px 26px -10px rgba(225,29,72,.65)}50%{transform:scale(1.02); box-shadow:0 14px 32px -8px rgba(225,29,72,.9)}}
+@media (prefers-reduced-motion:reduce){.ofm-warn{animation:none}}
 </style>
 <style>
 :root{
@@ -786,7 +796,7 @@ ar:{
   subtotal:"سعر المنتج", shipping:"سعر التوصيل", total:"المجموع الكلي",
   confirm:"تأكيد الطلب", sending:"جارٍ الإرسال…", pickWilaya:"اختر الولاية",
   pickCommune:"اختر البلدية", other:"أخرى (اكتبها يدوياً)",
-  successTitle:"تم تسجيل طلبك بنجاح ✅", successBody:"سنتصل بك قريباً لتأكيد الطلب. رقم الطلب:",
+  successTitle:"تم تسجيل طلبك بنجاح ✅", successBody:"سنتصل بك قريباً لتأكيد الطلب. رقم الطلب:", successWarn:"تأكد أن إرجاع السلع دون سبب أو عدم الرد على أرقام التوصيل يسبّب لي خسارة فقط، تذكّر ذلك عزيزي الزبون.", successWarnT:"تنبيه مهم",
   keepShopping:"مواصلة التسوق", contactWa:"تواصل عبر واتساب",
   required:"يرجى ملء جميع الحقول الإجبارية", badPhone:"رقم الهاتف غير صحيح — يجب أن يبدأ بـ 05 أو 06 أو 07 ويتكون من 10 أرقام", badName:"يرجى كتابة اسمك الحقيقي (الاسم واللقب)", tooFast:"يرجى مراجعة بياناتك ثم الضغط على «تأكيد الطلب» مرة أخرى", dupOrder:"سجّلنا طلبك لهذا المنتج مسبقاً وسنتصل بك قريباً للتأكيد. لأي تعديل راسلنا عبر واتساب", limitOrd:"تم بلوغ الحد الأقصى للطلبات من هذا الجهاز اليوم. تواصل معنا عبر واتساب", sendFail:"تعذّر إرسال طلبك بسبب مشكلة في الاتصال. حاول مجدداً بعد قليل أو تواصل معنا عبر واتساب", wait:"يرجى الانتظار قليلاً قبل إرسال طلب جديد",
   contactUs:"تواصل معنا", payDelivery:"الدفع والتوصيل", rights:"جميع الحقوق محفوظة",
@@ -828,7 +838,7 @@ fr:{
   subtotal:"Prix du produit", shipping:"Livraison", total:"Total à payer",
   confirm:"Confirmer la commande", sending:"Envoi…", pickWilaya:"Choisir la wilaya",
   pickCommune:"Choisir la commune", other:"Autre (saisir manuellement)",
-  successTitle:"Commande enregistrée ✅", successBody:"Nous vous appellerons pour confirmer. Numéro :",
+  successTitle:"Commande enregistrée ✅", successBody:"Nous vous appellerons pour confirmer. Numéro :", successWarn:"Sachez que renvoyer la marchandise sans motif ou ne pas répondre aux appels du livreur ne me cause que des pertes. Pensez-y, cher client.", successWarnT:"Important",
   keepShopping:"Continuer les achats", contactWa:"Contacter sur WhatsApp",
   required:"Merci de remplir les champs obligatoires", badPhone:"Numéro invalide — il doit commencer par 05, 06 ou 07 et comporter 10 chiffres", badName:"Veuillez saisir votre vrai nom (nom et prénom)", tooFast:"Vérifiez vos informations puis appuyez de nouveau sur « Confirmer la commande »", dupOrder:"Votre commande pour ce produit est déjà enregistrée, nous vous appellerons bientôt. Pour la modifier, écrivez-nous sur WhatsApp", limitOrd:"Limite de commandes atteinte aujourd'hui sur cet appareil. Contactez-nous sur WhatsApp", sendFail:"Envoi impossible (problème de connexion). Réessayez dans un instant ou contactez-nous sur WhatsApp", wait:"Veuillez patienter avant d'envoyer une nouvelle commande",
   contactUs:"Contact", payDelivery:"Paiement & livraison", rights:"Tous droits réservés",
@@ -870,7 +880,7 @@ en:{
   subtotal:"Product price", shipping:"Shipping", total:"Total to pay",
   confirm:"Confirm order", sending:"Sending…", pickWilaya:"Select wilaya",
   pickCommune:"Select commune", other:"Other (type manually)",
-  successTitle:"Order placed ✅", successBody:"We will call you to confirm. Order number:",
+  successTitle:"Order placed ✅", successBody:"We will call you to confirm. Order number:", successWarn:"Please be aware that returning goods without a reason or not answering the delivery calls only causes me losses. Please keep that in mind, dear customer.", successWarnT:"Important notice",
   keepShopping:"Keep shopping", contactWa:"Chat on WhatsApp",
   required:"Please fill in the required fields", badPhone:"Invalid phone number — it must start with 05, 06 or 07 and have 10 digits", badName:"Please enter your real full name", tooFast:"Please review your details, then press “Confirm order” again", dupOrder:"We already have your order for this product and will call you soon. To change it, message us on WhatsApp", limitOrd:"Daily order limit reached on this device. Please contact us on WhatsApp", sendFail:"Could not send your order (connection problem). Please try again shortly or contact us on WhatsApp", wait:"Please wait a moment before sending another order",
   contactUs:"Contact us", payDelivery:"Payment & delivery", rights:"All rights reserved",
@@ -2226,6 +2236,7 @@ function viewSuccess(){
     <div style="font-size:3rem">🎉</div>
     <h1 style="font-size:1.5rem; margin:12px 0 8px">${t('successTitle')}</h1>
     <p class="muted">${t('successBody')} <b style="color:var(--ink)">${esc(o.ref||'')}</b></p>
+    <div class="ofm-warn" role="alert"><span class="ofm-warn-ic">⚠️</span><div><b>${t('successWarnT')}</b><p>${t('successWarn')}</p></div></div>
     <div class="card" style="padding:16px; margin:18px 0; text-align:start; box-shadow:none; background:var(--surface-2)">
       <div style="display:flex; justify-content:space-between"><span class="muted">${t('product')}</span><b>${esc(o.productName||'')} ×${o.qty||1}</b></div>
       <div style="display:flex; justify-content:space-between"><span class="muted">${t('wilaya')}</span><b>${esc(o.wilaya||'')} / ${esc(o.commune||'')}</b></div>
